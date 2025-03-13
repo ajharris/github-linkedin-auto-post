@@ -1,0 +1,80 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+.env
+venv/
+
+# Flask
+instance/
+*.db
+*.sqlite3
+
+# Node.js / React
+node_modules/
+yarn.lock
+package-lock.json
+
+# Build / Dist
+build/
+dist/
+
+# Logs
+logs/
+*.log
+
+# Virtual environments
+.vscode/
+.idea/
+
+# Heroku / AWS / Cloud
+*.env.local
+*.env.development
+*.env.production
+
+# Coverage reports
+coverage/
+*.cover
+
+# Database dumps
+*.sql
+*.sqlite
+
+# Compiled files
+*.so
+*.out
+*.exe
+
+# MacOS
+.DS_Store
+
+# Docker
+.dockerignore
+docker-compose.override.yml

@@ -1,14 +1,14 @@
-GitHub to LinkedIn Auto-Post
+# GitHub to LinkedIn Auto-Post
 Automatically share your GitHub repository updates to LinkedIn using this Flask + React app.  
 No manual setup required—just sign in with LinkedIn and connect your GitHub repositories.
 
-Features:
+## Features:
 - Auto-post to LinkedIn whenever you push to GitHub  
 - Secure OAuth authentication for LinkedIn and GitHub  
 - Custom post templates for your updates  
 - Toggle repositories to control which ones post updates  
 
-Project Structure:
+## Project Structure:
 github-linkedin-auto-post/
 │── backend/           # Flask API
 │   │── app.py         # Main Flask app
@@ -23,7 +23,7 @@ github-linkedin-auto-post/
 │── README.md          # Project documentation
 │── setup_github_linkedin.sh  # Automated setup script
 
-Installation:
+## Installation:
 1. Automatic Setup:
    Run the setup script to install everything automatically:
    chmod +x setup_github_linkedin.sh
@@ -42,7 +42,7 @@ Installation:
    npm install
    npm run dev
 
-Usage:
+## Usage:
 1. Start the Flask backend:
    cd backend
    source venv/bin/activate
@@ -52,12 +52,12 @@ Usage:
    cd frontend
    npm run dev
 
-API Endpoints:
+## API Endpoints:
 Method  | Endpoint          | Description  
 --------|------------------|-----------------------------  
 GET     | /auth/login      | Redirect to LinkedIn login  
 GET     | /auth/callback   | Handle LinkedIn OAuth callback  
 POST    | /webhook/github  | Receive GitHub push events  
 
-Need Help?
-If you have issues setting up, contact support at support@yourapp.com.
+## Need Help?
+If you have issues setting up, stay tuned. This is not released yet.

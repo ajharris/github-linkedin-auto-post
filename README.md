@@ -36,13 +36,6 @@ github-linkedin-auto-post/
 │── setup_github_linkedin.sh  # Automated setup script
 
 ## Installation:
-1. Automatic Setup:
-   Run the setup script to install everything automatically:
-   chmod +x setup_github_linkedin.sh
-   ./setup_github_linkedin.sh
-
-2. Manual Setup:
-
    Backend Setup (Flask):
    cd backend
    python3 -m venv venv

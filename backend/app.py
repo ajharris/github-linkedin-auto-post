@@ -17,8 +17,13 @@ except ImportError as e:
 
 app = Flask(__name__)
 
+# Fix Heroku's `postgres://` issue for compatibility with SQLAlchemy
+DATABASE_URL = os.getenv("SQLALCHEMY_DATABASE_URI", "sqlite:///local.db")
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 # Configure SQLAlchemy
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI", "sqlite:///local.db")  # Default to SQLite locally
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)

@@ -10,17 +10,29 @@ No manual setup required—just sign in with LinkedIn and connect your GitHub re
 
 ## Project Structure:
 github-linkedin-auto-post/
+
 │── backend/           # Flask API
+
 │   │── app.py         # Main Flask app
+
 │   │── auth.py        # LinkedIn OAuth handling
+
 │   │── github_webhook.py  # GitHub event processing
+
 │   │── .env           # Environment variables
+
 │   │── requirements.txt  # Python dependencies
+
 │── frontend/          # React Frontend
+
 │   │── src/           # React app source code
+
 │   │── tailwind.config.js  # TailwindCSS config
+
 │   │── package.json   # Frontend dependencies
+
 │── README.md          # Project documentation
+
 │── setup_github_linkedin.sh  # Automated setup script
 
 ## Installation:

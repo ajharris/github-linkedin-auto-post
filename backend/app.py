@@ -3,6 +3,7 @@ from auth import linkedin_oauth
 from github_webhook import handle_github_event
 from database_service import create_client_database
 from models import db
+import os
 
 app = Flask(__name__)
 

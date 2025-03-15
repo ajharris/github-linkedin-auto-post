@@ -1,8 +1,8 @@
 from flask import Flask
 from dotenv import load_dotenv
-from config import Config
-from extensions import db
-from routes import register_blueprints
+from backend.config import Config  # <-- Add "backend." to imports
+from backend.extensions import db
+from backend.routes import register_blueprints
 
 # Load environment variables
 load_dotenv()

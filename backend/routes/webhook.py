@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from github_webhook import handle_github_event
+from backend.github_webhook import handle_github_event
 
 webhook_bp = Blueprint('webhook', __name__)
 

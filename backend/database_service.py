@@ -2,7 +2,7 @@ import os
 import psycopg2
 from urllib.parse import urlparse
 from flask_sqlalchemy import SQLAlchemy
-from models import db, Client
+from backend.models import db, Client
 
 DATABASE_URL = os.getenv("DATABASE_URL")  # Get main database connection from Heroku
 

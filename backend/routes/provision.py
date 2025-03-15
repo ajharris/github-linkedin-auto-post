@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from database_service import create_client_database
+from backend.database_service import create_client_database
 
 provision_bp = Blueprint('provision', __name__)
 

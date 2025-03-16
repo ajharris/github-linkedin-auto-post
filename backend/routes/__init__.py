@@ -9,5 +9,6 @@ def register_blueprints(app):
     app.register_blueprint(webhook_bp, url_prefix="/webhook")
     app.register_blueprint(provision_bp, url_prefix="/provision")
     app.register_blueprint(linkedin_oauth, url_prefix="/auth")
-    app.register_blueprint(health_bp, url_prefix="")  # Root path for health
-    app.register_blueprint(sample_bp, url_prefix="")  # Root path for sample
+    app.register_blueprint(health_bp, url_prefix="/health")
+    app.register_blueprint(sample_bp, url_prefix="/sample")
+

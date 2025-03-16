@@ -24,8 +24,8 @@ def create_app():
 
     return app
 
-# Explicitly expose the app for Gunicorn
-app = create_app()  # Ensure this is outside the main block
+# Ensure Gunicorn can find 'app'
+app = create_app()  # ✅ Add this
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from dotenv import load_dotenv
 from backend.config import Config
@@ -28,4 +29,6 @@ def create_app():
 app = create_app()  # ✅ Add this
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # ✅ Explicitly bind Flask to Heroku's assigned port
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)

@@ -1,6 +1,6 @@
 from flask import Flask
 from dotenv import load_dotenv
-from backend.config import Config  # <-- Add "backend." to imports
+from backend.config import Config
 from backend.extensions import db
 from backend.routes import register_blueprints
 
@@ -24,6 +24,8 @@ def create_app():
 
     return app
 
+# Explicitly expose the app for Gunicorn
+app = create_app()  # Ensure this is outside the main block
+
 if __name__ == "__main__":
-    app = create_app()
     app.run(debug=True)

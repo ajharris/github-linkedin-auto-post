@@ -19,6 +19,12 @@ def create_app():
     # Register routes
     register_blueprints(app)
 
+    print(f"App Created - Flask Instance: {id(app)}")
+
+    print("Registered Routes:")
+    for rule in app.url_map.iter_rules():
+        print(rule)
+
     # Create database tables
     with app.app_context():
         db.create_all()
@@ -29,6 +35,5 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    # ✅ Explicitly bind Flask to Heroku's assigned port
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)

@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from dotenv import load_dotenv
 from backend.config import Config
@@ -25,7 +26,8 @@ def create_app():
     return app
 
 # Ensure Gunicorn can find 'app'
-app = create_app()  # ✅ Add this
+app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Use Heroku's assigned port
+    app.run(host="0.0.0.0", port=port, debug=True)

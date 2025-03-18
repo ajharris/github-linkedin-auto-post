@@ -2,7 +2,7 @@ import os
 import psycopg2
 from urllib.parse import urlparse
 from flask_sqlalchemy import SQLAlchemy
-from backend.models import db, Client
+from backend.models import db, Client, GitHubEvent
 
 DATABASE_URL = os.getenv("DATABASE_URL")  # Get main database connection from Heroku
 
@@ -35,3 +35,18 @@ def create_client_database(client_name):
     db.session.commit()
 
     return new_db_url
+
+
+
+def store_github_event(event_data):
+    """Save GitHub event data to the database."""
+    new_event = GitHubEvent(
+        repo=event_data["repo"],
+        commit_message=event_data["commit_message"],
+        author=event_data["author"],
+        url=event_data["url"],
+        timestamp=event_data["timestamp"]
+    )
+    db.session.add(new_event)
+    db.session.commit()
+

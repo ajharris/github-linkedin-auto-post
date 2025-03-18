@@ -1,17 +1,21 @@
 import pytest
-from backend.app import create_app
+from backend.app import create_app, db
 
-@pytest.fixture
-def client():
-    """Creates a test client for the Flask app, ensuring the app context is loaded."""
-    print("=== Creating Flask App in conftest.py ===")
+@pytest.fixture(scope="session")
+def test_app():
+    """Create a Flask test app instance with an in-memory database."""
     app = create_app()
     app.config["TESTING"] = True
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     with app.app_context():
-        print("=== Routes in conftest.py ===")
-        for rule in app.url_map.iter_rules():
-            print(rule)
-        print("=============================")
-        with app.test_client() as client:
-            yield client
+        db.create_all()  # ✅ Ensure tables exist before tests run
+        yield app
+        db.session.remove()
+        db.drop_all()
+
+@pytest.fixture
+def client(test_app):
+    """Set up a test client using the initialized test app."""
+    return test_app.test_client()

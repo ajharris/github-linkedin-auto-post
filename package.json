@@ -1,0 +1,7 @@
+{
+    "scripts": {
+      "start": "gunicorn backend.app:app",
+      "heroku-postbuild": "cd frontend && npm install && npm run build"
+    }
+  }
+  

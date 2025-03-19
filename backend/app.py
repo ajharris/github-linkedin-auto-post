@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, send_file
 import requests
 import os
 
@@ -14,12 +14,9 @@ REDIRECT_URI = "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/aut
 
 app = Flask(__name__, static_folder="frontend/build", static_url_path="")
 
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def serve(path):
-    if os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    return send_from_directory(app.static_folder, "index.html")
+@app.route("/")
+def serve():
+    return send_file("frontend/build/index.html")
 
 
 

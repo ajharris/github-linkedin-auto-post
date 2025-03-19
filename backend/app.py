@@ -12,11 +12,17 @@ CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 REDIRECT_URI = "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback"  # Update for production
 
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Get absolute path of backend/
+BUILD_DIR = os.path.join(BASE_DIR, "..", "frontend", "build")  # Adjust to point to frontend/build
 
-@app.route("/")
-def serve():
-    return send_file("frontend/build/index.html")
+app = Flask(__name__, static_folder=BUILD_DIR, static_url_path="")
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    if os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, "index.html")
 
 
 

@@ -12,7 +12,7 @@ CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 REDIRECT_URI = "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback"  # Update for production
 
 
-app = Flask(__name__, static_folder="frontend/build", static_url_path="")
+app = Flask(__name__)
 
 @app.route("/")
 def serve():

@@ -8,6 +8,11 @@ CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 REDIRECT_URI = "http://localhost:5000/auth/linkedin/callback"  # Update for production
 
+from dotenv import load_dotenv
+
+load_dotenv()
+LINKEDIN_ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_TOKEN")
+
 @app.route("/auth/linkedin")
 def linkedin_auth():
     linkedin_auth_url = (

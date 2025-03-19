@@ -4,6 +4,8 @@ charset-normalizer==3.4.1
 click==8.1.8
 Flask==3.1.0
 flask-cors==5.0.1
+Flask-SQLAlchemy==3.1.1
+greenlet==3.1.1
 gunicorn==23.0.0
 idna==3.10
 iniconfig==2.0.0
@@ -16,5 +18,7 @@ pytest==8.3.5
 python-dotenv==1.0.1
 requests==2.32.3
 requests-mock==1.12.1
+SQLAlchemy==2.0.39
+typing_extensions==4.12.2
 urllib3==2.3.0
 Werkzeug==3.1.3

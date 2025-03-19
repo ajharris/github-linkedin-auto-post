@@ -1,4 +1,5 @@
 from flask import Flask, request, redirect, send_file
+from models import db
 import requests
 import os
 
@@ -19,6 +20,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "../frontend/build")
 
 app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="")
+
+app.config.from_object("config")
+db.init_app(app)
 
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")

@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
-REDIRECT_URI = "http://localhost:5000/auth/linkedin/callback"  # Update for production
+REDIRECT_URI = "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback"  # Update for production
 
 from dotenv import load_dotenv
 

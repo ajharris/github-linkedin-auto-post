@@ -10,6 +10,17 @@ REDIRECT_URI = "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/aut
 
 from dotenv import load_dotenv
 
+from flask import send_from_directory
+import os
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    if path and os.path.exists("frontend/build/" + path):
+        return send_from_directory("frontend/build", path)
+    return send_from_directory("frontend/build", "index.html")
+
+
 load_dotenv()
 LINKEDIN_ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_TOKEN")
 

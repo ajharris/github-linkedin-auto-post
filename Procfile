@@ -1,1 +1,1 @@
-web: gunicorn backend.app:app
+web: gunicorn -w 4 -k sync backend.app:app

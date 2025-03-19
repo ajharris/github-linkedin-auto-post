@@ -23,10 +23,7 @@ app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="")
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path):
-    # Debugging Output
-    print(f"Serving path: {path}")
-    print(f"Static Folder: {app.static_folder}")
-    print(f"Checking for file: {os.path.join(app.static_folder, path)}")
+
 
     if path and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
@@ -60,7 +57,7 @@ def linkedin_callback():
     if not code:
         return "Authorization failed: No code received from LinkedIn.", 400
 
-    print("Received authorization code:", code)  # Debugging
+
 
     token_url = "https://www.linkedin.com/oauth/v2/accessToken"
     data = {
@@ -72,7 +69,6 @@ def linkedin_callback():
     }
 
     response = requests.post(token_url, data=data)
-    print("LinkedIn token response:", response.text)  # Debugging
 
     if response.status_code != 200:
         return f"Failed to get access token: {response.text}", 400

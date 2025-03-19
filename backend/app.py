@@ -17,9 +17,10 @@ import os
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path):
-    if path and os.path.exists("frontend/build/" + path):
-        return send_from_directory("frontend/build", path)
-    return send_from_directory("frontend/build", "index.html")
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, "index.html")
+
 
 
 load_dotenv()

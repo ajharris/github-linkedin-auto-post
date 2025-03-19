@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_migrate import Migrate
 from models import db
 from routes import routes  # Import routes blueprint
 import os
@@ -17,6 +18,8 @@ app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="")
 
 app.config.from_object("config")
 db.init_app(app)
+
+migrate = Migrate(app, db)
 
 # Register the blueprint
 app.register_blueprint(routes)

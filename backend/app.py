@@ -2,22 +2,22 @@ from flask import Flask, request, redirect
 import requests
 import os
 
-app = Flask(__name__, static_folder="frontend/build", static_url_path="")
+from dotenv import load_dotenv
+
+from flask import send_from_directory
 
 
 CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 REDIRECT_URI = "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback"  # Update for production
 
-from dotenv import load_dotenv
 
-from flask import send_from_directory
-import os
+app = Flask(__name__, static_folder="frontend/build", static_url_path="")
 
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path):
-    if path and os.path.exists(os.path.join(app.static_folder, path)):
+    if os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     return send_from_directory(app.static_folder, "index.html")
 

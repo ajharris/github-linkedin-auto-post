@@ -2,7 +2,8 @@ from flask import Flask, request, redirect
 import requests
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="frontend/build", static_url_path="")
+
 
 CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")

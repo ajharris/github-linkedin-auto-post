@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime
-from models import db, User, GitHubEvent
+from backend.models import db, User, GitHubEvent
 
 @pytest.fixture
 def app():

@@ -3,8 +3,8 @@ import json
 import pytest
 from unittest.mock import patch
 from flask import Flask
-from routes import routes, verify_github_signature
-from models import db, User, GitHubEvent
+from backend.routes import routes, verify_github_signature
+from backend.models import db, User, GitHubEvent
 import hmac, hashlib
 
 @pytest.fixture

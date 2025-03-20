@@ -3,6 +3,10 @@ import requests
 import os
 from dotenv import load_dotenv
 from models import db, GitHubEvent, User
+import datetime
+
+import hmac
+import hashlib
 
 load_dotenv()
 
@@ -63,18 +67,34 @@ def linkedin_callback():
     access_token = response.json().get("access_token")
     return f"Your LinkedIn Access Token: {access_token}"
 
+
+GITHUB_SECRET = os.getenv("GITHUB_SECRET")
+
+def verify_github_signature(payload, signature):
+    """Verify GitHub webhook signature"""
+    if not signature or not GITHUB_SECRET:
+        return False
+
+    mac = hmac.new(GITHUB_SECRET.encode(), payload, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(f"sha256={mac}", signature)
+
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():
-    """Handles incoming GitHub webhook events"""
+    """Handles incoming GitHub webhook events with security"""
+    payload = request.get_data()
+    signature = request.headers.get("X-Hub-Signature-256")
+
+    # 🔐 Verify webhook signature
+    if not verify_github_signature(payload, signature):
+        return jsonify({"error": "Invalid signature"}), 403
+
     data = request.json
-    
     if not data:
         return jsonify({"error": "Invalid payload"}), 400
 
-    # Extract key GitHub event data
-    event_type = request.headers.get("X-GitHub-Event", "ping")  # Determines event type (push, release, etc.)
+    event_type = request.headers.get("X-GitHub-Event", "ping")
     repo_name = data.get("repository", {}).get("full_name", "unknown_repo")
-    
+
     if event_type == "push":
         commit_message = data["head_commit"]["message"]
         commit_url = data["head_commit"]["url"]
@@ -86,18 +106,19 @@ def github_webhook():
     else:
         return jsonify({"message": "Event type not supported"}), 200
 
-    # Find user in DB by GitHub ID
-    user = User.query.filter_by(github_id=pusher).first()
+    # 🛠 Find user by GitHub ID (pusher name may not always match GitHub ID)
+    user = User.query.filter_by(github_username=pusher).first()
     if not user:
         return jsonify({"error": "User not linked to GitHub"}), 404
 
-    # Create a new GitHubEvent entry
+    # 📌 Store event in the database with timestamp
     event = GitHubEvent(
         user_id=user.id,
         repo_name=repo_name,
         commit_message=commit_message,
         commit_url=commit_url,
-        status="pending"
+        status="pending",
+        timestamp=datetime.utcnow()  # Ensure events are stored with a timestamp
     )
 
     db.session.add(event)

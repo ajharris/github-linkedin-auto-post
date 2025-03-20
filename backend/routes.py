@@ -2,7 +2,7 @@ from flask import Blueprint, request, redirect, send_from_directory, jsonify
 import requests
 import os
 from dotenv import load_dotenv
-from models import db, GitHubEvent, User
+from backend.models import db, GitHubEvent, User
 from datetime import datetime
 import hmac
 import hashlib

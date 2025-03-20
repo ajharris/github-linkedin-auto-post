@@ -59,8 +59,8 @@ def test_github_webhook_no_signature(client):
     assert response.status_code == 403
     assert response.json == {"error": "Invalid signature"}
 
-@patch("routes.verify_github_signature", return_value=True)
-@patch("models.User.query.filter_by")
+@patch("backend.routes.verify_github_signature", return_value=True)
+@patch("backend.models.User.query.filter_by")
 def test_github_webhook_push_event(mock_filter_by, mock_verify, client):
     """Test handling a GitHub push event"""
     mock_filter_by.return_value.first.return_value = User(id=1, github_id="testuser", github_token="token")

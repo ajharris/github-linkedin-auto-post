@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.models import db, User, GitHubEvent
 
 @pytest.fixture
@@ -53,7 +53,7 @@ def test_create_github_event(session):
         commit_message="Initial commit",
         commit_url="http://github.com/test",
         status="pending",
-        timestamp=datetime.utcnow()
+        timestamp=datetime.now(timezone.utc)
     )
     session.add(event)
     session.commit()

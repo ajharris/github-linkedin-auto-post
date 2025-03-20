@@ -3,18 +3,25 @@ import requests
 import os
 from dotenv import load_dotenv
 from backend.models import db, GitHubEvent, User
-from datetime import datetime
+from datetime import datetime, timezone
 import hmac
 import hashlib
 
+# Load environment variables
 load_dotenv()
 
+# LinkedIn OAuth settings
 CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 REDIRECT_URI = "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback"
 
+# GitHub Webhook Secret
+GITHUB_SECRET = os.getenv("GITHUB_SECRET")
+
+# Define Blueprint for routes
 routes = Blueprint("routes", __name__)
 
+### -------------------- FRONTEND SERVING -------------------- ###
 @routes.route("/", defaults={"path": ""})
 @routes.route("/<path:path>")
 def serve(path):
@@ -27,6 +34,7 @@ def serve(path):
     return send_from_directory(frontend_dir, "index.html")
 
 
+### -------------------- LINKEDIN AUTHENTICATION -------------------- ###
 @routes.route("/auth/linkedin")
 def linkedin_auth():
     """Redirects user to LinkedIn OAuth authorization URL"""
@@ -67,15 +75,19 @@ def linkedin_callback():
     return f"Your LinkedIn Access Token: {access_token}"
 
 
-GITHUB_SECRET = os.getenv("GITHUB_SECRET")
-
+### -------------------- GITHUB WEBHOOK HANDLING -------------------- ###
 def verify_github_signature(payload, signature):
-    """Verify GitHub webhook signature"""
-    if not signature or not GITHUB_SECRET:
-        return False
+    """Verifies GitHub webhook signature using HMAC"""
+    secret = os.getenv("GITHUB_SECRET")
 
-    mac = hmac.new(GITHUB_SECRET.encode(), payload, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(f"sha256={mac}", signature)
+    if not secret or not signature:
+        return False  # Reject if no secret or signature is provided
+
+    secret = secret.encode()  # ✅ Ensure the secret is properly encoded
+    computed_signature = "sha256=" + hmac.new(secret, payload, hashlib.sha256).hexdigest()
+    
+    return hmac.compare_digest(computed_signature, signature)
+
 
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():
@@ -106,7 +118,7 @@ def github_webhook():
         return jsonify({"message": "Event type not supported"}), 200
 
     # 🛠 Find user by GitHub ID (pusher name may not always match GitHub ID)
-    user = User.query.filter_by(github_username=pusher).first()
+    user = User.query.filter_by(github_id=pusher).first()
     if not user:
         return jsonify({"error": "User not linked to GitHub"}), 404
 
@@ -117,11 +129,10 @@ def github_webhook():
         commit_message=commit_message,
         commit_url=commit_url,
         status="pending",
-        timestamp=datetime.utcnow()  # Ensure events are stored with a timestamp
+        timestamp=datetime.now(timezone.utc)  # Ensure events are stored with a timestamp
     )
 
     db.session.add(event)
     db.session.commit()
 
     return jsonify({"message": f"GitHub {event_type} event stored successfully", "commit_url": commit_url}), 200
-

@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone
 db = SQLAlchemy()
 
 class User(db.Model):
@@ -16,7 +16,7 @@ class GitHubEvent(db.Model):
     commit_message = db.Column(db.Text, nullable=True)
     commit_url = db.Column(db.String(512), nullable=True)
     status = db.Column(db.String(50), default="pending")  
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     user = db.relationship("User", backref=db.backref("github_events", lazy=True))
 

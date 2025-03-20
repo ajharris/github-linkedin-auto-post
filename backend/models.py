@@ -1,6 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-import datetime
-
+from datetime import datetime
 db = SQLAlchemy()
 
 class User(db.Model):

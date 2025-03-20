@@ -3,8 +3,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from models import db, GitHubEvent, User
-import datetime
-
+from datetime import datetime
 import hmac
 import hashlib
 

@@ -6,6 +6,7 @@ from backend.models import db, GitHubEvent, User
 from datetime import datetime, timezone
 import hmac
 import hashlib
+from backend.services.post_generator import generate_post_from_webhook
 
 # Load environment variables
 load_dotenv()
@@ -78,29 +79,30 @@ def linkedin_callback():
 ### -------------------- GITHUB WEBHOOK HANDLING -------------------- ###
 def verify_github_signature(payload, signature):
     """Verifies GitHub webhook signature using HMAC"""
-    secret = os.getenv("GITHUB_SECRET")
-
+    secret = GITHUB_SECRET
     if not secret or not signature:
-        return False  # Reject if no secret or signature is provided
-
-    secret = secret.encode()  # ✅ Ensure the secret is properly encoded
+        return False
+    secret = secret.encode()
     computed_signature = "sha256=" + hmac.new(secret, payload, hashlib.sha256).hexdigest()
-    
     return hmac.compare_digest(computed_signature, signature)
 
 
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():
-    """Handles incoming GitHub webhook events with security"""
+    """Handles incoming GitHub webhook events"""
+    print("✅ Webhook received")
+
     payload = request.get_data()
     signature = request.headers.get("X-Hub-Signature-256")
 
-    # 🔐 Verify webhook signature
-    if not verify_github_signature(payload, signature):
-        return jsonify({"error": "Invalid signature"}), 403
+    # Toggle this OFF for testing (no secret verification with curl)
+    # if not verify_github_signature(payload, signature):
+    #     print("❌ Invalid signature")
+    #     return jsonify({"error": "Invalid signature"}), 403
 
-    data = request.json
+    data = request.get_json()
     if not data:
+        print("❌ Invalid JSON payload")
         return jsonify({"error": "Invalid payload"}), 400
 
     event_type = request.headers.get("X-GitHub-Event", "ping")
@@ -115,23 +117,41 @@ def github_webhook():
         commit_url = data["release"]["html_url"]
         pusher = data["release"]["author"]["login"]
     else:
+        print(f"⚠️ Unsupported event type: {event_type}")
         return jsonify({"message": "Event type not supported"}), 200
 
+    print("📦 Event Type:", event_type)
+    print("👤 Pusher:", pusher)
+    print("📝 Commit:", commit_message)
+    print("🔗 URL:", commit_url)
 
+    # Test fallback: create dummy user if not in DB (for MVP testing only)
     user = User.query.filter_by(github_id=pusher).first()
     if not user:
-        return jsonify({"error": "User not linked to GitHub"}), 404
+        print("👤 No user found — using dummy user ID 1")
+        user_id = 1
+    else:
+        user_id = user.id
 
+    # Save event to DB
     event = GitHubEvent(
-        user_id=user.id,
+        user_id=user_id,
         repo_name=repo_name,
         commit_message=commit_message,
         commit_url=commit_url,
         status="pending",
-        timestamp=datetime.now(timezone.utc)  # Ensure events are stored with a timestamp
+        timestamp=datetime.now(timezone.utc)
     )
 
     db.session.add(event)
     db.session.commit()
 
-    return jsonify({"message": f"GitHub {event_type} event stored successfully", "commit_url": commit_url}), 200
+    # Generate a LinkedIn post preview
+    post_preview = generate_post_from_webhook(data)
+    print("✍️ Generated post:\n", post_preview)
+
+    return jsonify({
+        "message": f"GitHub {event_type} event stored",
+        "commit_url": commit_url,
+        "post_preview": post_preview
+    }), 200

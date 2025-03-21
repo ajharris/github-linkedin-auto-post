@@ -1,14 +1,17 @@
 import pytest
-from backend.app import app as flask_app  # ✅ Import app but rename it to avoid conflicts
-from backend.models import db
-from unittest.mock import patch
+from backend.app import create_app, db
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def app():
-    """Provide the actual Flask app for testing."""
-    return flask_app  # ✅ Use the imported app without overriding its name
+    """Create and configure a new app instance for each test."""
+    app = create_app("testing")  # Use 'testing' config
+    with app.app_context():
+        db.create_all()
+        yield app
+        db.session.remove()
+        db.drop_all()
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def client(app):
-    """Use the real Flask app's test client."""
+    """Provide a test client for the app."""
     return app.test_client()

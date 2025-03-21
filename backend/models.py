@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
 db = SQLAlchemy()
 
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     github_id = db.Column(db.String, unique=True, nullable=False)
@@ -19,4 +20,14 @@ class GitHubEvent(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     user = db.relationship("User", backref=db.backref("github_events", lazy=True))
+
+class WebhookEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    repo_name = db.Column(db.String(255), nullable=False)
+    event_type = db.Column(db.String(50), nullable=False)
+    commit_message = db.Column(db.Text, nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    user = db.relationship("User", backref=db.backref("webhook_events", lazy=True))
+
 

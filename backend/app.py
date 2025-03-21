@@ -2,29 +2,25 @@ from flask import Flask
 from flask_migrate import Migrate
 from backend.models import db
 from backend.routes import routes  # Import routes blueprint
-import os
+from backend.config import config_dict  # Import config dictionary
 
-from dotenv import load_dotenv
+def create_app(config_name="default"):
+    """Flask application factory function."""
+    app = Flask(__name__)
 
-dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
-load_dotenv(dotenv_path)
+    # Load configuration dynamically
+    app.config.from_object(config_dict[config_name])
 
-# Get absolute path of the backend folder
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # Initialize database
+    db.init_app(app)
+    migrate = Migrate(app, db)
 
-# Explicitly set the frontend build path
-FRONTEND_DIR = os.path.join(BASE_DIR, "../frontend/build")
+    # Register blueprints
+    app.register_blueprint(routes)
 
-app = Flask(__name__, static_folder=FRONTEND_DIR, static_url_path="")
+    return app
 
-app.config.from_object("backend.config.Config")
-
-db.init_app(app)
-
-migrate = Migrate(app, db)
-
-# ✅ Register the blueprint **without a prefix** (ensure it's at `/webhook/github`)
-app.register_blueprint(routes)  # ✅ Ensure it is correctly registered
-
+# ✅ Only run the app if executed directly
 if __name__ == "__main__":
+    app = create_app()
     app.run(port=5000, debug=True)

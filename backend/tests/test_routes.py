@@ -6,7 +6,7 @@ from flask import Flask
 from backend.routes import routes, verify_github_signature
 from backend.models import db, User, GitHubEvent
 import hmac, hashlib
-from backend.app import app
+from backend.app import create_app
 
 
 

@@ -117,12 +117,11 @@ def github_webhook():
     else:
         return jsonify({"message": "Event type not supported"}), 200
 
-    # 🛠 Find user by GitHub ID (pusher name may not always match GitHub ID)
+
     user = User.query.filter_by(github_id=pusher).first()
     if not user:
         return jsonify({"error": "User not linked to GitHub"}), 404
 
-    # 📌 Store event in the database with timestamp
     event = GitHubEvent(
         user_id=user.id,
         repo_name=repo_name,

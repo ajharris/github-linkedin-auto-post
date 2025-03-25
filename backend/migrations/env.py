@@ -1,5 +1,6 @@
 import logging
 from logging.config import fileConfig
+import os
 
 from flask import current_app
 
@@ -14,6 +15,8 @@ config = context.config
 fileConfig(config.config_file_name)
 logger = logging.getLogger('alembic.env')
 
+from app import create_app, db
+app = create_app(os.getenv("FLASK_CONFIG") or "default")
 
 def get_engine():
     try:

@@ -5,6 +5,10 @@ from backend.models import db
 from backend.routes import routes
 from backend.config import config_dict
 
+app = Flask(__name__)
+
+app.register_blueprint(routes)
+
 def create_app(config_name=None):
     """Flask application factory function."""
 

@@ -20,6 +20,8 @@ def create_app(config_name="default"):
 
     return app
 
+app = create_app()
+
 # ✅ Only run the app if executed directly
 if __name__ == "__main__":
     app = create_app()

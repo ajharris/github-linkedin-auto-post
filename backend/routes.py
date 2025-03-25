@@ -91,52 +91,22 @@ def verify_github_signature(payload, signature):
 
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():
+    print("✅ Webhook received")
+    print("🔍 Headers:", dict(request.headers))
+    print("🔍 Content-Type:", request.headers.get("Content-Type"))
+    print("🔍 Raw payload:", request.get_data(as_text=True))
+
     payload = request.get_data()
     signature = request.headers.get("X-Hub-Signature-256")
 
-# 🔐 Verify webhook signature (optional during testing)
-# if not verify_github_signature(payload, signature):
-#     return jsonify({"error": "Invalid signature"}), 403
+    # Optional: disable signature check for now
+    # if not verify_github_signature(payload, signature):
+    #     return jsonify({"error": "Invalid signature"}), 403
 
-    if not request.is_json:
-        print("❌ Unsupported media type:", request.headers.get("Content-Type"))
-        return jsonify({"error": "Unsupported Media Type"}), 415
-
-    data = request.get_json(silent=True)
-    if not data:
-        print("❌ Invalid JSON payload")
+    try:
+        data = request.get_json(force=True)
+    except Exception as e:
+        print("❌ JSON parsing failed:", e)
         return jsonify({"error": "Invalid JSON"}), 400
 
-
-    event_type = request.headers.get("X-GitHub-Event", "ping")
-    repo_name = data.get("repository", {}).get("full_name", "unknown_repo")
-
-    if event_type == "push":
-        commit_message = data["head_commit"]["message"]
-        commit_url = data["head_commit"]["url"]
-        pusher = data["pusher"]["name"]
-    elif event_type == "release":
-        commit_message = f"New release: {data['release']['name']}"
-        commit_url = data["release"]["html_url"]
-        pusher = data["release"]["author"]["login"]
-    else:
-        return jsonify({"message": "Event type not supported"}), 200
-
-
-    user = User.query.filter_by(github_id=pusher).first()
-    if not user:
-        return jsonify({"error": "User not linked to GitHub"}), 404
-
-    event = GitHubEvent(
-        user_id=user.id,
-        repo_name=repo_name,
-        commit_message=commit_message,
-        commit_url=commit_url,
-        status="pending",
-        timestamp=datetime.now(timezone.utc)  # Ensure events are stored with a timestamp
-    )
-
-    db.session.add(event)
-    db.session.commit()
-
-    return jsonify({"message": f"GitHub {event_type} event stored successfully", "commit_url": commit_url}), 200
+    print("✅ Parsed data:", data)

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import hmac
 import hashlib
 from backend.services.post_generator import generate_post_from_webhook
+from backend.services.post_to_linkedin import post_to_linkedin
 
 # Load environment variables
 load_dotenv()
@@ -113,17 +114,28 @@ def github_webhook():
     commit_message = data.get("head_commit", {}).get("message")
     commit_url = data.get("head_commit", {}).get("url")
 
-    # ✅ Find the user and create the event
+    # 🔐 Look up the user
     user = User.query.filter_by(github_id=pusher_name).first()
-    if user:
-        event = GitHubEvent(
-            user_id=user.id,
-            repo_name=repo_name,
-            commit_message=commit_message,
-            commit_url=commit_url,
-        )
-        db.session.add(event)
-        db.session.commit()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # 📝 Create GitHubEvent
+    linkedin_post_id = None
+    linkedin_response = post_to_linkedin(repo_name, commit_message)
+
+    if linkedin_response and isinstance(linkedin_response, dict):
+        linkedin_post_id = linkedin_response.get("id")
+
+    github_event = GitHubEvent(
+        user_id=user.id,
+        repo_name=repo_name,
+        commit_message=commit_message,
+        commit_url=commit_url,
+        event_type="push",
+        linkedin_post_id=linkedin_post_id
+    )
+
+    db.session.add(github_event)
+    db.session.commit()
 
     return jsonify({"status": "success"}), 200
-    

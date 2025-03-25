@@ -4,6 +4,11 @@ from backend.app import create_app, db
 from backend.models import GitHubEvent, User
 from unittest.mock import patch
 
+import os
+
+os.environ["LINKEDIN_ACCESS_TOKEN"] = "test_token"
+os.environ["LINKEDIN_USER_ID"] = "test_user_id"
+
 @pytest.fixture
 def test_client():
     """Set up test client and database."""
@@ -15,6 +20,8 @@ def test_client():
         db.session.remove()
         db.drop_all()
 
+@patch("backend.services.post_to_linkedin.LINKEDIN_ACCESS_TOKEN", "test_token")
+@patch("backend.services.post_to_linkedin.LINKEDIN_USER_ID", "test_user_id")
 @patch("backend.routes.verify_github_signature", return_value=True)
 def test_webhook_push_event(mock_verify, test_client):
     """Test that a valid push event is stored in the database."""
@@ -47,6 +54,7 @@ def test_webhook_push_event(mock_verify, test_client):
     assert event.user.github_id == "testuser"
 
 @patch("backend.routes.verify_github_signature", return_value=True)
+@patch.dict(os.environ, {"LINKEDIN_ACCESS_TOKEN": "test_token", "LINKEDIN_USER_ID": "test_user_id"})
 def test_webhook_invalid_payload(mock_verify, test_client):
     """Test that malformed JSON is rejected."""
     response = test_client.post(
@@ -72,6 +80,8 @@ def test_webhook_unauthorized_request(test_client):
     )
     assert response.status_code == 403
 
+@patch("backend.services.post_to_linkedin.LINKEDIN_ACCESS_TOKEN", "test_token")
+@patch("backend.services.post_to_linkedin.LINKEDIN_USER_ID", "test_user_id")
 @patch("backend.routes.verify_github_signature", return_value=True)
 def test_webhook_links_event_to_correct_user(mock_verify, test_client):
     """Test that a webhook event is linked to the correct user in the database."""

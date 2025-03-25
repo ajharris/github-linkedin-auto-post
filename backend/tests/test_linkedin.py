@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 LINKEDIN_ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_TOKEN")
+LINKEDIN_USER_ID = os.getenv("LINKEDIN_USER_ID")
 
 # Mock LinkedIn API URL
 LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
@@ -21,7 +22,7 @@ def post_to_linkedin(repo, message):
     }
 
     post_data = {
-        "author": "urn:li:person:YOUR_LINKEDIN_USER_ID",  # Replace with your LinkedIn User ID
+        "author": "urn:li:person:{LINKEDIN_USER_ID}",  # Replace with your LinkedIn User ID
         "lifecycleState": "PUBLISHED",
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {
@@ -70,3 +71,32 @@ def test_post_to_linkedin_auth_failure(requests_mock):
     # Assertions
     assert response.status_code == 401
     assert response.json()["message"] == "Invalid access token"
+
+def test_post_to_linkedin_server_error(requests_mock):
+    """
+    Test LinkedIn API server error.
+    """
+    mock_response = {"message": "Internal Server Error"}
+    requests_mock.post(LINKEDIN_POST_URL, json=mock_response, status_code=500)
+
+    response = post_to_linkedin("TestRepo", "Something broke.")
+    
+    assert response.status_code == 500
+    assert response.json()["message"] == "Internal Server Error"
+
+def test_post_payload_format(requests_mock):
+    """
+    Ensure the outgoing post data is formatted correctly.
+    """
+    requests_mock.post(LINKEDIN_POST_URL, json={"id": "test"}, status_code=201)
+
+    repo = "MyRepo"
+    message = "Did a thing."
+    post_to_linkedin(repo, message)
+
+    last_request = requests_mock.last_request
+    payload = last_request.json()
+    
+    assert payload["specificContent"]["com.linkedin.ugc.ShareContent"]["shareCommentary"]["text"] == f"🚀 New commit in {repo}: {message}"
+    assert payload["visibility"]["com.linkedin.ugc.MemberNetworkVisibility"] == "PUBLIC"
+

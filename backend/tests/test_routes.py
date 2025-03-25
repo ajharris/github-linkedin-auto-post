@@ -8,6 +8,11 @@ from backend.models import db, User, GitHubEvent
 import hmac, hashlib
 from backend.app import create_app
 
+import os
+
+os.environ["LINKEDIN_ACCESS_TOKEN"] = "test_token"
+os.environ["LINKEDIN_USER_ID"] = "test_user_id"
+
 
 
 
@@ -58,41 +63,30 @@ def test_github_webhook_no_signature(client):
     assert response.status_code == 403, f"Expected 403 but got {response.status_code}"
     assert response.json == {"error": "Invalid signature"}
 
+
+
+@patch("backend.routes.post_to_linkedin")
 @patch("backend.routes.verify_github_signature", return_value=True)
-def test_github_webhook_push_event(mock_verify, client):
-    """Test handling a GitHub push event"""
-    """Creating a repo to test"""
-
-    print("Flask App Name:", client.application.name)
-    print("Available routes in test:", [rule.rule for rule in client.application.url_map.iter_rules()])
-
+def test_github_webhook_push_event(mock_verify, mock_post_to_linkedin, client):
     with client.application.app_context():
-        existing_user = User.query.filter_by(github_id="testuser").first()
-        if not existing_user:  # ✅ Only add if the user does not already exist
-            test_user = User(id=1, github_id="testuser", github_token="token")
-            db.session.add(test_user)
-            db.session.commit()  # ✅ Ensure user is saved
+        mock_post_to_linkedin.return_value = {"status_code": 201, "id": "mock_ugc_id"}
 
-    # Debugging: Check if user was created
-    with client.application.app_context():
-        db_user = User.query.filter_by(github_id="testuser").first()
-        print("User in DB:", db_user)
+        user = User(github_id="testuser", github_token="token", linkedin_token="li_token")
+        db.session.add(user)
+        db.session.commit()
 
-    payload = {
-        "repository": {"full_name": "test/repo"},
-        "head_commit": {"message": "Test commit", "url": "http://github.com/test"},
-        "pusher": {"name": "testuser"}
-    }
+        payload = {
+            "repository": {"name": "repo", "full_name": "test/repo"},
+            "head_commit": {"message": "Test commit", "url": "http://github.com/test"},
+            "pusher": {"name": "testuser"}
+        }
 
-    response = client.post("/webhook/github", json=payload, headers={
-        "X-GitHub-Event": "push",
-        "Content-Type": "application/json",
-        "X-Hub-Signature-256": "sha256=test_signature"
-    })
+        response = client.post("/webhook/github", json=payload, headers={
+            "X-GitHub-Event": "push",
+            "Content-Type": "application/json",
+            "X-Hub-Signature-256": "sha256=test_signature"
+        })
 
-    print("Response Status Code:", response.status_code)
-    print("Response JSON:", response.json)
-
-    assert response.status_code == 200, f"Expected 200 but got {response.status_code}"
-    assert response.json["status"] == "success"
+        assert response.status_code == 200
+        assert response.json["status"] == "success"
 

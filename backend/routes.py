@@ -99,10 +99,6 @@ def github_webhook():
     payload = request.get_data()
     signature = request.headers.get("X-Hub-Signature-256")
 
-    # Optional: disable signature check for now
-    # if not verify_github_signature(payload, signature):
-    #     return jsonify({"error": "Invalid signature"}), 403
-
     try:
         data = request.get_json(force=True)
     except Exception as e:

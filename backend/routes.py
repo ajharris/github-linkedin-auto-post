@@ -145,4 +145,5 @@ def github_webhook():
     db.session.add(github_event)
     db.session.commit()
 
+
     return jsonify({"status": "success"}), 200

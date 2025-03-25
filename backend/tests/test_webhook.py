@@ -1,7 +1,7 @@
 import json
 import pytest
 from backend.app import create_app, db
-from backend.models import GitHubEvent as WebhookEvent, User
+from backend.models import GitHubEvent, User
 from unittest.mock import patch
 
 @pytest.fixture
@@ -39,9 +39,9 @@ def test_webhook_push_event(mock_verify, test_client):
     )
 
     assert response.status_code == 200
-    assert WebhookEvent.query.count() == 1
+    assert GitHubEvent.query.count() == 1
 
-    event = WebhookEvent.query.first()
+    event = GitHubEvent.query.first()
     assert event.repo_name == "testuser/test-repo"
     assert event.commit_message == "Fix bug in webhook handler"
     assert event.user.github_id == "testuser"
@@ -96,5 +96,5 @@ def test_webhook_links_event_to_correct_user(mock_verify, test_client):
     )
 
     assert response.status_code == 200
-    event = WebhookEvent.query.first()
+    event = GitHubEvent.query.first()
     assert event.user.github_id == "otheruser"

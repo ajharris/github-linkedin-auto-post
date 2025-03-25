@@ -94,4 +94,5 @@ def test_github_webhook_push_event(mock_verify, client):
     print("Response JSON:", response.json)
 
     assert response.status_code == 200, f"Expected 200 but got {response.status_code}"
-    assert "GitHub push event stored successfully" in response.json["message"]
+    assert response.json["status"] == "success"
+

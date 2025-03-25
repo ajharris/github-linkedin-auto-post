@@ -93,21 +93,37 @@ logging.basicConfig(level=logging.INFO)
 
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():
-
-
     payload = request.get_data()
     signature = request.headers.get("X-Hub-Signature-256")
+    if not verify_github_signature(request, signature):
+        return jsonify({"error": "Invalid signature"}), 403
 
     logging.info("Webhook received")
-    logging.debug(f"Headers: {dict(request.headers)}")
-    logging.debug(f"Payload: {payload}")
 
     try:
         data = request.get_json(force=True)
     except Exception as e:
-        print("❌ JSON parsing failed:", e)
         return jsonify({"error": "Invalid JSON"}), 400
 
     print("✅ Parsed data:", data)
+
+    # 🔍 Extract user and commit info
+    pusher_name = data.get("pusher", {}).get("name")
+    repo_name = data.get("repository", {}).get("full_name")
+    commit_message = data.get("head_commit", {}).get("message")
+    commit_url = data.get("head_commit", {}).get("url")
+
+    # ✅ Find the user and create the event
+    user = User.query.filter_by(github_id=pusher_name).first()
+    if user:
+        event = GitHubEvent(
+            user_id=user.id,
+            repo_name=repo_name,
+            commit_message=commit_message,
+            commit_url=commit_url,
+        )
+        db.session.add(event)
+        db.session.commit()
+
     return jsonify({"status": "success"}), 200
     

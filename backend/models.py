@@ -16,18 +16,8 @@ class GitHubEvent(db.Model):
     repo_name = db.Column(db.String(255), nullable=False)
     commit_message = db.Column(db.Text, nullable=True)
     commit_url = db.Column(db.String(512), nullable=True)
-    status = db.Column(db.String(50), default="pending")  
+    event_type = db.Column(db.String(50), nullable=True)  # e.g. "push"
+    status = db.Column(db.String(50), default="pending")  # e.g. posted to LinkedIn or not
     timestamp = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     user = db.relationship("User", backref=db.backref("github_events", lazy=True))
-
-class WebhookEvent(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    repo_name = db.Column(db.String(255), nullable=False)
-    event_type = db.Column(db.String(50), nullable=False)
-    commit_message = db.Column(db.Text, nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-
-    user = db.relationship("User", backref=db.backref("webhook_events", lazy=True))
-
-

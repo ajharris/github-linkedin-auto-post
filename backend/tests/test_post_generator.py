@@ -24,3 +24,21 @@ def test_generate_post_from_webhook():
     assert "Your Name" in post
     assert "#buildinpublic" in post
     assert "https://github.com/yourusername/awesome-project" in post
+
+def test_generate_post_with_no_head_commit():
+    payload = {
+        "repository": {
+            "name": "cool-repo",
+            "html_url": "https://github.com/user/cool-repo"
+        }
+    }
+    post = generate_post_from_webhook(payload)
+    assert "cool-repo" in post
+    assert "Someone" in post  # default fallback name
+
+def test_generate_post_with_minimal_payload():
+    payload = {}
+    post = generate_post_from_webhook(payload)
+    assert isinstance(post, str)
+    assert len(post) > 0
+

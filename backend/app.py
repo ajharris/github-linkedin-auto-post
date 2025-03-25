@@ -22,7 +22,3 @@ def create_app(config_name="default"):
 
 app = create_app()
 
-# ✅ Only run the app if executed directly
-if __name__ == "__main__":
-    app = create_app()
-    app.run(port=5000, debug=True)

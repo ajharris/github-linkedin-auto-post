@@ -86,16 +86,21 @@ def verify_github_signature(payload, signature):
     computed_signature = "sha256=" + hmac.new(secret, payload, hashlib.sha256).hexdigest()
     return hmac.compare_digest(computed_signature, signature)
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():
-    print("✅ Webhook received")
-    print("🔍 Headers:", dict(request.headers))
-    print("🔍 Content-Type:", request.headers.get("Content-Type"))
-    print("🔍 Raw payload:", request.get_data(as_text=True))
+
 
     payload = request.get_data()
     signature = request.headers.get("X-Hub-Signature-256")
+
+    logging.info("Webhook received")
+    logging.debug(f"Headers: {dict(request.headers)}")
+    logging.debug(f"Payload: {payload}")
 
     try:
         data = request.get_json(force=True)

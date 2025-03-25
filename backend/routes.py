@@ -87,7 +87,7 @@ import hashlib
 
 def verify_github_signature(request, signature):
     if not signature:
-        return False  # No signature provided
+        return False  
 
     secret = os.environ.get("GITHUB_WEBHOOK_SECRET", "").encode("utf-8")
     payload = request.data

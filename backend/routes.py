@@ -6,6 +6,7 @@ from backend.models import db, GitHubEvent, User
 from datetime import datetime, timezone
 import hmac
 import hashlib
+from backend.services.post_generator import generate_post_from_webhook
 
 # Load environment variables
 load_dotenv()
@@ -78,14 +79,11 @@ def linkedin_callback():
 ### -------------------- GITHUB WEBHOOK HANDLING -------------------- ###
 def verify_github_signature(payload, signature):
     """Verifies GitHub webhook signature using HMAC"""
-    secret = os.getenv("GITHUB_SECRET")
-
+    secret = GITHUB_SECRET
     if not secret or not signature:
-        return False  # Reject if no secret or signature is provided
-
-    secret = secret.encode()  # ✅ Ensure the secret is properly encoded
+        return False
+    secret = secret.encode()
     computed_signature = "sha256=" + hmac.new(secret, payload, hashlib.sha256).hexdigest()
-    
     return hmac.compare_digest(computed_signature, signature)
 
 

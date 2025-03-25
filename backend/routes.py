@@ -104,3 +104,4 @@ def github_webhook():
         return jsonify({"error": "Invalid JSON"}), 400
 
     print("✅ Parsed data:", data)
+    

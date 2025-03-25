@@ -9,6 +9,10 @@ import hashlib
 from backend.services.post_generator import generate_post_from_webhook
 from backend.services.post_to_linkedin import post_to_linkedin
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 # Load environment variables
 load_dotenv()
 
@@ -78,18 +82,21 @@ def linkedin_callback():
 
 
 ### -------------------- GITHUB WEBHOOK HANDLING -------------------- ###
-def verify_github_signature(payload, signature):
-    """Verifies GitHub webhook signature using HMAC"""
-    secret = GITHUB_SECRET
-    if not secret or not signature:
-        return False
-    secret = secret.encode()
+import hmac
+import hashlib
+
+def verify_github_signature(request, signature):
+    if not signature:
+        return False  # No signature provided
+
+    secret = os.environ.get("GITHUB_WEBHOOK_SECRET", "").encode("utf-8")
+    payload = request.data
+
     computed_signature = "sha256=" + hmac.new(secret, payload, hashlib.sha256).hexdigest()
     return hmac.compare_digest(computed_signature, signature)
 
-import logging
 
-logging.basicConfig(level=logging.INFO)
+
 
 
 @routes.route("/webhook/github", methods=["POST"])

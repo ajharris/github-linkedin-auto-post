@@ -102,8 +102,11 @@ def github_webhook():
 
     if not all([pusher_name, repo_name, commit_message, commit_url]):
         return jsonify({"error": "Incomplete commit info"}), 400
+    
+    github_user_id = str(repo.get("owner", {}).get("id"))  # GitHub numeric ID as string
+    logging.info(f"Looking for user with github_id={github_user_id}")
 
-    user = User.query.filter_by(github_id=pusher_name).first()
+    user = User.query.filter_by(github_id=github_user_id).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
 
@@ -123,9 +126,6 @@ def github_webhook():
 
     db.session.add(github_event)
     db.session.commit()
-
-    return jsonify({"status": "success"}), 200
-
 
     return jsonify({"status": "success"}), 200
 

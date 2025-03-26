@@ -12,6 +12,11 @@ LINKEDIN_USER_ID = os.getenv("LINKEDIN_USER_ID")
 # Mock LinkedIn API URL
 LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
 
+def test_linkedin_env_vars_set():
+    assert os.getenv("LINKEDIN_ACCESS_TOKEN"), "Missing LINKEDIN_ACCESS_TOKEN"
+    assert os.getenv("LINKEDIN_USER_ID"), "Missing LINKEDIN_USER_ID"
+
+
 def post_to_linkedin(repo, message):
     """
     Function to post a commit update to LinkedIn.

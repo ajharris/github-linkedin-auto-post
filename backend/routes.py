@@ -126,5 +126,6 @@ def github_webhook():
 
     return jsonify({"status": "success"}), 200
 
+
     return jsonify({"status": "success"}), 200
 

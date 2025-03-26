@@ -25,3 +25,9 @@ def app():
 @pytest.fixture
 def test_client(app):
     return app.test_client()
+
+@pytest.fixture
+def patch_linkedin_env(monkeypatch):
+    monkeypatch.setenv("LINKEDIN_ACCESS_TOKEN", "test_token")
+    monkeypatch.setenv("LINKEDIN_USER_ID", "urn:li:person:testuser")
+

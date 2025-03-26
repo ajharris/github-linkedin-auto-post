@@ -4,25 +4,29 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-LINKEDIN_ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_TOKEN")
-LINKEDIN_USER_ID = os.getenv("LINKEDIN_USER_ID")
 LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
+LINKEDIN_ACCESS_TOKEN = None
+LINKEDIN_USER_ID = None
+
 
 def post_to_linkedin(repo_name, commit_message):
     """
     Sends a post to LinkedIn with commit information.
-    Returns the requests.Response object.
+    Returns the LinkedIn API response.
     """
-    if not LINKEDIN_ACCESS_TOKEN or not LINKEDIN_USER_ID:
+    access_token = os.getenv("LINKEDIN_ACCESS_TOKEN")
+    user_id = os.getenv("LINKEDIN_USER_ID")
+
+    if not access_token or not user_id:
         raise ValueError("Missing LinkedIn credentials in environment variables")
 
     headers = {
-        "Authorization": f"Bearer {LINKEDIN_ACCESS_TOKEN}",
+        "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
     }
 
     post_data = {
-        "author": f"urn:li:person:{LINKEDIN_USER_ID}",
+        "author": f"urn:li:person:{user_id}",
         "lifecycleState": "PUBLISHED",
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {

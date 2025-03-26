@@ -6,7 +6,7 @@ function App() {
   const [message, setMessage] = useState("");
 
   const postToLinkedIn = async () => {
-    await axios.post("http://localhost:5000/webhook", {
+    await axios.post("http://localhost:5000/webhook", { 
       repository: { full_name: repo },
       head_commit: { message },
     });

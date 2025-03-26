@@ -131,6 +131,15 @@ def github_webhook():
     db.session.add(github_event)
     db.session.commit()
 
+    logging.info(f"[Webhook] Posting to LinkedIn for repo: {repo_name}, commit: {commit_message}")
+    linkedin_response = post_to_linkedin(repo_name, commit_message)
+
+    if isinstance(linkedin_response, requests.Response):
+        logging.info(f"[LinkedIn] Status: {linkedin_response.status_code}")
+        logging.info(f"[LinkedIn] Response: {linkedin_response.text}")
+
+
+
     return jsonify({"status": "success"}), 200
 
 

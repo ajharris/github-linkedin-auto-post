@@ -1,3 +1,5 @@
+# backend/app.py
+
 import os
 from flask import Flask
 from flask_migrate import Migrate
@@ -15,12 +17,13 @@ def create_app(config_name=None):
         raise ValueError(f"Invalid config name: {config_name}")
 
     app.config.from_object(config_obj)
+    app.register_blueprint(routes)
 
     db.init_app(app)
     Migrate(app, db)
-    app.register_blueprint(routes)
+
+    print("📍 Registered routes:")
+    for rule in app.url_map.iter_rules():
+        print(f"  {rule}")
 
     return app
-
-# ✅ Use this as the entry point for Gunicorn
-app = create_app()

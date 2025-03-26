@@ -1,46 +1,38 @@
 from flask import Blueprint, request, redirect, send_from_directory, jsonify
-import requests
 import os
+import requests
+import logging
 from dotenv import load_dotenv
 from backend.models import db, GitHubEvent, User
-from datetime import datetime, timezone
-import hmac
-import hashlib
 from backend.services.post_generator import generate_post_from_webhook
 from backend.services.post_to_linkedin import post_to_linkedin
-
-import logging
-
-logging.basicConfig(level=logging.INFO)
+from backend.services.verify_signature import verify_github_signature
 
 # Load environment variables
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
 
 # LinkedIn OAuth settings
 CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 REDIRECT_URI = "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback"
 
-# GitHub Webhook Secret
-GITHUB_SECRET = os.getenv("GITHUB_SECRET")
-
-# Define Blueprint for routes
+# Define Blueprint
 routes = Blueprint("routes", __name__)
 
-### -------------------- FRONTEND SERVING -------------------- ###
+# -------------------- FRONTEND SERVING -------------------- #
 @routes.route("/", defaults={"path": ""})
 @routes.route("/<path:path>")
 def serve(path):
-    """Serve frontend static files"""
     frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../frontend/build")
-    
-    if path and os.path.exists(os.path.join(frontend_dir, path)):
+    file_path = os.path.join(frontend_dir, path)
+    if path and os.path.exists(file_path):
         return send_from_directory(frontend_dir, path)
-
     return send_from_directory(frontend_dir, "index.html")
 
 
-### -------------------- LINKEDIN AUTHENTICATION -------------------- ###
+# -------------------- LINKEDIN AUTHENTICATION -------------------- #
 @routes.route("/auth/linkedin")
 def linkedin_auth():
     """Redirects user to LinkedIn OAuth authorization URL"""
@@ -59,7 +51,6 @@ def linkedin_callback():
 
     if error:
         return f"LinkedIn OAuth error: {error}", 400
-
     if not code:
         return "Authorization failed: No code received from LinkedIn.", 400
 
@@ -73,7 +64,6 @@ def linkedin_callback():
     }
 
     response = requests.post(token_url, data=data)
-
     if response.status_code != 200:
         return f"Failed to get access token: {response.text}", 400
 
@@ -81,27 +71,9 @@ def linkedin_callback():
     return f"Your LinkedIn Access Token: {access_token}"
 
 
-### -------------------- GITHUB WEBHOOK HANDLING -------------------- ###
-import hmac
-import hashlib 
-
-def verify_github_signature(request, signature):
-    if not signature:
-        return False  
-
-    secret = os.environ.get("GITHUB_WEBHOOK_SECRET", "").encode("utf-8")
-    payload = request.data
-
-    computed_signature = "sha256=" + hmac.new(secret, payload, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(computed_signature, signature)
-
-
-
-
-
+# -------------------- GITHUB WEBHOOK HANDLING -------------------- #
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():
-    payload = request.get_data()
     signature = request.headers.get("X-Hub-Signature-256")
     if not verify_github_signature(request, signature):
         return jsonify({"error": "Invalid signature"}), 403
@@ -110,27 +82,24 @@ def github_webhook():
 
     try:
         data = request.get_json(force=True)
-    except Exception as e:
+    except Exception:
         return jsonify({"error": "Invalid JSON"}), 400
 
     print("✅ Parsed data:", data)
 
-    # 🔍 Extract user and commit info
+    # Extract relevant data
     pusher_name = data.get("pusher", {}).get("name")
     repo_name = data.get("repository", {}).get("full_name")
     commit_message = data.get("head_commit", {}).get("message")
     commit_url = data.get("head_commit", {}).get("url")
 
-    # 🔐 Look up the user
     user = User.query.filter_by(github_id=pusher_name).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    # 📝 Create GitHubEvent
     linkedin_post_id = None
     linkedin_response = post_to_linkedin(repo_name, commit_message)
-
-    if linkedin_response and isinstance(linkedin_response, dict):
+    if isinstance(linkedin_response, dict):
         linkedin_post_id = linkedin_response.get("id")
 
     github_event = GitHubEvent(
@@ -144,6 +113,5 @@ def github_webhook():
 
     db.session.add(github_event)
     db.session.commit()
-
 
     return jsonify({"status": "success"}), 200

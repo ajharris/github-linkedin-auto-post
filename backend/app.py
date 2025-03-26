@@ -23,3 +23,5 @@ def create_app(config_name=None):
     Migrate(app, db)
 
     return app
+
+

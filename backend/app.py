@@ -22,8 +22,4 @@ def create_app(config_name=None):
     db.init_app(app)
     Migrate(app, db)
 
-    print("📍 Registered routes:")
-    for rule in app.url_map.iter_rules():
-        print(f"  {rule}")
-
     return app

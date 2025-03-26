@@ -85,8 +85,6 @@ def github_webhook():
     except Exception:
         return jsonify({"error": "Invalid JSON"}), 400
 
-    print("✅ Parsed data:", data)
-
     # Validate required fields
     pusher = data.get("pusher", {})
     repo = data.get("repository", {})
@@ -102,11 +100,17 @@ def github_webhook():
 
     if not all([pusher_name, repo_name, commit_message, commit_url]):
         return jsonify({"error": "Incomplete commit info"}), 400
-    
-    github_user_id = str(repo.get("owner", {}).get("id"))  # GitHub numeric ID as string
-    logging.info(f"Looking for user with github_id={github_user_id}")
 
+    # Use GitHub user ID if available, otherwise fallback to username
+    github_user_id = repo.get("owner", {}).get("id")
+    if github_user_id is not None:
+        github_user_id = str(github_user_id)
+    else:
+        github_user_id = pusher_name  # fallback for test payloads
+
+    logging.info(f"Looking for user with github_id={github_user_id}")
     user = User.query.filter_by(github_id=github_user_id).first()
+
     if not user:
         return jsonify({"error": "User not found"}), 404
 
@@ -128,4 +132,5 @@ def github_webhook():
     db.session.commit()
 
     return jsonify({"status": "success"}), 200
+
 

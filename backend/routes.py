@@ -87,11 +87,21 @@ def github_webhook():
 
     print("✅ Parsed data:", data)
 
-    # Extract relevant data
-    pusher_name = data.get("pusher", {}).get("name")
-    repo_name = data.get("repository", {}).get("full_name")
-    commit_message = data.get("head_commit", {}).get("message")
-    commit_url = data.get("head_commit", {}).get("url")
+    # Validate required fields
+    pusher = data.get("pusher", {})
+    repo = data.get("repository", {})
+    head_commit = data.get("head_commit", {})
+
+    if not pusher or not repo or not head_commit:
+        return jsonify({"error": "Missing required data"}), 400
+
+    pusher_name = pusher.get("name")
+    repo_name = repo.get("full_name")
+    commit_message = head_commit.get("message")
+    commit_url = head_commit.get("url")
+
+    if not all([pusher_name, repo_name, commit_message, commit_url]):
+        return jsonify({"error": "Incomplete commit info"}), 400
 
     user = User.query.filter_by(github_id=pusher_name).first()
     if not user:
@@ -115,3 +125,6 @@ def github_webhook():
     db.session.commit()
 
     return jsonify({"status": "success"}), 200
+
+    return jsonify({"status": "success"}), 200
+

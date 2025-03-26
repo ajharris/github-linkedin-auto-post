@@ -16,3 +16,4 @@ def test_production_env_vars_set():
     """
     missing = [var for var in REQUIRED_PRODUCTION_ENV_VARS if not os.getenv(var)]
     assert not missing, f"❌ Missing production env vars: {missing}"
+    

@@ -1,14 +1,15 @@
 import os
 from backend.models import db, User
-from backend.app import create_app
 
-# Create the app using your factory
-app = create_app()
+def seed_main_user(app=None):
+    from backend.app import create_app  # local import to avoid circular dependency unless needed
 
-def seed_main_user():
-    github_id = "7585359"
-    github_token = os.getenv("LINKEDIN_ACCESS_TOKEN", "placeholder_github_token")
-    linkedin_token = os.getenv("LINKEDIN_ACCESS_TOKEN", "placeholder_linkedin_token")
+    if app is None:
+        app = create_app()
+
+    github_id = os.getenv("SEED_GITHUB_ID", "7585359")
+    github_token = os.getenv("SEED_GITHUB_TOKEN", "placeholder_github_token")
+    linkedin_token = os.getenv("SEED_LINKEDIN_TOKEN", "placeholder_linkedin_token")
 
     with app.app_context():
         user = User.query.filter_by(github_id=github_id).first()

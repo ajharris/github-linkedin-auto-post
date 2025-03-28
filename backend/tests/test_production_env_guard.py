@@ -11,6 +11,7 @@ def test_required_env_vars_for_production(monkeypatch):
 
     monkeypatch.delenv("LINKEDIN_ACCESS_TOKEN", raising=False)
     monkeypatch.delenv("LINKEDIN_USER_ID", raising=False)
+    
 
     with pytest.raises(ValueError, match="Missing LinkedIn credentials"):
         post_to_linkedin("some-repo", "Test commit message")

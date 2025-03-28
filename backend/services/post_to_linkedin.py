@@ -27,22 +27,22 @@ def post_to_linkedin(repo_name, commit_message):
     }
 
     post_data = {
-        "author": f"urn:li:person:{user_id}",
-        "lifecycleState": "PUBLISHED",
-        "specificContent": {
-            "com.linkedin.ugc.ShareContent": {
-                "shareCommentary": {
-                    "text": f"🚀 Just pushed new code to {repo_name}!\n\n"
-                            f"💬 {commit_message}\n\n"
-                            "#buildinpublic #opensource"
-                },
-                "shareMediaCategory": "NONE"
-            }
-        },
-        "visibility": {
-            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+    "author": f"urn:li:member:{user_id}",  # <-- this is the fix
+    "lifecycleState": "PUBLISHED",
+    "specificContent": {
+        "com.linkedin.ugc.ShareContent": {
+            "shareCommentary": {
+                "text": f"🚀 Just pushed new code to {repo_name}!\n\n"
+                        f"💬 {commit_message}\n\n"
+                        "#buildinpublic #opensource"
+            },
+            "shareMediaCategory": "NONE"
         }
+    },
+    "visibility": {
+        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
     }
-
+}
+    
     response = requests.post(LINKEDIN_POST_URL, json=post_data, headers=headers)
     return response

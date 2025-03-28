@@ -1,18 +1,18 @@
-# post_generator.py
-
-from backend.services.post_to_linkedin import LINKEDIN_USER_ID
-
+import os
 
 def generate_post_from_webhook(payload):
+    linkedin_user_id = os.getenv("LINKEDIN_USER_ID", "someone")
+
     repo = payload.get("repository", {}).get("name", "a GitHub repo")
     url = payload.get("repository", {}).get("html_url", "https://github.com")
     commit = payload.get("head_commit", {})
     message = commit.get("message", "made an update")
-    author = f"urn:li:member:{LINKEDIN_USER_ID}"
+    commit_author = commit.get("author", {}).get("name", "Someone")
 
+    author = f"urn:li:member:{linkedin_user_id}"
 
     return (
-        f"🚀 {author} just pushed to {repo}!\n\n"
+        f"🚀 {commit_author} just pushed to {repo}!\n\n"
         f"💬 Commit message: \"{message}\"\n\n"
         f"🔗 Check it out: {url}\n\n"
         "#buildinpublic #opensource"

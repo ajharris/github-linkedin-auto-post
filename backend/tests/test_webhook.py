@@ -5,17 +5,19 @@ from unittest.mock import patch
 
 
 @pytest.mark.usefixtures("patch_signature_verification")
-@patch("backend.services.post_to_linkedin.LINKEDIN_ACCESS_TOKEN", "test_token")
-@patch("backend.services.post_to_linkedin.LINKEDIN_USER_ID", "test_user_id")
-def test_webhook_push_event(test_client):
+@patch("backend.services.post_to_linkedin.requests.post")
+def test_webhook_push_event(mock_post, test_client):
     """Test that a valid push event is stored in the database."""
-    user = User(github_id="testuser", github_token="fake_github_token", linkedin_token="fake_token")
+    mock_post.return_value.status_code = 201
+    mock_post.return_value.json.return_value = {"id": "linkedin_post_123"}
+
+    user = User(github_id="testuser", github_token="fake_github_token", linkedin_token="fake_token", linkedin_id="123456789")
     from backend.models import db
     db.session.add(user)
     db.session.commit()
 
     payload = {
-        "repository": {"full_name": "testuser/test-repo"},
+        "repository": {"full_name": "testuser/test-repo", "owner": {"id": "testuser"}},
         "pusher": {"name": "testuser"},
         "head_commit": {
             "message": "Fix bug in webhook handler",
@@ -70,17 +72,19 @@ def test_webhook_unauthorized_request(test_client):
 
 
 @pytest.mark.usefixtures("patch_signature_verification")
-@patch("backend.services.post_to_linkedin.LINKEDIN_ACCESS_TOKEN", "test_token")
-@patch("backend.services.post_to_linkedin.LINKEDIN_USER_ID", "test_user_id")
-def test_webhook_links_event_to_correct_user(test_client):
+@patch("backend.services.post_to_linkedin.requests.post")
+def test_webhook_links_event_to_correct_user(mock_post, test_client):
     """Test that a webhook event is linked to the correct user in the database."""
-    user = User(github_id="otheruser", github_token="fake_github_token", linkedin_token="fake_token")
+    mock_post.return_value.status_code = 201
+    mock_post.return_value.json.return_value = {"id": "linkedin_post_456"}
+
+    user = User(github_id="otheruser", github_token="fake_github_token", linkedin_token="fake_token", linkedin_id="123456789")
     from backend.models import db
     db.session.add(user)
     db.session.commit()
 
     payload = {
-        "repository": {"full_name": "otheruser/some-repo"},
+        "repository": {"full_name": "otheruser/some-repo", "owner": {"id": "otheruser"}},
         "pusher": {"name": "otheruser"},
         "head_commit": {
             "message": "Refactor API endpoints",

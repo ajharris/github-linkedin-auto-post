@@ -5,8 +5,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
-LINKEDIN_ACCESS_TOKEN = None
-LINKEDIN_USER_ID = None
 
 
 import logging
@@ -27,7 +25,7 @@ def post_to_linkedin(repo_name, commit_message):
     }
 
     post_data = {
-    "author": f"urn:li:member:{LINKEDIN_USER_ID}",
+    "author": f"urn:li:member:{user_id}",
     "lifecycleState": "PUBLISHED",
     "specificContent": {
         "com.linkedin.ugc.ShareContent": {

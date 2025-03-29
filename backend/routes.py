@@ -87,8 +87,8 @@ def linkedin_callback():
         if github_user_id:
             user = User.query.filter_by(github_id=github_user_id).first()
             if user:
-                user.linkedin_access_token = access_token
-                user.linkedin_user_id = linkedin_user_id
+                user.linkedin_token = access_token
+                user.linkedin_id = linkedin_user_id
                 db.session.commit()
                 current_app.logger.info(f"[LinkedIn] Stored user with ID {linkedin_user_id}")
 

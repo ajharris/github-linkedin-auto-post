@@ -43,15 +43,33 @@ def test_linkedin_auth_redirect(client):
     assert "https://www.linkedin.com/oauth/v2/authorization" in response.location
 
 
+from unittest.mock import patch
+
+@patch("requests.get")
 @patch("requests.post")
-def test_linkedin_callback_success(mock_post, client):
+def test_linkedin_callback_success(mock_post, mock_get, client):
     """Test LinkedIn OAuth callback"""
+    # Mock token exchange
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = {"access_token": "test_token"}
 
-    response = client.get("/auth/linkedin/callback?code=valid_code")
+    # Mock profile fetch
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {"id": "123456789"}
+
+    # Add fake GitHub user so the callback logic finds them
+    with client.application.app_context():
+        from backend.models import User, db
+        user = User(github_id="test", github_token="fake-token")
+        db.session.add(user)
+        db.session.commit()
+
+    # Call the callback
+    response = client.get("/auth/linkedin/callback?code=valid_code&state=test")
+
     assert response.status_code == 200
-    assert "Your LinkedIn Access Token" in response.get_data(as_text=True)
+    assert b"Access Token has been stored" in response.data
+
 
 
 def test_linkedin_callback_no_code(client):

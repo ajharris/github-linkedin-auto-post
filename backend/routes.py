@@ -81,7 +81,7 @@ def linkedin_callback():
 
     if response.status_code == 200:
         linkedin_profile = response.json()
-        linkedin_user_id = linkedin_profile.get("id")  # Numeric ID
+        user.linkedin_id = linkedin_profile.get("id")  # Numeric ID
 
         github_user_id = request.args.get("state")
         if github_user_id:

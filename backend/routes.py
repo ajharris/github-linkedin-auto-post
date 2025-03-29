@@ -81,21 +81,23 @@ def linkedin_callback():
 
     if response.status_code == 200:
         linkedin_profile = response.json()
-        user.linkedin_id = linkedin_profile.get("id")  # Numeric ID
-
+        linkedin_user_id = linkedin_profile.get("id")  # Numeric ID
+    
         github_user_id = request.args.get("state")
+        user = None
         if github_user_id:
             user = User.query.filter_by(github_id=github_user_id).first()
             if user:
                 user.linkedin_token = access_token
-                user.linkedin_id = user.linkedin_id
+                user.linkedin_id = linkedin_user_id
                 db.session.commit()
-                current_app.logger.info(f"[LinkedIn] Stored user with ID {user.linkedin_id}")
+                current_app.logger.info(f"[LinkedIn] Stored user with ID {linkedin_user_id}")
+    
+        if user:
+            return "Your LinkedIn Access Token has been stored. You can close this window."
+        else:
+            return "LinkedIn profile fetched, but user not found in DB.", 404
 
-        return f"Your LinkedIn Access Token has been stored. You can close this window."
-    else:
-        current_app.logger.error(f"[LinkedIn] Failed to fetch profile: {response.text}")
-        return f"Failed to fetch LinkedIn profile: {response.text}", 400
 
 
 # -------------------- GITHUB WEBHOOK HANDLING -------------------- #

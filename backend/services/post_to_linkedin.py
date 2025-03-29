@@ -9,7 +9,7 @@ LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
 
 import logging
 
-def post_to_linkedin(repo_name, commit_message):
+def post_to_linkedin(user, repo_name, commit_message):
     access_token = os.getenv("LINKEDIN_ACCESS_TOKEN")
     user_id = os.getenv("LINKEDIN_USER_ID")
 

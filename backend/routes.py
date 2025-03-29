@@ -88,9 +88,9 @@ def linkedin_callback():
             user = User.query.filter_by(github_id=github_user_id).first()
             if user:
                 user.linkedin_token = access_token
-                user.linkedin_id = linkedin_user_id
+                user.linkedin_id = user.linkedin_id
                 db.session.commit()
-                current_app.logger.info(f"[LinkedIn] Stored user with ID {linkedin_user_id}")
+                current_app.logger.info(f"[LinkedIn] Stored user with ID {user.linkedin_id}")
 
         return f"Your LinkedIn Access Token has been stored. You can close this window."
     else:

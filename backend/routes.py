@@ -1,4 +1,4 @@
-from flask import Blueprint, request, redirect, send_from_directory, jsonify
+from flask import Blueprint, request, redirect, send_from_directory, jsonify, current_app
 import os
 import requests
 import logging
@@ -36,10 +36,13 @@ def serve(path):
 @routes.route("/auth/linkedin")
 def linkedin_auth():
     """Redirects user to LinkedIn OAuth authorization URL"""
+    # For local testing, replace github_user_id with your test ID
+    github_user_id = request.args.get("github_user_id", "test")
     linkedin_auth_url = (
         f"https://www.linkedin.com/oauth/v2/authorization?response_type=code"
         f"&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}"
         f"&scope=w_member_social"
+        f"&state={github_user_id}"
     )
     return redirect(linkedin_auth_url)
 
@@ -68,7 +71,31 @@ def linkedin_callback():
         return f"Failed to get access token: {response.text}", 400
 
     access_token = response.json().get("access_token")
-    return f"Your LinkedIn Access Token: {access_token}"
+
+    linkedin_api_url = "https://api.linkedin.com/v2/me"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+
+    response = requests.get(linkedin_api_url, headers=headers)
+
+    if response.status_code == 200:
+        linkedin_profile = response.json()
+        linkedin_user_id = linkedin_profile.get("id")  # Numeric ID
+
+        github_user_id = request.args.get("state")
+        if github_user_id:
+            user = User.query.filter_by(github_id=github_user_id).first()
+            if user:
+                user.linkedin_access_token = access_token
+                user.linkedin_user_id = linkedin_user_id
+                db.session.commit()
+                current_app.logger.info(f"[LinkedIn] Stored user with ID {linkedin_user_id}")
+
+        return f"Your LinkedIn Access Token has been stored. You can close this window."
+    else:
+        current_app.logger.error(f"[LinkedIn] Failed to fetch profile: {response.text}")
+        return f"Failed to fetch LinkedIn profile: {response.text}", 400
 
 
 # -------------------- GITHUB WEBHOOK HANDLING -------------------- #
@@ -138,8 +165,4 @@ def github_webhook():
         logging.info(f"[LinkedIn] Status: {linkedin_response.status_code}")
         logging.info(f"[LinkedIn] Response: {linkedin_response.text}")
 
-
-
     return jsonify({"status": "success"}), 200
-
-

@@ -1,4 +1,5 @@
 from flask import Blueprint, request, redirect, send_from_directory, jsonify, current_app
+
 import os
 import requests
 import logging
@@ -7,6 +8,7 @@ from backend.models import db, GitHubEvent, User
 from backend.services.post_generator import generate_post_from_webhook
 from backend.services.post_to_linkedin import post_to_linkedin
 from backend.services.verify_signature import verify_github_signature
+from backend.services.linkedin_oauth import build_linkedin_auth_url
 
 # Load environment variables
 load_dotenv()
@@ -177,3 +179,4 @@ def github_webhook():
         logging.info(f"[LinkedIn] Response: {linkedin_response.text}")
 
     return jsonify({"status": "success"}), 200
+

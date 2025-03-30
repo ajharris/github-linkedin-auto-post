@@ -68,7 +68,7 @@ def test_linkedin_callback_success(mock_post, mock_get, client):
     response = client.get("/auth/linkedin/callback?code=valid_code&state=test")
 
     assert response.status_code == 200
-    assert b"Access Token has been stored" in response.data
+    assert b"LinkedIn Access Token stored successfully" in response.data
 
 
 

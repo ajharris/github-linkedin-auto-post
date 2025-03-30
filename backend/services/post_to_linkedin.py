@@ -25,7 +25,7 @@ def post_to_linkedin(user, repo_name, commit_message):
     }
 
     post_data = {
-    "author": f"urn:li:member:{user_id}",
+    "author": f"urn:li:person:{user_id}",
     "lifecycleState": "PUBLISHED",
     "specificContent": {
         "com.linkedin.ugc.ShareContent": {

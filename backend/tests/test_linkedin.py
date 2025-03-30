@@ -44,21 +44,22 @@ def post_to_linkedin(repo, message):
     return response
 
 
-def test_post_to_linkedin_success(requests_mock):
-    """
-    Test successful LinkedIn post using a mocked API response.
-    """
-    mock_response = {"id": "urn:li:ugcPost:123456789"}
-    
-    # Mock the LinkedIn API call
-    requests_mock.post(LINKEDIN_POST_URL, json=mock_response, status_code=201)
+def test_post_to_linkedin_success():
+    # Create a fake user with valid credentials
+    user = SimpleNamespace(linkedin_token="fake_token", linkedin_id="123456789")
 
-    # Run the function
-    response = post_to_linkedin("TestRepo", "Initial commit.")
+    with requests_mock.Mocker() as m:
+        m.post("https://api.linkedin.com/v2/ugcPosts", json={"id": "mock_post_id"}, status_code=201)
 
-    # Assertions
-    assert response.status_code == 201
-    assert response.json() == mock_response
+        result = post_to_linkedin(user, "ajharris/github-linkedin-auto-post", "Commit message")
+
+        # ✅ Add this
+        request_payload = m.request_history[0].json()
+        assert request_payload["author"] == "urn:li:person:123456789", "Author URN should use 'person', not 'member'"
+
+        assert result.status_code == 201
+        assert result.json()["id"] == "mock_post_id"
+
 
 
 def test_post_to_linkedin_auth_failure(requests_mock):

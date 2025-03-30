@@ -24,5 +24,12 @@ def test_post_to_linkedin_success():
         m.post("https://api.linkedin.com/v2/ugcPosts", json={"id": "mock_post_id"}, status_code=201)
 
         result = post_to_linkedin(user, "ajharris/github-linkedin-auto-post", "Commit message")
+
+        # ✅ Add this
+        request_payload = m.request_history[0].json()
+        assert request_payload["author"] == "urn:li:person:123456789", "Author URN should use 'person', not 'member'"
+
         assert result.status_code == 201
         assert result.json()["id"] == "mock_post_id"
+
+

@@ -2,9 +2,8 @@ import os
 from backend.models import db, User
 
 def seed_main_user(app=None):
-    from backend.app import create_app  # local import to avoid circular dependency unless needed
-
     if app is None:
+        from backend.app import create_app  # 🔄 MOVE THIS HERE to avoid circular import
         app = create_app()
 
     github_id = os.getenv("SEED_GITHUB_ID", "7585359")

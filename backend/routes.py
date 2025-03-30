@@ -41,9 +41,10 @@ def linkedin_auth():
     linkedin_auth_url = (
         f"https://www.linkedin.com/oauth/v2/authorization?response_type=code"
         f"&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}"
-        f"&scope=w_member_social"
+        f"&scope=r_liteprofile%20w_member_social"
         f"&state={github_user_id}"
     )
+
     return redirect(linkedin_auth_url)
 
 @routes.route("/auth/linkedin/callback")
@@ -82,7 +83,7 @@ def linkedin_callback():
     if response.status_code == 200:
         linkedin_profile = response.json()
         linkedin_user_id = linkedin_profile.get("id")  # Numeric ID
-    
+
         github_user_id = request.args.get("state")
         user = None
         if github_user_id:
@@ -92,7 +93,7 @@ def linkedin_callback():
                 user.linkedin_id = linkedin_user_id
                 db.session.commit()
                 current_app.logger.info(f"[LinkedIn] Stored user with ID {linkedin_user_id}")
-    
+
         if user:
             return "Your LinkedIn Access Token has been stored. You can close this window."
         else:

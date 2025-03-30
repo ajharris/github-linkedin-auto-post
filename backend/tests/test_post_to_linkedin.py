@@ -2,6 +2,8 @@ import pytest
 import requests_mock
 from types import SimpleNamespace
 from backend.services.post_to_linkedin import post_to_linkedin
+from types import SimpleNamespace
+
 
 
 def test_post_to_linkedin_missing_env(monkeypatch):

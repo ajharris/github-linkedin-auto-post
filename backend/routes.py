@@ -67,37 +67,45 @@ def linkedin_callback():
         "client_secret": CLIENT_SECRET,
     }
 
-    response = requests.post(token_url, data=data)
-    if response.status_code != 200:
-        return f"Failed to get access token: {response.text}", 400
+    token_response = requests.post(token_url, data=data)
+    if token_response.status_code != 200:
+        return f"Failed to get access token: {token_response.text}", 400
 
-    access_token = response.json().get("access_token")
+    access_token = token_response.json().get("access_token")
+    if not access_token:
+        return "Access token missing in response from LinkedIn", 400
 
+    # Get LinkedIn user profile
     linkedin_api_url = "https://api.linkedin.com/v2/me"
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
 
-    response = requests.get(linkedin_api_url, headers=headers)
+    profile_response = requests.get(linkedin_api_url, headers=headers)
+    if profile_response.status_code != 200:
+        current_app.logger.error(f"[LinkedIn] Failed to fetch profile: {profile_response.text}")
+        return f"Failed to fetch LinkedIn profile: {profile_response.text}", 400
 
-    if response.status_code == 200:
-        linkedin_profile = response.json()
-        linkedin_user_id = linkedin_profile.get("id")  # Numeric ID
+    linkedin_profile = profile_response.json()
+    linkedin_user_id = linkedin_profile.get("id")
+    if not linkedin_user_id:
+        return "Could not retrieve LinkedIn user ID", 400
 
-        github_user_id = request.args.get("state")
-        user = None
-        if github_user_id:
-            user = User.query.filter_by(github_id=github_user_id).first()
-            if user:
-                user.linkedin_token = access_token
-                user.linkedin_id = linkedin_user_id
-                db.session.commit()
-                current_app.logger.info(f"[LinkedIn] Stored user with ID {linkedin_user_id}")
+    # Get the GitHub user ID from the OAuth state param
+    github_user_id = request.args.get("state")
+    if not github_user_id:
+        return "Missing state param (GitHub user ID)", 400
 
-        if user:
-            return "Your LinkedIn Access Token has been stored. You can close this window."
-        else:
-            return "LinkedIn profile fetched, but user not found in DB.", 404
+    user = User.query.filter_by(github_id=github_user_id).first()
+    if not user:
+        return f"User with GitHub ID {github_user_id} not found", 404
+
+    user.linkedin_token = access_token
+    user.linkedin_id = linkedin_user_id
+    db.session.commit()
+    current_app.logger.info(f"[LinkedIn] Linked user {github_user_id} with LinkedIn ID {linkedin_user_id}")
+
+    return "✅ LinkedIn Access Token stored successfully. You can close this window."
 
 
 

@@ -89,9 +89,9 @@ def linkedin_callback():
         return f"Failed to fetch LinkedIn profile: {profile_response.text}", 400
 
     linkedin_profile = profile_response.json()
-    print("[DEBUG] LinkedIn profile response:", linkedin_profile)
-
+    print("[DEBUG] LinkedIn profile response:", linkedin_profile)  # ← ADD THIS LINE
     linkedin_user_id = linkedin_profile.get("id")
+    
     if not linkedin_user_id:
         return "Could not retrieve LinkedIn user ID", 400
 

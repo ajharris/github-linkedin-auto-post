@@ -89,7 +89,6 @@ def linkedin_callback():
         return f"Failed to fetch LinkedIn profile: {profile_response.text}", 400
 
     linkedin_profile = profile_response.json()
-    linkedin_profile = profile_response.json()
     current_app.logger.info(f"[DEBUG] LinkedIn profile response: {linkedin_profile}")  # ← Add this
     linkedin_user_id = linkedin_profile.get("id")
 

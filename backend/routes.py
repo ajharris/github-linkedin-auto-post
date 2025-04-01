@@ -31,7 +31,7 @@ def serve(path):
     if os.path.exists(file_path) and os.path.isfile(file_path):
         return send_from_directory(frontend_dir, path or "index.html")
 
-    return jsonify(message="GitHub → LinkedIn Auto Post backend is running."), 200
+    return jsonify(error="File not found"), 404
 
 
 # -------------------- LINKEDIN AUTHENTICATION -------------------- #

@@ -14,40 +14,4 @@ Robust Testing – Includes unit and integration tests for critical backend serv
 
 Frontend UI – Built with React for future management and user controls.
 
-## Project Structure
 
-backend/ # Flask API backend and services
-frontend/ # React frontend app
-migrations/ # Database migration scripts
-instance/ # SQLite development database
-Procfile # For deployment on platforms like Heroku
-requirements.txt # Backend dependencies
-
-## Quick Start
-
-Backend
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r ../requirements.txt
-flask run
-
-## Frontend
-
-cd frontend
-npm install
-npm start
-
-## Deployment
-
-This app is configured for deployment on Heroku using a Procfile.
-
-## Tests
-
-Run backend tests with:
-
-pytest backend/tests
-
-## License
-
-MIT License (or your preferred license)

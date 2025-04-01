@@ -20,6 +20,7 @@ def post_to_linkedin(user, repo_name, commit_message):
     # Ensure the user_id is properly formatted
     if not user_id.startswith("urn:li:person:"):
         author_urn = f"urn:li:person:{user_id}"
+
     else:
         author_urn = user_id
 

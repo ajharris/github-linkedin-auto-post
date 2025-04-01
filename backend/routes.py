@@ -27,13 +27,19 @@ routes = Blueprint("routes", __name__)
 @routes.route("/", defaults={"path": ""})
 @routes.route("/<path:path>")
 def serve(path):
-    frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../frontend/build")
-    file_path = os.path.normpath(os.path.join(frontend_dir, path))
+    frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../frontend/build"))
+    file_path = os.path.normpath(os.path.join(frontend_dir, path or "index.html"))
+
+    # Protect against directory traversal
     if not file_path.startswith(frontend_dir):
-        return "Forbidden", 403
-    if path and os.path.exists(file_path):
-        return send_from_directory(frontend_dir, path)
-    return send_from_directory(frontend_dir, "index.html")
+        return jsonify({"error": "Forbidden"}), 403
+
+    # Serve file if it exists
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return send_from_directory(frontend_dir, path or "index.html")
+
+    # Fallback for missing frontend
+    return jsonify(message="GitHub → LinkedIn Auto Post backend is running."), 200
 
 
 # -------------------- LINKEDIN AUTHENTICATION -------------------- #
@@ -159,9 +165,13 @@ def github_webhook():
         return jsonify({"error": "User not found"}), 404
 
     linkedin_post_id = None
-    linkedin_response = post_to_linkedin(user, repo_name, commit_message)
-    if isinstance(linkedin_response, dict):
-        linkedin_post_id = linkedin_response.get("id")
+    try:
+        linkedin_response = post_to_linkedin(user, repo_name, commit_message)
+        if isinstance(linkedin_response, dict):
+            linkedin_post_id = linkedin_response.get("id")
+    except ValueError as e:
+        logging.exception("Failed to post to LinkedIn")
+        return jsonify({"error": str(e)}), 500
 
     github_event = GitHubEvent(
         user_id=user.id,
@@ -176,7 +186,6 @@ def github_webhook():
     db.session.commit()
 
     logging.info(f"[Webhook] Posting to LinkedIn for repo: {repo_name}, commit: {commit_message}")
-    linkedin_response = post_to_linkedin(user, repo_name, commit_message)
 
     if isinstance(linkedin_response, requests.Response):
         logging.info(f"[LinkedIn] Status: {linkedin_response.status_code}")

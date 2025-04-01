@@ -12,6 +12,7 @@ Robust Testing – Includes unit and integration tests for critical backend serv
 
 Frontend UI – Built with React for future management and user controls.
 
+
 ## Project Structure
 backend/ # Flask API backend and services
 frontend/ # React frontend app

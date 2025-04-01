@@ -85,8 +85,8 @@ def linkedin_callback():
     if not access_token:
         return "Access token missing in response from LinkedIn", 400
 
-    # Get LinkedIn user profile
-    linkedin_api_url = "https://api.linkedin.com/v2/me"
+    # Use OpenID Connect endpoint to get user ID
+    linkedin_api_url = "https://api.linkedin.com/v2/userinfo"
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
@@ -97,8 +97,9 @@ def linkedin_callback():
         return f"Failed to fetch LinkedIn profile: {profile_response.text}", 400
 
     linkedin_profile = profile_response.json()
-    current_app.logger.info(f"[DEBUG] LinkedIn profile response: {linkedin_profile}")  # ← Add this
-    linkedin_user_id = linkedin_profile.get("id")
+    current_app.logger.info(f"[DEBUG] LinkedIn profile response: {linkedin_profile}")
+
+    linkedin_user_id = linkedin_profile.get("sub")  # <- OpenID user ID field
 
     if not linkedin_user_id:
         return "Could not retrieve LinkedIn user ID", 400

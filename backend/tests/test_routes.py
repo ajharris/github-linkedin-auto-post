@@ -55,7 +55,7 @@ def test_linkedin_callback_success(mock_post, mock_get, client):
 
     # Mock profile fetch
     mock_get.return_value.status_code = 200
-    mock_get.return_value.json.return_value = {"id": "123456789"}
+    mock_get.return_value.json.return_value = {"sub": "123456789"}
 
     # Add fake GitHub user so the callback logic finds them
     with client.application.app_context():

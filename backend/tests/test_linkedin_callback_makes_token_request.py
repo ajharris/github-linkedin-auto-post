@@ -44,6 +44,6 @@ def test_linkedin_callback_makes_token_request(app, test_client):
     with app.app_context():
         updated_user = User.query.filter_by(github_id="test").first()
         assert updated_user.linkedin_token == "mock_access_token"
-        assert updated_user.linkedin_id == "123456789"
+        assert updated_user.linkedin_id == "test"
 
 

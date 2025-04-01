@@ -1,5 +1,4 @@
 from flask import Blueprint, request, redirect, send_from_directory, jsonify, current_app
-
 import os
 import requests
 import logging
@@ -8,19 +7,15 @@ from backend.models import db, GitHubEvent, User
 from backend.services.post_generator import generate_post_from_webhook
 from backend.services.post_to_linkedin import post_to_linkedin
 from backend.services.verify_signature import verify_github_signature
-from backend.services.linkedin_oauth import build_linkedin_auth_url
 
 # Load environment variables
 load_dotenv()
-
 logging.basicConfig(level=logging.INFO)
 
-# LinkedIn OAuth settings
 CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 REDIRECT_URI = "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback"
 
-# Define Blueprint
 routes = Blueprint("routes", __name__)
 
 # -------------------- FRONTEND SERVING -------------------- #
@@ -30,23 +25,18 @@ def serve(path):
     frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../frontend/build"))
     file_path = os.path.normpath(os.path.join(frontend_dir, path or "index.html"))
 
-    # Protect against directory traversal
     if not file_path.startswith(frontend_dir):
         return jsonify({"error": "Forbidden"}), 403
 
-    # Serve file if it exists
     if os.path.exists(file_path) and os.path.isfile(file_path):
         return send_from_directory(frontend_dir, path or "index.html")
 
-    # Fallback for missing frontend
     return jsonify(message="GitHub → LinkedIn Auto Post backend is running."), 200
 
 
 # -------------------- LINKEDIN AUTHENTICATION -------------------- #
 @routes.route("/auth/linkedin")
 def linkedin_auth():
-    """Redirects user to LinkedIn OAuth authorization URL"""
-    # For local testing, replace github_user_id with your test ID
     github_user_id = request.args.get("github_user_id", "test")
     linkedin_auth_url = (
         f"https://www.linkedin.com/oauth/v2/authorization?response_type=code"
@@ -54,72 +44,47 @@ def linkedin_auth():
         f"&scope=w_member_social"
         f"&state={github_user_id}"
     )
-
     return redirect(linkedin_auth_url)
 
 @routes.route("/auth/linkedin/callback")
 def linkedin_callback():
-    """Handles LinkedIn OAuth callback"""
     code = request.args.get("code")
     error = request.args.get("error")
+    github_user_id = request.args.get("state")
 
     if error:
         return f"LinkedIn OAuth error: {error}", 400
-    if not code:
-        return "Authorization failed: No code received from LinkedIn.", 400
+    if not code or not github_user_id:
+        return "Authorization failed", 400
 
-    token_url = "https://www.linkedin.com/oauth/v2/accessToken"
-    data = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": REDIRECT_URI,
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
-    }
+    token_response = requests.post(
+        "https://www.linkedin.com/oauth/v2/accessToken",
+        data={
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": REDIRECT_URI,
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+        }
+    )
 
-    token_response = requests.post(token_url, data=data)
     if token_response.status_code != 200:
         return f"Failed to get access token: {token_response.text}", 400
 
     access_token = token_response.json().get("access_token")
     if not access_token:
-        return "Access token missing in response from LinkedIn", 400
-
-    # Use OpenID Connect endpoint to get user ID
-    linkedin_api_url = "https://api.linkedin.com/v2/userinfo"
-    headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
-
-    profile_response = requests.get(linkedin_api_url, headers=headers)
-    if profile_response.status_code != 200:
-        current_app.logger.error(f"[LinkedIn] Failed to fetch profile: {profile_response.text}")
-        return f"Failed to fetch LinkedIn profile: {profile_response.text}", 400
-
-    linkedin_profile = profile_response.json()
-    current_app.logger.info(f"[DEBUG] LinkedIn profile response: {linkedin_profile}")
-
-    linkedin_user_id = linkedin_profile.get("sub")  # <- OpenID user ID field
-
-    if not linkedin_user_id:
-        return "Could not retrieve LinkedIn user ID", 400
-
-    # Get the GitHub user ID from the OAuth state param
-    github_user_id = request.args.get("state")
-    if not github_user_id:
-        return "Missing state param (GitHub user ID)", 400
+        return "Missing access token from LinkedIn", 400
 
     user = User.query.filter_by(github_id=github_user_id).first()
     if not user:
         return f"User with GitHub ID {github_user_id} not found", 404
 
     user.linkedin_token = access_token
-    user.linkedin_id = linkedin_user_id
+    user.linkedin_id = github_user_id  # Use GitHub ID as placeholder
     db.session.commit()
-    current_app.logger.info(f"[LinkedIn] Linked user {github_user_id} with LinkedIn ID {linkedin_user_id}")
 
+    current_app.logger.info(f"[LinkedIn] Linked user {github_user_id} with access token")
     return "✅ LinkedIn Access Token stored successfully. You can close this window."
-
 
 
 # -------------------- GITHUB WEBHOOK HANDLING -------------------- #
@@ -136,7 +101,6 @@ def github_webhook():
     except Exception:
         return jsonify({"error": "Invalid JSON"}), 400
 
-    # Validate required fields
     pusher = data.get("pusher", {})
     repo = data.get("repository", {})
     head_commit = data.get("head_commit", {})
@@ -152,12 +116,7 @@ def github_webhook():
     if not all([pusher_name, repo_name, commit_message, commit_url]):
         return jsonify({"error": "Incomplete commit info"}), 400
 
-    # Use GitHub user ID if available, otherwise fallback to username
-    github_user_id = repo.get("owner", {}).get("id")
-    if github_user_id is not None:
-        github_user_id = str(github_user_id)
-    else:
-        github_user_id = pusher_name  # fallback for test payloads
+    github_user_id = str(repo.get("owner", {}).get("id") or pusher_name)
 
     logging.info(f"Looking for user with github_id={github_user_id}")
     user = User.query.filter_by(github_id=github_user_id).first()
@@ -182,7 +141,6 @@ def github_webhook():
         event_type="push",
         linkedin_post_id=linkedin_post_id
     )
-
     db.session.add(github_event)
     db.session.commit()
 
@@ -193,4 +151,3 @@ def github_webhook():
         logging.info(f"[LinkedIn] Response: {linkedin_response.text}")
 
     return jsonify({"status": "success"}), 200
-

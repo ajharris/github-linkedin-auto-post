@@ -6,8 +6,8 @@ from types import SimpleNamespace
 
 
 @pytest.mark.parametrize("linkedin_id, expected_urn", [
-    ("123456", "urn:li:person:123456"),
-    ("urn:li:person:123456", "urn:li:person:123456")
+    ("123456", "urn:li:member:123456"),
+    ("urn:li:member:123456", "urn:li:member:123456")
 ])
 def test_post_to_linkedin_formats_author_correctly(monkeypatch, linkedin_id, expected_urn):
     user = SimpleNamespace(linkedin_token="fake-token", linkedin_id=linkedin_id)
@@ -47,7 +47,7 @@ def test_post_to_linkedin_success():
 
         # ✅ Add this
         request_payload = m.request_history[0].json()
-        assert request_payload["author"] == "urn:li:person:123456789", "Author URN should use 'person', not 'member'"
+        assert request_payload["author"] == "urn:li:member:123456789", "Author URN should use 'person', not 'member'"
 
         assert result.status_code == 201
         assert result.json()["id"] == "mock_post_id"

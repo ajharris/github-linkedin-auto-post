@@ -1,13 +1,11 @@
 import os
 import requests
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
 
 LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
-
-
-import logging
 
 def post_to_linkedin(user, repo_name, commit_message):
     access_token = user.linkedin_token
@@ -19,19 +17,25 @@ def post_to_linkedin(user, repo_name, commit_message):
     if not access_token or not user_id:
         raise ValueError("Missing LinkedIn credentials")
 
+    # Ensure the user_id is properly formatted
+    if not user_id.startswith("urn:li:person:"):
+        author_urn = f"urn:li:person:{user_id}"
+    else:
+        author_urn = user_id
+
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
     }
 
     post_data = {
-        "author": f"urn:li:person:{user_id}",
+        "author": author_urn,
         "lifecycleState": "PUBLISHED",
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {
                 "shareCommentary": {
-                    "text": f"🚀 Just pushed new code to {repo_name}!\n\n"
-                            f"💬 {commit_message}\n\n"
+                    "text": f"\ud83d\ude80 Just pushed new code to {repo_name}!\n\n"
+                            f"\ud83d\udcac {commit_message}\n\n"
                             "#buildinpublic #opensource"
                 },
                 "shareMediaCategory": "NONE"
@@ -42,5 +46,5 @@ def post_to_linkedin(user, repo_name, commit_message):
         }
     }
 
-    response = requests.post("https://api.linkedin.com/v2/ugcPosts", json=post_data, headers=headers)
+    response = requests.post(LINKEDIN_POST_URL, json=post_data, headers=headers)
     return response

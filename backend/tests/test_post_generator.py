@@ -47,7 +47,9 @@ def test_generate_post_with_minimal_payload():
     assert isinstance(post, str)
     assert "a GitHub repo" in post
     assert "made an update" in post
-    assert "https://github.com" in post
+    from urllib.parse import urlparse
+    parsed_url = urlparse(post)
+    assert parsed_url.hostname == "github.com"
 
 def test_generate_post_with_partial_commit():
     payload = {

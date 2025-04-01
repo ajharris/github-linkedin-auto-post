@@ -28,7 +28,9 @@ routes = Blueprint("routes", __name__)
 @routes.route("/<path:path>")
 def serve(path):
     frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../frontend/build")
-    file_path = os.path.join(frontend_dir, path)
+    file_path = os.path.normpath(os.path.join(frontend_dir, path))
+    if not file_path.startswith(frontend_dir):
+        return "Forbidden", 403
     if path and os.path.exists(file_path):
         return send_from_directory(frontend_dir, path)
     return send_from_directory(frontend_dir, "index.html")

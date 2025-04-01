@@ -19,7 +19,7 @@ def test_linkedin_callback_makes_token_request(app, test_client):
 
         # Mock LinkedIn profile response with numeric member ID
         m.get("https://api.linkedin.com/v2/userinfo", json={
-            "id": "123456789"
+            "sub": "123456789"
         })
 
         # Trigger the OAuth callback with mock code and user ID

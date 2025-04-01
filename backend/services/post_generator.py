@@ -9,7 +9,7 @@ def generate_post_from_webhook(payload):
     message = commit.get("message", "made an update")
     commit_author = commit.get("author", {}).get("name", "Someone")
 
-    author = f"urn:li:member:{linkedin_user_id}"
+    author = f"urn:li:person:{linkedin_user_id}"
 
     return (
         f"🚀 {commit_author} just pushed to {repo}!\n\n"

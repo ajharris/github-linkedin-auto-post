@@ -25,7 +25,7 @@ def test_post_to_linkedin_success():
         result = post_to_linkedin(user, "ajharris/github-linkedin-auto-post", "Commit message")
 
         request_payload = m.request_history[0].json()
-        assert request_payload["author"] == "urn:li:member:123456789"
+        assert request_payload["author"] == "urn:li:person:123456789"
         assert result.status_code == 201
         assert result.json()["id"] == "mock_post_id"
 
@@ -70,4 +70,4 @@ def test_post_payload_format():
 
         assert actual_text == expected_text
         assert payload["visibility"]["com.linkedin.ugc.MemberNetworkVisibility"] == "PUBLIC"
-        assert payload["author"] == "urn:li:member:123456789"
+        assert payload["author"] == "urn:li:person:123456789"

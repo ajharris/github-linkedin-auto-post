@@ -92,3 +92,45 @@ def test_webhook_fails_if_linkedin_credentials_missing(mock_verify, test_client)
     assert res.status_code == 500
     assert b"Missing LinkedIn credentials" in res.data  # only if app returns error detail
 
+
+def test_linkedin_author_format(client, requests_mock, app):
+    # Arrange: create a test user with a bad LinkedIn ID (e.g. just digits)
+    with app.app_context():
+        user = User(
+            github_id=7585359,
+            github_token="fake_github_token",
+            linkedin_token="fake_token",
+            linkedin_id="AbCDefG123456789"  # ✅ fake but valid-length ID
+        )        
+        db.session.add(user)
+        db.session.commit()
+
+    # Intercept the LinkedIn API call
+    linkedin_url = "https://api.linkedin.com/v2/ugcPosts"
+
+    def request_callback(request, context):
+        body = json.loads(request.body)
+        author = body.get("author")
+        assert author.startswith("urn:li:person:"), f"Invalid author format: {author}"
+        assert len(author.split(":")[-1]) > 10, f"Author URN too short: {author}"
+        context.status_code = 201  # LinkedIn returns 201 Created for successful posts
+        return {"id": "urn:li:share:123456789"}
+
+
+    import re
+    requests_mock.post(re.compile(r"https://api\.linkedin\.com/v2/ugcPosts.*"), json=request_callback)
+
+
+    # Act: simulate GitHub push event
+    headers = {"X-GitHub-Event": "push"}
+    data = {
+        "repository": {"full_name": "ajharris/github-linkedin-auto-post"},
+        "head_commit": {"message": "test commit"},
+        "sender": {"id": 7585359}
+    }
+    response = client.post("/webhook/github", json=data, headers=headers)
+
+    # Assert: still OK on our side, but test will fail if author is bad
+    assert response.status_code == 200
+    assert requests_mock.called, "LinkedIn mock was not called"
+

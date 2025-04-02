@@ -124,6 +124,8 @@ def github_webhook():
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    logging.info(f"Webhook user: {user}, LinkedIn ID: {user.linkedin_id}")
+
     linkedin_post_id = None
     try:
         linkedin_response = post_to_linkedin(user, repo_name, commit_message)

@@ -92,16 +92,16 @@ def test_webhook_fails_if_linkedin_credentials_missing(mock_verify, test_client)
     assert res.status_code == 500
     assert b"Missing LinkedIn credentials" in res.data  # only if app returns error detail
 
-
-def test_linkedin_author_format(client, requests_mock, app):
+@patch("backend.routes.verify_github_signature", return_value=True)
+def test_linkedin_author_format(mock_verify, client, requests_mock, app):
     # Arrange: create a test user with a bad LinkedIn ID (e.g. just digits)
-    with app.app_context():
+    with client.application.app_context():
         user = User(
             github_id=7585359,
             github_token="fake_github_token",
             linkedin_token="fake_token",
-            linkedin_id="AbCDefG123456789"  # ✅ fake but valid-length ID
-        )        
+            linkedin_id="AbCDefG123456789"
+        )
         db.session.add(user)
         db.session.commit()
 
@@ -124,11 +124,28 @@ def test_linkedin_author_format(client, requests_mock, app):
     # Act: simulate GitHub push event
     headers = {"X-GitHub-Event": "push"}
     data = {
-        "repository": {"full_name": "ajharris/github-linkedin-auto-post"},
-        "head_commit": {"message": "test commit"},
-        "sender": {"id": 7585359}
+    "repository": {
+        "full_name": "ajharris/github-linkedin-auto-post",
+        "html_url": "https://github.com/ajharris/github-linkedin-auto-post"
+    },
+    "head_commit": {
+        "message": "test commit",
+        "url": "https://github.com/ajharris/github-linkedin-auto-post/commit/abc123",
+        "author": {
+            "name": "Dev User"
+        }
+    },
+        "pusher": {
+        "name": "7585359"
+    },
+    "sender": {
+        "id": 7585359
     }
+    }
+
     response = client.post("/webhook/github", json=data, headers=headers)
+    print("Response data:", response.data)
+
 
     # Assert: still OK on our side, but test will fail if author is bad
     assert response.status_code == 200

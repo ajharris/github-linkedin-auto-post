@@ -47,3 +47,12 @@ def clean_db(app):
     db.drop_all()
     db.create_all()
 
+@pytest.fixture(autouse=True)
+def patch_post_to_linkedin():
+    with patch("backend.routes.post_to_linkedin") as mock_func:
+        mock_func.side_effect = lambda user, repo, msg: type("Response", (), {
+            "status_code": 201,
+            "json": lambda self: {"id": "mocked-id"}
+        })()
+        yield mock_func
+

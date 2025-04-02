@@ -26,7 +26,7 @@ def test_linkedin_callback_makes_token_request(app, test_client):
         # Trigger the OAuth callback with mock code and user ID
         response = test_client.get("/auth/linkedin/callback?code=mock_code&state=test")
 
-        assert response.status_code == 200
+        assert response.status_code == 200, response.data
         assert b"LinkedIn Access Token stored successfully" in response.data
         assert m.called, "Expected POST to LinkedIn was not made"
 

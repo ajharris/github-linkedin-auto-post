@@ -67,7 +67,7 @@ def test_linkedin_callback_success(mock_post, mock_get, client):
     # Call the callback
     response = client.get("/auth/linkedin/callback?code=valid_code&state=test")
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.data
     assert b"LinkedIn Access Token stored successfully" in response.data
 
 
@@ -117,5 +117,5 @@ def test_github_webhook(mock_verify, mock_post, client):
 
     response = client.post("/webhook/github", data=body, headers=headers)
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.data
     assert response.get_json() == {"status": "success"}

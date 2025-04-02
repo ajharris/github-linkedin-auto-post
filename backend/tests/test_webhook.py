@@ -35,7 +35,7 @@ def test_webhook_push_event(mock_post, test_client):
         },
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.data
     assert GitHubEvent.query.count() == 1
 
     event = GitHubEvent.query.first()

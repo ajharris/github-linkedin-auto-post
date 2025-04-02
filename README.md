@@ -14,8 +14,10 @@ Robust Testing – Includes unit and integration tests for critical backend serv
 
 Frontend UI – Built with React for future management and user controls.
 
-## Hosted at:
+## Hosted at
 
 https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/
 
 (Note: frontend not complete)
+
+

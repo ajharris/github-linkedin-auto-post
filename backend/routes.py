@@ -133,7 +133,7 @@ def github_webhook():
         if isinstance(linkedin_response, dict):
             linkedin_post_id = linkedin_response.get("id")
     except ValueError as e:
-        logging.exception("Failed to post to LinkedIn")
+        logging.exception("Failed to post to LinkedIn: {e}")
         return jsonify({"error": str(e)}), 500
 
     github_event = GitHubEvent(

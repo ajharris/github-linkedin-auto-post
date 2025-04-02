@@ -18,8 +18,8 @@ def post_to_linkedin(user, repo_name, commit_message):
         raise ValueError("Missing LinkedIn credentials")
 
     # Ensure the user_id is properly formatted
-    if not user_id.startswith("urn:li:person:"):
-        author_urn = f"urn:li:person:{user_id}"
+    if not user_id.startswith("urn:li:member:"):
+        author_urn = f"urn:li:member:{user_id}"
 
     else:
         author_urn = user_id

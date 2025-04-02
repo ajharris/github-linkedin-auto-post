@@ -87,6 +87,7 @@ def linkedin_callback():
     return "✅ LinkedIn Access Token stored successfully. You can close this window."
 
 
+
 # -------------------- GITHUB WEBHOOK HANDLING -------------------- #
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():

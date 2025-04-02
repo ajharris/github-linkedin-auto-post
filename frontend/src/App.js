@@ -13,6 +13,14 @@ function App() {
     alert("Posted!");
   };
 
+  const handleGitHubLogin = () => {
+    const githubClientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
+    const redirectUri = encodeURIComponent("https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/github/callback");
+    const scope = "read:user";
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+    window.location.href = githubAuthUrl;
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       <h2>GitHub to LinkedIn Post</h2>
@@ -31,6 +39,8 @@ function App() {
       />
       <br />
       <button onClick={postToLinkedIn}>Post</button>
+      <button onClick={handleGitHubLogin}>Login with GitHub</button>
+
     </div>
   );
 }

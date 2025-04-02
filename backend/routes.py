@@ -169,3 +169,35 @@ def github_webhook():
         logging.info(f"[LinkedIn] Response: {linkedin_response.text}")
 
     return jsonify({"status": "success"}), 200
+
+@routes.route("/auth/github/callback")
+def github_callback():
+    code = request.args.get("code")
+    if not code:
+        return "Missing code", 400
+
+    token_resp = requests.post(
+        "https://github.com/login/oauth/access_token",
+        data={
+            "client_id": os.getenv("GITHUB_CLIENT_ID"),
+            "client_secret": os.getenv("GITHUB_CLIENT_SECRET"),
+            "code": code,
+        },
+        headers={"Accept": "application/json"}
+    )
+
+    token_json = token_resp.json()
+    access_token = token_json.get("access_token")
+    if not access_token:
+        return "Failed to obtain GitHub access token", 400
+
+    user_resp = requests.get(
+        "https://api.github.com/user",
+        headers={"Authorization": f"token {access_token}"}
+    )
+    github_data = user_resp.json()
+    github_user_id = str(github_data.get("id"))
+
+    # Redirect to LinkedIn auth with github_user_id as state
+    return redirect(f"/auth/linkedin?github_user_id={github_user_id}")
+

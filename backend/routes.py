@@ -1,4 +1,4 @@
-from flask import Blueprint, request, redirect, send_from_directory, jsonify, current_app
+from flask import Blueprint, json, request, redirect, send_from_directory, jsonify, current_app
 import os
 import requests
 import logging
@@ -99,68 +99,37 @@ def linkedin_callback():
 # -------------------- GITHUB WEBHOOK HANDLING -------------------- #
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():
-    signature = request.headers.get("X-Hub-Signature-256")
-    if not verify_github_signature(request, signature):
-        return jsonify({"error": "Invalid signature"}), 403
 
+    payload = request.get_json()
     
+    # Basic logging
+    current_app.logger.info("[Webhook] Raw payload:")
+    current_app.logger.info(json.dumps(payload, indent=2))
 
-    try:
-        data = request.get_json(force=True)
-    except Exception:
-        return jsonify({"error": "Invalid JSON"}), 400
 
-    pusher = data.get("pusher", {})
-    repo = data.get("repository", {})
-    head_commit = data.get("head_commit", {})
+    # Extract GitHub user ID and commit data
+    github_user_id = str(payload.get("sender", {}).get("id"))
+    repo_name = payload.get("repository", {}).get("name")
+    commit_message = payload.get("head_commit", {}).get("message")
 
-    if not pusher or not repo or not head_commit:
-        return jsonify({"error": "Missing required data"}), 400
+    if not github_user_id or not repo_name or not commit_message:
+        current_app.logger.warning("[Webhook] Missing required data")
+        return "Invalid payload", 400
 
-    pusher_name = pusher.get("name")
-    repo_name = repo.get("full_name")
-    commit_message = head_commit.get("message")
-    commit_url = head_commit.get("url")
-
-    if not all([pusher_name, repo_name, commit_message, commit_url]):
-        return jsonify({"error": "Incomplete commit info"}), 400
-
-    github_user_id = str(repo.get("owner", {}).get("id") or pusher_name)
-
-    
+    # Fetch user and post
     user = User.query.filter_by(github_id=github_user_id).first()
+    if not user or not user.linkedin_token:
+        current_app.logger.warning(f"[Webhook] No LinkedIn credentials for GitHub user {github_user_id}")
+        return "No LinkedIn credentials", 200
 
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    
-
-    linkedin_post_id = None
     try:
-        linkedin_response = post_to_linkedin(user, repo_name, commit_message)
-        if isinstance(linkedin_response, dict):
-            linkedin_post_id = linkedin_response.get("id")
-    except ValueError as e:
-        
-        return jsonify({"error": str(e)}), 500
+        post_to_linkedin(user, repo_name, commit_message)
+        current_app.logger.info("[Webhook] Post triggered successfully")
+    except Exception as e:
+        current_app.logger.error(f"[Webhook] Failed to post to LinkedIn: {e}")
+        return str(e), 500
 
-    github_event = GitHubEvent(
-        user_id=user.id,
-        repo_name=repo_name,
-        commit_message=commit_message,
-        commit_url=commit_url,
-        event_type="push",
-        linkedin_post_id=linkedin_post_id
-    )
-    db.session.add(github_event)
-    db.session.commit()
-
-    
-
-    if isinstance(linkedin_response, requests.Response):
-        logging.info(f"[LinkedIn] Response: {linkedin_response.text}")
-
-    return jsonify({"status": "success"}), 200
+    return "OK", 200
 
 @routes.route("/auth/github/callback")
 def github_callback():

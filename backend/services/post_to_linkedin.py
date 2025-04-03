@@ -9,6 +9,7 @@ load_dotenv()
 LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
 
 def post_to_linkedin(user, repo_name, commit_message):
+    
     access_token = user.linkedin_token
     user_id = user.linkedin_id
 

@@ -37,6 +37,8 @@ def serve(path):
 # -------------------- LINKEDIN AUTHENTICATION -------------------- #
 @routes.route("/auth/linkedin")
 def linkedin_auth():
+    print("💬 LinkedIn callback args:", dict(request.args))
+
     github_user_id = request.args.get("github_user_id", "test")
     linkedin_auth_url = (
         f"https://www.linkedin.com/oauth/v2/authorization"
@@ -100,13 +102,6 @@ def linkedin_callback():
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():
     payload = request.get_json()
-
-    current_app.logger.info("[Webhook] GitHub push received")
-    current_app.logger.info("[Webhook] Raw payload dump:")
-    current_app.logger.info(json.dumps(payload, indent=2))  # 💥 This will reveal the structure
-
-    print("🔥 Webhook received and print is working!")
-    print("Payload preview:", request.get_json())
 
 
     github_user_id = str(payload.get("sender", {}).get("id"))

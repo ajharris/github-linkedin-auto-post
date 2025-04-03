@@ -186,14 +186,12 @@ def check_github_link_status(github_id):
 
 @routes.route("/debug/fetch_linkedin_id")
 def debug_fetch_linkedin_id():
-    print("DEBUG QUERY STRING:", request.query_string)
-    print("DEBUG ARGS:", request.args)
+    try:
+        github_user_id = int(request.args.get("github_user_id"))
+    except (TypeError, ValueError):
+        return "Invalid github_user_id parameter", 400
 
-    github_user_id = request.args.get("github_id")
-    if not github_user_id:
-        return "Missing github_user_id parameter", 400
-
-    user = User.query.filter_by(github_id=str(github_user_id)).first()
+    user = User.query.filter_by(github_id=github_user_id).first()
     if not user or not user.linkedin_token:
         return f"No LinkedIn token found for GitHub user {github_user_id}", 404
 

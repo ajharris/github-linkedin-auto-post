@@ -187,7 +187,7 @@ def check_github_link_status(github_id):
 @routes.route("/debug/fetch_linkedin_id")
 def debug_fetch_linkedin_id():
     try:
-        github_user_id = int(request.args.get("github_user_id"))
+        github_user_id = request.args.get("github_user_id")
     except (TypeError, ValueError):
         return "Invalid github_user_id parameter", 400
 

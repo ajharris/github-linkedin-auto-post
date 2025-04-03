@@ -184,9 +184,31 @@ def check_github_link_status(github_id):
         })
     return jsonify({"linked": False}), 404
 
-@routes.route("/debug/set_linkedin_id")
-def debug_set_linkedin_id():
-    user = User.query.filter_by(github_id="7585359").first()
-    user.linkedin_id = "urn:li:person:abc123xyz890"  # ← your actual ID
+@routes.route("/debug/fetch_linkedin_id")
+def debug_fetch_linkedin_id():
+    github_user_id = request.args.get("github_user_id")
+    if not github_user_id:
+        return "Missing github_user_id parameter", 400
+
+    user = User.query.filter_by(github_id=github_user_id).first()
+    if not user or not user.linkedin_token:
+        return f"No LinkedIn token found for GitHub user {github_user_id}", 404
+
+    access_token = user.linkedin_token
+    profile_response = requests.get(
+        "https://api.linkedin.com/v2/me",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    if profile_response.status_code != 200:
+        return f"Failed to fetch LinkedIn profile: {profile_response.text}", 400
+
+    linkedin_id = profile_response.json().get("id")
+    if not linkedin_id:
+        return "LinkedIn profile missing ID", 400
+
+    user.linkedin_id = f"urn:li:person:{linkedin_id}"
     db.session.commit()
-    return "✅ LinkedIn ID updated"
+
+    return f"✅ Updated LinkedIn ID to {user.linkedin_id} for GitHub user {github_user_id}"
+

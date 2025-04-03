@@ -42,12 +42,14 @@ function App() {
   };
 
   const handleGitHubLogin = () => {
+    localStorage.removeItem("github_user_id");  // clear cache
     const githubClientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
     const redirectUri = encodeURIComponent("https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/github/callback");
     const scope = "read:user";
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${redirectUri}&scope=${scope}`;
     window.location.href = githubAuthUrl;
   };
+  
 
   const handleLinkedInLogin = () => {
     if (!githubUserId) {
@@ -80,7 +82,19 @@ function App() {
       <br />
       <button onClick={handleGitHubLogin}>Login with GitHub</button>
       <button onClick={handleLinkedInLogin}>Link LinkedIn</button>
+      {userInfo ? (
+      <div>
+        <p>👤 GitHub: <strong>{userInfo.github_username}</strong> (ID: {userInfo.github_id})</p>
+        {userInfo.linked ? (
+          <p>🔗 Linked to LinkedIn ✅</p>
+        ) : (
+          <p>❌ Not linked to LinkedIn yet</p>
+        )}
+      </div>
+    ) : (
       <p>GitHub User ID: {githubUserId || "Not logged in"}</p>
+    )}
+
       </div> 
     </div>
   );

@@ -184,4 +184,9 @@ def check_github_link_status(github_id):
         })
     return jsonify({"linked": False}), 404
 
-
+@routes.route("/debug/set_linkedin_id")
+def debug_set_linkedin_id():
+    user = User.query.filter_by(github_id="7585359").first()
+    user.linkedin_id = "urn:li:person:abc123xyz890"  # ← your actual ID
+    db.session.commit()
+    return "✅ LinkedIn ID updated"

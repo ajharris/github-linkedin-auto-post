@@ -14,6 +14,8 @@ def create_app(config_name=None):
     """Flask application factory function."""
     config_name = config_name or os.getenv("FLASK_CONFIG", "production")
     app = Flask(__name__, static_folder="../frontend/build", static_url_path="")
+    app.logger.setLevel(logging.INFO)
+
 
     config_obj = config_dict.get(config_name)
     if config_obj is None:

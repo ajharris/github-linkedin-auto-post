@@ -39,12 +39,15 @@ def serve(path):
 def linkedin_auth():
     github_user_id = request.args.get("github_user_id", "test")
     linkedin_auth_url = (
-        f"https://www.linkedin.com/oauth/v2/authorization?response_type=code"
-        f"&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}"
-        f"&scope=openid%20profile%20w_member_social"
+        f"https://www.linkedin.com/oauth/v2/authorization"
+        f"?response_type=code"
+        f"&client_id={CLIENT_ID}"
+        f"&redirect_uri={REDIRECT_URI}"
+        f"&scope=w_member_social"
         f"&state={github_user_id}"
     )
     return redirect(linkedin_auth_url)
+
 
 @routes.route("/auth/linkedin/callback")
 def linkedin_callback():
@@ -75,33 +78,20 @@ def linkedin_callback():
     if not access_token:
         return "Missing access token from LinkedIn", 400
 
-    # ✅ GET REAL LINKEDIN ID
-    profile_response = requests.get(
-        "https://api.linkedin.com/v2/me",
-        headers={"Authorization": f"Bearer {access_token}"}
-    )
-
-    if profile_response.status_code != 200:
-        return f"Failed to fetch LinkedIn profile: {profile_response.text}", 400
-
-    linkedin_user_id = profile_response.json().get("id")
-    if not linkedin_user_id:
-        return "LinkedIn profile missing ID", 400
-
+    # Store the token without fetching /me
     user = User.query.filter_by(github_id=github_user_id).first()
     if not user:
-        # 👇 Optionally auto-create user here instead of returning 404
         user = User(github_id=github_user_id)
 
     user.linkedin_token = access_token
-    user.linkedin_id = linkedin_user_id
+
+    # ✅ Manually set your LinkedIn URN here once for testing
+    user.linkedin_id = "urn:li:person:REPLACE_WITH_YOUR_URN"
+
     db.session.add(user)
     db.session.commit()
 
-    current_app.logger.info(f"LinkedIn callback query string: {request.query_string}")
-
-
-    current_app.logger.info(f"[LinkedIn] Linked user {github_user_id} with LinkedIn ID {linkedin_user_id}")
+    current_app.logger.info(f"[LinkedIn] Stored token for GitHub user {github_user_id}")
     return "✅ LinkedIn Access Token stored successfully. You can close this window."
 
 

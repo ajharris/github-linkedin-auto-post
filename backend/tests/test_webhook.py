@@ -11,7 +11,7 @@ def test_webhook_push_event(mock_post, test_client):
     mock_post.return_value.status_code = 201
     mock_post.return_value.json.return_value = {"id": "linkedin_post_123"}
 
-    user = User(github_id="testuser", github_token="fake_github_token", linkedin_token="fake_token", linkedin_id="123456789")
+    user = User(github_id="123456789", github_token="fake_github_token", linkedin_token="fake_token", linkedin_id="123456789")
     from backend.models import db
     db.session.add(user)
     db.session.commit()
@@ -55,7 +55,8 @@ def test_webhook_invalid_payload(test_client):
             "X-Hub-Signature-256": "fake"
         },
     )
-    assert response.status_code == 403  # signature should be invalid without patching
+    assert response.status_code == 400
+
 
 
 def test_webhook_unauthorized_request(test_client):

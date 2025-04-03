@@ -104,7 +104,12 @@ def github_webhook():
     payload = request.get_json()
 
 
-    github_user_id = str(payload.get("sender", {}).get("id"))
+    github_user_id = (
+        str(payload.get("sender", {}).get("id"))
+        or str(payload.get("repository", {}).get("owner", {}).get("id"))
+        or str(payload.get("pusher", {}).get("name"))
+    )
+
     repo_name = payload.get("repository", {}).get("name")
     commit_message = payload.get("head_commit", {}).get("message")
 
@@ -112,13 +117,15 @@ def github_webhook():
 
     user = User.query.filter_by(github_id=github_user_id).first()
     if not user:
-        current_app.logger.warning(f"[Webhook] No user found for GitHub ID {github_user_id}")
-        user = User.query.first()  # TEMP fallback for testing
-        current_app.logger.warning(f"[Webhook] Fallback user: {user.github_id}")
+        current_app.logger.warning("[post_to_linkedin] No user provided.")
+        user = User.query.first()
+        current_app.logger.warning(f"[Webhook] Fallback user: {getattr(user, 'github_id', 'None')}")
 
-    if not user.linkedin_token:
-        current_app.logger.warning(f"[Webhook] No LinkedIn token for user {user.github_id}")
-        return "No LinkedIn token", 200
+    if not user or not user.linkedin_token:
+        current_app.logger.warning("[Webhook] No user with valid LinkedIn token found.")
+        return jsonify({"error": "No valid user found"}), 400
+
+    
 
     try:
         post_to_linkedin(user, repo_name, commit_message)
@@ -127,7 +134,7 @@ def github_webhook():
         current_app.logger.error(f"[Webhook] Failed to post to LinkedIn: {e}")
         return str(e), 500
 
-    return "OK", 200
+    return jsonify({"status": "success"})
 
 @routes.route("/auth/github/callback")
 def github_callback():

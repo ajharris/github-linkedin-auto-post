@@ -1,5 +1,5 @@
 import os
-from flask import current_app, json
+from flask import current_app, json, jsonify
 import requests
 from dotenv import load_dotenv
 import logging
@@ -12,9 +12,13 @@ LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
 
 def post_to_linkedin(user, repo_name, commit_message):
     if not user:
-        current_app.logger.warning(f"[Webhook] No user found for GitHub ID {github_user_id}")
+        current_app.logger.warning(f"[post_to_linkedin] No user provided.")
         user = User.query.first()
-        current_app.logger.warning(f"[Webhook] Fallback: using first user {user.github_id}")
+        if not user:
+            raise ValueError("User not found")
+        current_app.logger.warning(f"[Webhook] Fallback user: {getattr(user, 'github_id', 'None')}")
+
+
 
     
     access_token = user.linkedin_token

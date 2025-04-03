@@ -4,11 +4,18 @@ import requests
 from dotenv import load_dotenv
 import logging
 
+from backend.models import User
+
 load_dotenv()
 
 LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
 
 def post_to_linkedin(user, repo_name, commit_message):
+    if not user:
+        current_app.logger.warning(f"[Webhook] No user found for GitHub ID {github_user_id}")
+        user = User.query.first()
+        current_app.logger.warning(f"[Webhook] Fallback: using first user {user.github_id}")
+
     
     access_token = user.linkedin_token
     user_id = user.linkedin_id

@@ -105,6 +105,10 @@ def github_webhook():
     current_app.logger.info("[Webhook] Raw payload dump:")
     current_app.logger.info(json.dumps(payload, indent=2))  # 💥 This will reveal the structure
 
+    print("🔥 Webhook received and print is working!")
+    print("Payload preview:", request.get_json())
+
+
     github_user_id = str(payload.get("sender", {}).get("id"))
     repo_name = payload.get("repository", {}).get("name")
     commit_message = payload.get("head_commit", {}).get("message")

@@ -1,5 +1,5 @@
 from backend.models import db, User
-from backend.scripts.seed_user import seed_main_user
+from backend.scripts.seed_main_user import seed_main_user
 
 def test_seed_main_user(app, monkeypatch):
     monkeypatch.setenv("SEED_GITHUB_ID", "test-user-123")

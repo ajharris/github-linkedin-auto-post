@@ -98,6 +98,9 @@ def linkedin_callback():
     db.session.add(user)
     db.session.commit()
 
+    current_app.logger.info(f"LinkedIn callback query string: {request.query_string}")
+
+
     current_app.logger.info(f"[LinkedIn] Linked user {github_user_id} with LinkedIn ID {linkedin_user_id}")
     return "✅ LinkedIn Access Token stored successfully. You can close this window."
 

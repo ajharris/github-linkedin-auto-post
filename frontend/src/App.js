@@ -5,19 +5,32 @@ function App() {
   const [repo, setRepo] = useState("");
   const [message, setMessage] = useState("");
   const [githubUserId, setGithubUserId] = useState(localStorage.getItem("github_user_id") || "");
+  const [userInfo, setUserInfo] = useState(null);
+
 
   // Check for GitHub OAuth callback with ?github_user_id=
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("github_user_id");
+  
     if (id) {
       localStorage.setItem("github_user_id", id);
       setGithubUserId(id);
-
-      // Clean up the URL
       window.history.replaceState({}, document.title, "/");
     }
+  
+    const storedId = id || localStorage.getItem("github_user_id");
+    if (storedId) {
+      fetch(`/api/github/${storedId}/status`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.github_id) {
+            setUserInfo(data);
+          }
+        });
+    }
   }, []);
+  
 
   const postToLinkedIn = async () => {
     await axios.post("http://localhost:5000/webhook", {

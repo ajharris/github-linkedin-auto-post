@@ -41,7 +41,7 @@ def linkedin_auth():
     linkedin_auth_url = (
         f"https://www.linkedin.com/oauth/v2/authorization?response_type=code"
         f"&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}"
-        f"&scope=w_member_social"
+        f"&scope=r_liteprofile%20r_emailaddress%20w_member_social"
         f"&state={github_user_id}"
     )
     return redirect(linkedin_auth_url)

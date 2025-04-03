@@ -193,7 +193,7 @@ def debug_fetch_linkedin_id():
     if not github_user_id:
         return "Missing github_user_id parameter", 400
 
-    user = User.query.filter_by(github_id=github_user_id).first()
+    user = User.query.filter_by(github_id=str(github_user_id)).first()
     if not user or not user.linkedin_token:
         return f"No LinkedIn token found for GitHub user {github_user_id}", 404
 

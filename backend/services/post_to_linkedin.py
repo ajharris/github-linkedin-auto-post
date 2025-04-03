@@ -1,4 +1,5 @@
 import os
+from flask import current_app, json
 import requests
 from dotenv import load_dotenv
 import logging
@@ -48,4 +49,10 @@ def post_to_linkedin(user, repo_name, commit_message):
     }
 
     response = requests.post(LINKEDIN_POST_URL, json=post_data, headers=headers)
+
+    current_app.logger.info(f"[LinkedIn] Posting as {user.linkedin_id}")
+    current_app.logger.info(f"[LinkedIn] Payload: {json.dumps(post_data, indent=2)}")
+    current_app.logger.info(f"[LinkedIn] Response: {response.status_code} {response.text}")
+
+
     return response

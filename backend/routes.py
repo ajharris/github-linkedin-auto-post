@@ -45,9 +45,11 @@ def linkedin_auth():
         f"?response_type=code"
         f"&client_id={CLIENT_ID}"
         f"&redirect_uri={REDIRECT_URI}"
-        f"&scope=r_liteprofile%20w_member_social"
+        f"&scope=w_member_social"
         f"&state={github_user_id}"
     )
+    current_app.logger.info(f"[LinkedIn] Redirecting to LinkedIn auth URL: {linkedin_auth_url}")
+
 
     return redirect(linkedin_auth_url)
 

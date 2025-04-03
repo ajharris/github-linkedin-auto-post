@@ -8,7 +8,7 @@ from backend.routes import routes
 from backend.config import config_dict
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
+
 
 def create_app(config_name=None):
     """Flask application factory function."""

@@ -11,7 +11,7 @@ def post_to_linkedin(user, repo_name, commit_message):
     access_token = user.linkedin_token
     user_id = user.linkedin_id
 
-    logging.info(f"[LinkedIn] Access token present: {bool(access_token)}")
+    
     logging.info(f"[LinkedIn] User ID: {user_id}")
 
     if not access_token or not user_id:

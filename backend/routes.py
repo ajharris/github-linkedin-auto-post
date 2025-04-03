@@ -10,7 +10,7 @@ from backend.services.verify_signature import verify_github_signature
 
 # Load environment variables
 load_dotenv()
-logging.basicConfig(level=logging.INFO)
+
 
 CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
@@ -110,7 +110,7 @@ def github_webhook():
     if not verify_github_signature(request, signature):
         return jsonify({"error": "Invalid signature"}), 403
 
-    logging.info("Webhook received")
+    
 
     try:
         data = request.get_json(force=True)
@@ -134,13 +134,13 @@ def github_webhook():
 
     github_user_id = str(repo.get("owner", {}).get("id") or pusher_name)
 
-    logging.info(f"Looking for user with github_id={github_user_id}")
+    
     user = User.query.filter_by(github_id=github_user_id).first()
 
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    logging.info(f"Webhook user: {user}, LinkedIn ID: {user.linkedin_id}")
+    
 
     linkedin_post_id = None
     try:
@@ -148,7 +148,7 @@ def github_webhook():
         if isinstance(linkedin_response, dict):
             linkedin_post_id = linkedin_response.get("id")
     except ValueError as e:
-        logging.exception("Failed to post to LinkedIn: {e}")
+        
         return jsonify({"error": str(e)}), 500
 
     github_event = GitHubEvent(
@@ -162,10 +162,9 @@ def github_webhook():
     db.session.add(github_event)
     db.session.commit()
 
-    logging.info(f"[Webhook] Posting to LinkedIn for repo: {repo_name}, commit: {commit_message}")
+    
 
     if isinstance(linkedin_response, requests.Response):
-        logging.info(f"[LinkedIn] Status: {linkedin_response.status_code}")
         logging.info(f"[LinkedIn] Response: {linkedin_response.text}")
 
     return jsonify({"status": "success"}), 200

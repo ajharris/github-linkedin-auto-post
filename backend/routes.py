@@ -102,28 +102,24 @@ def github_webhook():
     payload = request.get_json()
 
     current_app.logger.info("[Webhook] GitHub push received")
+    current_app.logger.info("[Webhook] Raw payload dump:")
+    current_app.logger.info(json.dumps(payload, indent=2))  # 💥 This will reveal the structure
 
-    # Dump the full payload
-    current_app.logger.info("[Webhook] Payload:")
-    current_app.logger.info(json.dumps(payload, indent=2))
-
-    # Try to extract key info and log it
     github_user_id = str(payload.get("sender", {}).get("id"))
     repo_name = payload.get("repository", {}).get("name")
     commit_message = payload.get("head_commit", {}).get("message")
 
-    current_app.logger.info(f"[Webhook] Extracted user_id={github_user_id}, repo={repo_name}, commit={commit_message}")
+    current_app.logger.info(f"[Webhook] Extracted values → user_id: {github_user_id}, repo: {repo_name}, commit: {commit_message}")
 
-
-    if not github_user_id or not repo_name or not commit_message:
-        current_app.logger.warning("[Webhook] Missing required data")
-        return "Invalid payload", 400
-
-    # Fetch user and post
     user = User.query.filter_by(github_id=github_user_id).first()
-    if not user or not user.linkedin_token:
-        current_app.logger.warning(f"[Webhook] No LinkedIn credentials for GitHub user {github_user_id}")
-        return "No LinkedIn credentials", 200
+    if not user:
+        current_app.logger.warning(f"[Webhook] No user found for GitHub ID {github_user_id}")
+        user = User.query.first()  # TEMP fallback for testing
+        current_app.logger.warning(f"[Webhook] Fallback user: {user.github_id}")
+
+    if not user.linkedin_token:
+        current_app.logger.warning(f"[Webhook] No LinkedIn token for user {user.github_id}")
+        return "No LinkedIn token", 200
 
     try:
         post_to_linkedin(user, repo_name, commit_message)

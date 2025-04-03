@@ -45,9 +45,10 @@ def linkedin_auth():
         f"?response_type=code"
         f"&client_id={CLIENT_ID}"
         f"&redirect_uri={REDIRECT_URI}"
-        f"&scope=w_member_social"
+        f"&scope=r_liteprofile%20w_member_social"
         f"&state={github_user_id}"
     )
+
     return redirect(linkedin_auth_url)
 
 

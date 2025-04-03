@@ -6,6 +6,7 @@ db = SQLAlchemy()
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     github_id = db.Column(db.String, unique=True, nullable=False)
+    github_username = db.Column(db.String, nullable=True)  # ✅ Add this line
     linkedin_id = db.Column(db.String, unique=True, nullable=True)
     github_token = db.Column(db.String, nullable=False)
     linkedin_token = db.Column(db.String, nullable=True)

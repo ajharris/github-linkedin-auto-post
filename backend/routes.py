@@ -197,7 +197,32 @@ def github_callback():
     )
     github_data = user_resp.json()
     github_user_id = str(github_data.get("id"))
+    github_username = github_data.get("login")
+
+    user = User.query.filter_by(github_id=github_user_id).first()
+    if not user:
+        user = User(github_id=github_user_id)
+
+    user.github_token = access_token
+    user.github_username = github_username  # ✅ Add this line
+    db.session.add(user)
+    db.session.commit()
+
+
 
     # Redirect to LinkedIn auth with github_user_id as state
     return redirect(f"/auth/linkedin?github_user_id={github_user_id}")
+
+@routes.route("/api/github/<github_id>/status")
+def check_github_link_status(github_id):
+    user = User.query.filter_by(github_id=str(github_id)).first()
+    if user:
+        return jsonify({
+            "linked": bool(user.linkedin_id),
+            "github_id": user.github_id,
+            "github_username": user.github_username,
+            "linkedin_id": user.linkedin_id
+        })
+    return jsonify({"linked": False}), 404
+
 

@@ -99,18 +99,21 @@ def linkedin_callback():
 # -------------------- GITHUB WEBHOOK HANDLING -------------------- #
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():
-
     payload = request.get_json()
-    
-    # Basic logging
-    current_app.logger.info("[Webhook] Raw payload:")
+
+    current_app.logger.info("[Webhook] GitHub push received")
+
+    # Dump the full payload
+    current_app.logger.info("[Webhook] Payload:")
     current_app.logger.info(json.dumps(payload, indent=2))
 
-
-    # Extract GitHub user ID and commit data
+    # Try to extract key info and log it
     github_user_id = str(payload.get("sender", {}).get("id"))
     repo_name = payload.get("repository", {}).get("name")
     commit_message = payload.get("head_commit", {}).get("message")
+
+    current_app.logger.info(f"[Webhook] Extracted user_id={github_user_id}, repo={repo_name}, commit={commit_message}")
+
 
     if not github_user_id or not repo_name or not commit_message:
         current_app.logger.warning("[Webhook] Missing required data")

@@ -90,9 +90,6 @@ def linkedin_callback():
 
     user.linkedin_token = access_token
 
-    # ✅ Manually set your LinkedIn URN here once for testing
-    user.linkedin_id = "urn:li:person:REPLACE_WITH_YOUR_URN"
-
     db.session.add(user)
     db.session.commit()
 

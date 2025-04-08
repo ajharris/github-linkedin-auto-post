@@ -8,29 +8,30 @@ class BaseConfig:
     SECRET_KEY = os.getenv("SECRET_KEY", "default_secret")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     LINKEDIN_USER_ID = os.getenv("LINKEDIN_USER_ID")
+    GITHUB_WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET")
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///app.db")
+    DEBUG = False
+    TESTING = False
 
-    @staticmethod
-    def init_app(app):
-        pass  # For any app-specific initialization
 
 class DevelopmentConfig(BaseConfig):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv("DEV_DATABASE_URL", "sqlite:///dev.db")
 
+
 class TestingConfig(BaseConfig):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_DATABASE_URI = os.getenv("TEST_DATABASE_URL", "sqlite:///test.db")
+
 
 class ProductionConfig(BaseConfig):
-    db_url = os.getenv("DATABASE_URL")
-    if not db_url:
-        raise ValueError("DATABASE_URL is not set! Make sure it's defined in your .env file or Heroku config.")
-    SQLALCHEMY_DATABASE_URI = db_url.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///prod.db")
 
-# Dictionary to map config names to classes
-config_dict = {
+
+# Dictionary to map environment names to config classes
+config = {
     "development": DevelopmentConfig,
     "testing": TestingConfig,
     "production": ProductionConfig,
-    "default": DevelopmentConfig,  # Set your default environment here
+    "default": DevelopmentConfig,
 }

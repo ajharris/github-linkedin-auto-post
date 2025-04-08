@@ -14,7 +14,8 @@ def test_post_to_linkedin_formats_author_correctly(monkeypatch, linkedin_id, exp
 
     def mock_post(url, json, headers):
         assert json["author"] == expected_urn
-        return SimpleNamespace(status_code=201, json=lambda: {"id": "fake-post-id"})
+        return SimpleNamespace(status_code=201, json=lambda: {"id": "fake-post-id"}, text="OK")
+
 
     monkeypatch.setattr("backend.services.post_to_linkedin.requests.post", mock_post)
 

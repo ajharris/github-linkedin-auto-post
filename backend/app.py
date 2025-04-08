@@ -14,6 +14,8 @@ def create_app(config_name=None):
     """Flask application factory function."""
     config_name = config_name or os.getenv("FLASK_CONFIG", "production")
     app = Flask(__name__, static_folder="../frontend/build", static_url_path="")
+    app.logger.setLevel(logging.INFO)
+
 
     config_obj = config_dict.get(config_name)
     if config_obj is None:
@@ -35,5 +37,11 @@ def create_app(config_name=None):
             return send_from_directory(app.static_folder, path)
         else:
             return send_from_directory(app.static_folder, "index.html")
+        
+    # 🔽 CLI command
+    @app.cli.command("seed-user")
+    def seed_user():
+        from backend.scripts.seed_main_user import seed_main_user
+        seed_main_user(app)
 
     return app

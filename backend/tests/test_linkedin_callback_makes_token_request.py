@@ -5,8 +5,16 @@ from backend.models import User, db
 
 def test_linkedin_callback_makes_token_request(app, test_client):
     with app.app_context():
-        # Seed a user with github_id='test' so the callback can match it
-        user = User(github_id="test", github_token="fake-token")
+        # Seed a user with github_id='123456789' so the callback can match it
+        user = User(
+            github_id="123456789",
+            github_username="testuser",
+            github_token="fake-token",  # <-- this must NOT be None
+            linkedin_token="mock_access_token"
+        )
+
+
+
         db.session.add(user)
         db.session.commit()
 
@@ -42,8 +50,8 @@ def test_linkedin_callback_makes_token_request(app, test_client):
         assert parsed["code"] == ["mock_code"]
 
     with app.app_context():
-        updated_user = User.query.filter_by(github_id="test").first()
+        updated_user = User.query.filter_by(github_id="123456789").first()
         assert updated_user.linkedin_token == "mock_access_token"
-        assert updated_user.linkedin_id == "test"
+        assert updated_user.linkedin_id == "123456789"
 
 

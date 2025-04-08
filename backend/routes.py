@@ -11,7 +11,6 @@ from backend.services.verify_signature import verify_github_signature
 # Load environment variables
 load_dotenv()
 
-
 CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
 CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 REDIRECT_URI = "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback"
@@ -50,7 +49,6 @@ def linkedin_auth():
     )
     current_app.logger.info(f"[LinkedIn] Redirecting to LinkedIn auth URL: {linkedin_auth_url}")
 
-
     return redirect(linkedin_auth_url)
 
 
@@ -83,22 +81,17 @@ def linkedin_callback():
     if not access_token:
         return "Missing access token from LinkedIn", 400
 
-    # Store the token without fetching /me
     user = User.query.filter_by(github_id=github_user_id).first()
     if not user:
-        user = User(github_id=github_user_id)
+        current_app.logger.warning("[LinkedIn] No user found with GitHub ID. Aborting.")
+        return "GitHub login required before connecting LinkedIn.", 400
 
     user.linkedin_token = access_token
 
-    # ✅ Manually set your LinkedIn URN here once for testing
-    user.linkedin_id = "urn:li:person:REPLACE_WITH_YOUR_URN"
-
-    db.session.add(user)
     db.session.commit()
 
     current_app.logger.info(f"[LinkedIn] Stored token for GitHub user {github_user_id}")
     return "✅ LinkedIn Access Token stored successfully. You can close this window."
-
 
 
 # -------------------- GITHUB WEBHOOK HANDLING -------------------- #
@@ -106,8 +99,12 @@ def linkedin_callback():
 def github_webhook():
     payload = request.get_json()
 
+    github_user_id = (
+        str(payload.get("sender", {}).get("id"))
+        or str(payload.get("repository", {}).get("owner", {}).get("id"))
+        or str(payload.get("pusher", {}).get("name"))
+    )
 
-    github_user_id = str(payload.get("sender", {}).get("id"))
     repo_name = payload.get("repository", {}).get("name")
     commit_message = payload.get("head_commit", {}).get("message")
 
@@ -115,13 +112,13 @@ def github_webhook():
 
     user = User.query.filter_by(github_id=github_user_id).first()
     if not user:
-        current_app.logger.warning(f"[Webhook] No user found for GitHub ID {github_user_id}")
-        user = User.query.first()  # TEMP fallback for testing
-        current_app.logger.warning(f"[Webhook] Fallback user: {user.github_id}")
+        current_app.logger.warning("[post_to_linkedin] No user provided.")
+        user = User.query.first()
+        current_app.logger.warning(f"[Webhook] Fallback user: {getattr(user, 'github_id', 'None')}")
 
-    if not user.linkedin_token:
-        current_app.logger.warning(f"[Webhook] No LinkedIn token for user {user.github_id}")
-        return "No LinkedIn token", 200
+    if not user or not user.linkedin_token:
+        current_app.logger.warning("[Webhook] No user with valid LinkedIn token found.")
+        return jsonify({"error": "No valid user found"}), 400
 
     try:
         post_to_linkedin(user, repo_name, commit_message)
@@ -130,7 +127,8 @@ def github_webhook():
         current_app.logger.error(f"[Webhook] Failed to post to LinkedIn: {e}")
         return str(e), 500
 
-    return "OK", 200
+    return jsonify({"status": "success"})
+
 
 @routes.route("/auth/github/callback")
 def github_callback():
@@ -166,14 +164,12 @@ def github_callback():
         user = User(github_id=github_user_id)
 
     user.github_token = access_token
-    user.github_username = github_username  # ✅ Add this line
+    user.github_username = github_username
     db.session.add(user)
     db.session.commit()
 
-
-
-    # Redirect to LinkedIn auth with github_user_id as state
     return redirect(f"/auth/linkedin?github_user_id={github_user_id}")
+
 
 @routes.route("/api/github/<github_id>/status")
 def check_github_link_status(github_id):
@@ -186,6 +182,7 @@ def check_github_link_status(github_id):
             "linkedin_id": user.linkedin_id
         })
     return jsonify({"linked": False}), 404
+
 
 @routes.route("/debug/fetch_linkedin_id")
 def debug_fetch_linkedin_id():
@@ -215,4 +212,3 @@ def debug_fetch_linkedin_id():
     db.session.commit()
 
     return f"✅ Updated LinkedIn ID to {user.linkedin_id} for GitHub user {github_user_id}"
-

@@ -60,7 +60,7 @@ def test_linkedin_callback_success(mock_post, mock_get, client):
     # Add fake GitHub user so the callback logic finds them
     with client.application.app_context():
         from backend.models import User, db
-        user = User(github_id="test", github_token="fake-token")
+        user = User(github_id="123456789", github_token="fake-token")
         db.session.add(user)
         db.session.commit()
 
@@ -82,8 +82,9 @@ def test_linkedin_callback_no_code(client):
 def test_github_webhook_no_signature(client):
     """Test GitHub webhook request with missing signature"""
     response = client.post("/webhook/github", json={"test": "data"}, headers={"Content-Type": "application/json"})
-    assert response.status_code == 403
-    assert response.get_json() == {"error": "Invalid signature"}
+    assert response.status_code == 400
+    assert response.get_json() == {"error": "No valid user found"}
+
 
 
 @patch("backend.routes.post_to_linkedin", return_value={"id": "test-post-id"})

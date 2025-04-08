@@ -103,6 +103,13 @@ def is_linkedin_token_valid(access_token):
     )
     return response.status_code == 200
 
+def is_github_token_valid(access_token):
+    """Validate GitHub access token."""
+    response = requests.get(
+        "https://api.github.com/user",
+        headers={"Authorization": f"token {access_token}"}
+    )
+    return response.status_code == 200
 
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():
@@ -133,9 +140,17 @@ def github_webhook():
         user = User.query.first()
         current_app.logger.warning(f"[Webhook] Fallback user: {getattr(user, 'github_id', 'None')}")
 
-    if not user or not user.linkedin_token or not is_linkedin_token_valid(user.linkedin_token):
-        current_app.logger.warning("[Webhook] No user with valid LinkedIn token found.")
-        return jsonify({"error": "No valid user found"}), 400
+    if not user:
+        current_app.logger.warning("[Webhook] No user found.")
+        return jsonify({"error": "No user found"}), 400
+
+    if not user.github_token or not is_github_token_valid(user.github_token):
+        current_app.logger.warning("[Webhook] Invalid GitHub token.")
+        return jsonify({"error": "Invalid GitHub token"}), 400
+
+    if not user.linkedin_token or not is_linkedin_token_valid(user.linkedin_token):
+        current_app.logger.warning("[Webhook] Invalid LinkedIn token.")
+        return jsonify({"error": "Invalid LinkedIn token"}), 400
 
     try:
         post_to_linkedin(user, repo_name, commit_message)

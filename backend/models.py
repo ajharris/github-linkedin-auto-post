@@ -24,3 +24,4 @@ class GitHubEvent(db.Model):
 
 
     user = db.relationship("User", backref=db.backref("github_events", lazy=True))
+

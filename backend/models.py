@@ -11,6 +11,10 @@ class User(db.Model):
     github_token = db.Column(db.String, nullable=False)
     linkedin_token = db.Column(db.String, nullable=True)
 
+    def has_valid_linkedin_token(self):
+        """Check if the user has a valid LinkedIn token."""
+        return self.linkedin_token is not None and self.linkedin_id is not None
+
 class GitHubEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

@@ -5,7 +5,7 @@ from flask import Flask, send_from_directory
 from flask_migrate import Migrate
 from backend.models import db
 from backend.routes import routes
-from backend.config import config_dict
+from backend.config import config
 
 import logging
 
@@ -16,12 +16,16 @@ def create_app(config_name=None):
     app = Flask(__name__, static_folder="../frontend/build", static_url_path="")
     app.logger.setLevel(logging.INFO)
 
+    app.logger.info(f"[App] Starting application with config: {config_name}")
 
-    config_obj = config_dict.get(config_name)
+    config_obj = config.get(config_name)
     if config_obj is None:
+        app.logger.error(f"[App] Invalid config name: {config_name}")
         raise ValueError(f"Invalid config name: {config_name}")
 
     app.config.from_object(config_obj)
+    app.logger.info("[App] Configuration loaded successfully.")
+
     app.register_blueprint(routes)
 
     db.init_app(app)

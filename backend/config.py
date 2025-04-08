@@ -4,6 +4,12 @@ from dotenv import load_dotenv
 # Load environment variables from a .env file if present
 load_dotenv()
 
+# Ensure DATABASE_URL uses the correct prefix
+uri = os.getenv("DATABASE_URL", "")
+if uri.startswith("postgres://"):
+    uri = uri.replace("postgres://", "postgresql://", 1)
+os.environ["DATABASE_URL"] = uri
+
 class BaseConfig:
     SECRET_KEY = os.getenv("SECRET_KEY", "default_secret")
     SQLALCHEMY_TRACK_MODIFICATIONS = False

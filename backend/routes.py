@@ -108,6 +108,10 @@ def is_linkedin_token_valid(access_token):
 def github_webhook():
     payload = request.get_json()
 
+    if not payload:
+        current_app.logger.error("[Webhook] Missing payload in request.")
+        return jsonify({"error": "Missing payload"}), 400
+
     github_user_id = (
         str(payload.get("sender", {}).get("id"))
         or str(payload.get("repository", {}).get("owner", {}).get("id"))
@@ -116,6 +120,10 @@ def github_webhook():
 
     repo_name = payload.get("repository", {}).get("name")
     commit_message = payload.get("head_commit", {}).get("message")
+
+    if not github_user_id or not repo_name or not commit_message:
+        current_app.logger.error("[Webhook] Missing required fields in payload.")
+        return jsonify({"error": "Invalid payload"}), 400
 
     current_app.logger.info(f"[Webhook] Extracted values → user_id: {github_user_id}, repo: {repo_name}, commit: {commit_message}")
 
@@ -134,7 +142,7 @@ def github_webhook():
         current_app.logger.info("[Webhook] Post triggered successfully")
     except Exception as e:
         current_app.logger.error(f"[Webhook] Failed to post to LinkedIn: {e}")
-        return str(e), 500
+        return jsonify({"error": str(e)}), 500
 
     return jsonify({"status": "success"})
 

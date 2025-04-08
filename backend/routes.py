@@ -7,6 +7,8 @@ from backend.models import db, GitHubEvent, User
 from backend.services.post_generator import generate_post_from_webhook
 from backend.services.post_to_linkedin import post_to_linkedin
 from backend.services.verify_signature import verify_github_signature
+import jwt  # Install with `pip install pyjwt`
+from jwt.exceptions import InvalidTokenError
 
 # Load environment variables
 load_dotenv()
@@ -44,7 +46,7 @@ def linkedin_auth():
         f"?response_type=code"
         f"&client_id={CLIENT_ID}"
         f"&redirect_uri={REDIRECT_URI}"
-        f"&scope=w_member_social"
+        f"&scope=r_liteprofile%20w_member_social%20r_emailaddress"
         f"&state={github_user_id}"
     )
     current_app.logger.info(f"[LinkedIn] Redirecting to LinkedIn auth URL: {linkedin_auth_url}")
@@ -77,9 +79,25 @@ def linkedin_callback():
     if token_response.status_code != 200:
         return f"Failed to get access token: {token_response.text}", 400
 
-    access_token = token_response.json().get("access_token")
-    if not access_token:
-        return "Missing access token from LinkedIn", 400
+    token_data = token_response.json()
+    access_token = token_data.get("access_token")
+    id_token = token_data.get("id_token")  # OpenID Connect ID token
+
+    if not access_token or not id_token:
+        return "Missing access token or ID token from LinkedIn", 400
+
+    # Verify the ID token
+    try:
+        decoded_id_token = jwt.decode(
+            id_token,
+            options={"verify_signature": False},  # LinkedIn does not provide a public key for signature verification
+            algorithms=["RS256"]
+        )
+        linkedin_user_id = decoded_id_token.get("sub")
+        current_app.logger.info(f"[LinkedIn] Decoded ID token: {decoded_id_token}")
+    except InvalidTokenError as e:
+        current_app.logger.error(f"[LinkedIn] Invalid ID token: {e}")
+        return "Invalid ID token", 400
 
     user = User.query.filter_by(github_id=github_user_id).first()
     if not user:
@@ -87,11 +105,12 @@ def linkedin_callback():
         return "GitHub login required before connecting LinkedIn.", 400
 
     user.linkedin_token = access_token
+    user.linkedin_id = linkedin_user_id
 
     db.session.commit()
 
-    current_app.logger.info(f"[LinkedIn] Stored token for GitHub user {github_user_id}")
-    return "✅ LinkedIn Access Token stored successfully. You can close this window."
+    current_app.logger.info(f"[LinkedIn] Stored token and ID for GitHub user {github_user_id}")
+    return "✅ LinkedIn Access Token and ID stored successfully. You can close this window."
 
 
 # -------------------- GITHUB WEBHOOK HANDLING -------------------- #

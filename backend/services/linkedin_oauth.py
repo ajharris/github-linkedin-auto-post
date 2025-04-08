@@ -15,6 +15,6 @@ def build_linkedin_auth_url(github_user_id: str) -> str:
     return (
         f"https://www.linkedin.com/oauth/v2/authorization?response_type=code"
         f"&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}"
-        f"&scope=w_member_social"
+        f"&scope=w_member_social%20r_liteprofile%20r_emailaddress%20openid"
         f"&state={github_user_id}"
     )

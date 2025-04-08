@@ -97,11 +97,22 @@ def linkedin_callback():
 # -------------------- GITHUB WEBHOOK HANDLING -------------------- #
 def is_linkedin_token_valid(access_token):
     """Validate LinkedIn access token."""
-    response = requests.get(
-        "https://api.linkedin.com/v2/me",
-        headers={"Authorization": f"Bearer {access_token}"}
-    )
-    return response.status_code == 200
+    try:
+        response = requests.get(
+            "https://api.linkedin.com/v2/me",
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+        if response.status_code == 200:
+            return True
+        else:
+            current_app.logger.warning(
+                f"[LinkedIn Token Validation] Token validation failed with status code {response.status_code}. "
+                f"Response: {response.text}"
+            )
+            return False
+    except requests.RequestException as e:
+        current_app.logger.error(f"[LinkedIn Token Validation] Exception occurred: {e}")
+        return False
 
 def is_github_token_valid(access_token):
     """Validate GitHub access token."""

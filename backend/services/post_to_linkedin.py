@@ -18,39 +18,33 @@ def post_to_linkedin(user, repo_name, commit_message):
             raise ValueError("User not found")
         current_app.logger.warning(f"[Webhook] Fallback user: {getattr(user, 'github_id', 'None')}")
 
-
-
-    
     access_token = user.linkedin_token
     user_id = user.linkedin_id
 
-    
     logging.info(f"[LinkedIn] User ID: {user_id}")
 
     if not access_token or not user_id:
         raise ValueError("Missing LinkedIn credentials")
 
     # Ensure the user_id is properly formatted
-    if not user_id.startswith("urn:li:member:"):
-        author_urn = f"urn:li:member:{user_id}"
+    if not user_id.startswith("urn:li:person:"):
+        user_id = f"urn:li:person:{user_id}"  # Correct the format if necessary
 
-    else:
-        author_urn = user_id
+    author_urn = user_id
 
     headers = {
         "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-Restli-Protocol-Version": "2.0.0"
     }
 
-    post_data = {
+    payload = {
         "author": author_urn,
         "lifecycleState": "PUBLISHED",
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {
                 "shareCommentary": {
-                    "text": f"\ud83d\ude80 Just pushed new code to {repo_name}!\n\n"
-                            f"\ud83d\udcac {commit_message}\n\n"
-                            "#buildinpublic #opensource"
+                    "text": f"New update from {repo_name}: {commit_message}"
                 },
                 "shareMediaCategory": "NONE"
             }
@@ -60,11 +54,11 @@ def post_to_linkedin(user, repo_name, commit_message):
         }
     }
 
-    response = requests.post(LINKEDIN_POST_URL, json=post_data, headers=headers)
+    response = requests.post(LINKEDIN_POST_URL, headers=headers, json=payload)
 
-    current_app.logger.info(f"[LinkedIn] Posting as {user.linkedin_id}")
-    current_app.logger.info(f"[LinkedIn] Payload: {json.dumps(post_data, indent=2)}")
-    current_app.logger.info(f"[LinkedIn] Response: {response.status_code} {response.text}")
+    if response.status_code != 201:
+        current_app.logger.error(f"[LinkedIn] Failed to post: {response.status_code} {response.text}")
+        raise ValueError(f"Failed to post to LinkedIn: {response.status_code} {response.text}")
 
-
-    return response
+    current_app.logger.info(f"[LinkedIn] Successfully posted to LinkedIn for user {user.github_id}")
+    return response.json()

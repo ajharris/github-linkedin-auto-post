@@ -183,32 +183,6 @@ def github_webhook():
     db.session.commit()
     current_app.logger.info(f"[Webhook] Commit recorded in database with ID: {github_event.id}")
 
-    if not user.github_token or not is_github_token_valid(user.github_token):
-        current_app.logger.warning("[Webhook] Invalid GitHub token.")
-        return jsonify({"error": "Invalid GitHub token"}), 400
-
-    if not user.linkedin_token:
-        current_app.logger.warning("[Webhook] LinkedIn token is missing.")
-        return jsonify({"error": "LinkedIn token is missing"}), 400
-
-    if not is_linkedin_token_valid(user.linkedin_token):
-        current_app.logger.warning("[Webhook] LinkedIn token is invalid.")
-        return jsonify({
-            "error": "Invalid LinkedIn token",
-            "details": "The LinkedIn token associated with the user is either expired or invalid. Please reauthenticate."
-        }), 400
-
-    try:
-        post_to_linkedin(user, repo_name, commit_message)
-        github_event.status = "posted"
-        db.session.commit()
-        current_app.logger.info("[Webhook] Post triggered successfully")
-    except Exception as e:
-        github_event.status = "failed"
-        db.session.commit()
-        current_app.logger.error(f"[Webhook] Failed to post to LinkedIn: {e}")
-        return jsonify({"error": str(e)}), 500
-
     return jsonify({"status": "success"})
 
 

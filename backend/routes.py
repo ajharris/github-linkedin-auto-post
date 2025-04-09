@@ -281,3 +281,22 @@ def debug_fetch_linkedin_id():
     db.session.commit()
 
     return f"✅ Updated LinkedIn ID to {user.linkedin_id} for GitHub user {github_user_id}"
+
+
+@routes.route("/api/github/<github_id>/commits")
+def get_commits(github_id):
+    user = User.query.filter_by(github_id=str(github_id)).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    events = GitHubEvent.query.filter_by(user_id=user.id).order_by(GitHubEvent.timestamp.desc()).all()
+    commits = [
+        {
+            "id": event.id,
+            "repo_name": event.repo_name,
+            "message": event.commit_message,
+            "timestamp": event.timestamp.isoformat(),
+        }
+        for event in events
+    ]
+    return jsonify({"commits": commits})

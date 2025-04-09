@@ -6,7 +6,9 @@ function App() {
   const [message, setMessage] = useState("");
   const [githubUserId, setGithubUserId] = useState(localStorage.getItem("github_user_id") || "");
   const [userInfo, setUserInfo] = useState(null);
-
+  const [isPosting, setIsPosting] = useState(false);
+  const [commits, setCommits] = useState([]);
+  const [selectedCommit, setSelectedCommit] = useState(null);
 
   // Check for GitHub OAuth callback with ?github_user_id=
   useEffect(() => {
@@ -28,17 +30,45 @@ function App() {
             setUserInfo(data);
           }
         });
+
+      fetch(`/api/github/${storedId}/commits`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.commits) {
+            console.log("Fetched commits:", data.commits); // Debug log
+            setCommits(data.commits);
+          } else {
+            console.error("No commits found:", data); // Debug log
+          }
+        })
+        .catch(err => console.error("Error fetching commits:", err)); // Debug log
     }
   }, []);
   
 
+  const handleCommitSelect = (commit) => {
+    setSelectedCommit(commit);
+    setMessage(`Commit: ${commit.message}`);
+  };
+
   const postToLinkedIn = async () => {
-    await axios.post("http://localhost:5000/webhook", {
-      repository: { full_name: repo, owner: { id: githubUserId } },
-      head_commit: { message },
-      pusher: { name: githubUserId }, // fallback if needed
-    });
-    alert("Posted!");
+    if (!selectedCommit) {
+      alert("Please select a commit first.");
+      return;
+    }
+    setIsPosting(true);
+    try {
+      await axios.post("http://localhost:5000/webhook", {
+        repository: { full_name: repo, owner: { id: githubUserId } },
+        head_commit: { message },
+        pusher: { name: githubUserId }, // fallback if needed
+      });
+      alert("Posted!");
+    } catch (error) {
+      alert("Failed to post. Please try again.");
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   const handleGitHubLogin = () => {
@@ -61,8 +91,20 @@ function App() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
       <h2>GitHub to LinkedIn Post</h2>
+      <div>
+        <h3>Available Commits</h3>
+        <ul>
+          {commits.map((commit) => (
+            <li key={commit.id}>
+              <button onClick={() => handleCommitSelect(commit)}>
+                {commit.message}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
       <input
         type="text"
         placeholder="Repo Name"
@@ -78,11 +120,13 @@ function App() {
       />
       <br />
       <div>
-      <button onClick={postToLinkedIn}>Post</button>
-      <br />
-      <button onClick={handleGitHubLogin}>Login with GitHub</button>
-      <button onClick={handleLinkedInLogin}>Link LinkedIn</button>
-      {userInfo ? (
+        <button onClick={postToLinkedIn} disabled={isPosting}>
+          {isPosting ? "Posting..." : "Post"}
+        </button>
+        <br />
+        <button onClick={handleGitHubLogin}>Login with GitHub</button>
+        <button onClick={handleLinkedInLogin}>Link LinkedIn</button>
+        {userInfo ? (
       <div>
         <p>👤 GitHub: <strong>{userInfo.github_username}</strong> (ID: {userInfo.github_id})</p>
         {userInfo.linked ? (
@@ -94,7 +138,6 @@ function App() {
     ) : (
       <p>GitHub User ID: {githubUserId || "Not logged in"}</p>
     )}
-
       </div> 
     </div>
   );

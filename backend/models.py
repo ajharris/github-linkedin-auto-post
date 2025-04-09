@@ -19,7 +19,7 @@ class GitHubEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     repo_name = db.Column(db.String(255), nullable=False)
-    commit_message = db.Column(db.Text, nullable=True)
+    commit_message = db.Column(db.Text, nullable=False)  # Ensure this is not nullable
     commit_url = db.Column(db.String(512), nullable=True)
     event_type = db.Column(db.String(50), nullable=True)  # e.g. "push"
     status = db.Column(db.String(50), default="pending")  # e.g. posted to LinkedIn or not

@@ -224,7 +224,7 @@ def github_callback():
     db.session.add(user)
     db.session.commit()
 
-    # Redirect back to the frontend with the GitHub user ID
+    # Use the FRONTEND_URL environment variable for the redirect
     frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
     return redirect(f"{frontend_url}?github_user_id={github_user_id}")
 

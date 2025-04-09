@@ -317,3 +317,16 @@ def post_commit_to_linkedin(github_id):
     except Exception as e:
         current_app.logger.error(f"[Post Commit] Failed to post to LinkedIn: {e}")
         return jsonify({"error": str(e)}), 500
+
+@routes.route("/api/github/<github_id>/disconnect_linkedin", methods=["POST"])
+def disconnect_linkedin(github_id):
+    user = User.query.filter_by(github_id=str(github_id)).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    user.linkedin_token = None
+    user.linkedin_id = None
+    db.session.commit()
+
+    current_app.logger.info(f"[LinkedIn] Disconnected LinkedIn for GitHub user {github_id}")
+    return jsonify({"status": "success"})

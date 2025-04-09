@@ -154,6 +154,34 @@ function App() {
     window.location.href = linkedinUrl;
   };
 
+  const handleGitHubLogout = () => {
+    localStorage.removeItem("github_user_id");
+    setGithubUserId("");
+    setUserInfo(null);
+    setCommits([]);
+    alert("Logged out of GitHub.");
+  };
+
+  const handleLinkedInDisconnect = async () => {
+    if (!githubUserId) {
+      alert("You need to log in with GitHub first.");
+      return;
+    }
+  
+    try {
+      const response = await axios.post(`/api/github/${githubUserId}/disconnect_linkedin`);
+      if (response.data.status === "success") {
+        setUserInfo((prev) => ({ ...prev, linked: false, linkedin_id: null }));
+        alert("Disconnected LinkedIn successfully.");
+      } else {
+        alert("Failed to disconnect LinkedIn.");
+      }
+    } catch (error) {
+      console.error("Error disconnecting LinkedIn:", error);
+      alert("An error occurred while disconnecting LinkedIn.");
+    }
+  };
+
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
       <h2>GitHub to LinkedIn Post</h2>
@@ -172,40 +200,29 @@ function App() {
           ))}
         </ul>
       </div>
-      <input
-        type="text"
-        placeholder="Repo Name"
-        value={repo}
-        onChange={(e) => setRepo(e.target.value)}
-      />
-      <br />
-      <input
-        type="text"
-        placeholder="Commit Message"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-      />
-      <br />
       <div>
-        <button onClick={postSelectedCommitToLinkedIn} disabled={isPosting || !selectedCommit}>
-          {isPosting ? "Posting..." : "Post Selected Commit"}
-        </button>
-        <br />
-        <button onClick={handleGitHubLogin}>Login with GitHub</button>
-        <button onClick={handleLinkedInLogin}>Link LinkedIn</button>
         {userInfo ? (
-      <div>
-        <p>👤 GitHub: <strong>{userInfo.github_username}</strong> (ID: {userInfo.github_id})</p>
-        {userInfo.linked ? (
-          <p>🔗 Linked to LinkedIn ✅</p>
+          <>
+            <p>👤 GitHub: <strong>{userInfo.github_username}</strong> (ID: {userInfo.github_id})</p>
+            {userInfo.linked ? (
+              <>
+                <p>🔗 Linked to LinkedIn ✅</p>
+                <button onClick={handleLinkedInDisconnect}>Disconnect LinkedIn</button>
+              </>
+            ) : (
+              <button onClick={handleLinkedInLogin}>Link LinkedIn</button>
+            )}
+            <button onClick={handleGitHubLogout}>Logout from GitHub</button>
+          </>
         ) : (
-          <p>❌ Not linked to LinkedIn yet</p>
+          <>
+            <button onClick={handleGitHubLogin}>Login with GitHub</button>
+            <button onClick={handleLinkedInLogin} disabled>
+              Link LinkedIn
+            </button>
+          </>
         )}
       </div>
-    ) : (
-      <p>GitHub User ID: {githubUserId || "Not logged in"}</p>
-    )}
-      </div> 
     </div>
   );
 }

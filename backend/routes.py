@@ -157,6 +157,7 @@ def github_webhook():
 
     repo_name = payload.get("repository", {}).get("name")
     commit_message = payload.get("head_commit", {}).get("message")
+    commit_url = payload.get("head_commit", {}).get("url")
 
     if not github_user_id or not repo_name or not commit_message:
         current_app.logger.error("[Webhook] Missing required fields in payload.")
@@ -166,13 +167,21 @@ def github_webhook():
 
     user = User.query.filter_by(github_id=github_user_id).first()
     if not user:
-        current_app.logger.warning("[post_to_linkedin] No user provided.")
-        user = User.query.first()
-        current_app.logger.warning(f"[Webhook] Fallback user: {getattr(user, 'github_id', 'None')}")
-
-    if not user:
         current_app.logger.warning("[Webhook] No user found.")
         return jsonify({"error": "No user found"}), 400
+
+    # Record the commit in the database
+    github_event = GitHubEvent(
+        user_id=user.id,
+        repo_name=repo_name,
+        commit_message=commit_message,
+        commit_url=commit_url,
+        event_type="push",
+        status="pending"
+    )
+    db.session.add(github_event)
+    db.session.commit()
+    current_app.logger.info(f"[Webhook] Commit recorded in database with ID: {github_event.id}")
 
     if not user.github_token or not is_github_token_valid(user.github_token):
         current_app.logger.warning("[Webhook] Invalid GitHub token.")
@@ -191,8 +200,12 @@ def github_webhook():
 
     try:
         post_to_linkedin(user, repo_name, commit_message)
+        github_event.status = "posted"
+        db.session.commit()
         current_app.logger.info("[Webhook] Post triggered successfully")
     except Exception as e:
+        github_event.status = "failed"
+        db.session.commit()
         current_app.logger.error(f"[Webhook] Failed to post to LinkedIn: {e}")
         return jsonify({"error": str(e)}), 500
 
@@ -237,7 +250,9 @@ def github_callback():
     db.session.add(user)
     db.session.commit()
 
-    return redirect(f"/auth/linkedin?github_user_id={github_user_id}")
+    # Redirect back to the frontend with the GitHub user ID
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    return redirect(f"{frontend_url}?github_user_id={github_user_id}")
 
 
 @routes.route("/api/github/<github_id>/status")
@@ -300,3 +315,30 @@ def get_commits(github_id):
         for event in events
     ]
     return jsonify({"commits": commits})
+
+@routes.route("/api/github/<github_id>/post_commit", methods=["POST"])
+def post_commit_to_linkedin(github_id):
+    user = User.query.filter_by(github_id=str(github_id)).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if not user.linkedin_token or not is_linkedin_token_valid(user.linkedin_token):
+        return jsonify({"error": "Invalid or missing LinkedIn token"}), 400
+
+    data = request.get_json()
+    commit_id = data.get("commit_id")
+    if not commit_id:
+        return jsonify({"error": "Missing commit ID"}), 400
+
+    commit = GitHubEvent.query.filter_by(id=commit_id, user_id=user.id).first()
+    if not commit:
+        return jsonify({"error": "Commit not found"}), 404
+
+    try:
+        post_to_linkedin(user, commit.repo_name, commit.commit_message)
+        commit.status = "posted"
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        current_app.logger.error(f"[Post Commit] Failed to post to LinkedIn: {e}")
+        return jsonify({"error": str(e)}), 500

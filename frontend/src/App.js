@@ -71,6 +71,35 @@ function App() {
     }
   };
 
+  const postSelectedCommitToLinkedIn = async () => {
+    if (!selectedCommit) {
+      alert("Please select a commit first.");
+      return;
+    }
+  
+    setIsPosting(true);
+    try {
+      const response = await axios.post(`/api/github/${githubUserId}/post_commit`, {
+        commit_id: selectedCommit.id,
+      });
+      if (response.data.status === "success") {
+        alert("Commit posted to LinkedIn successfully!");
+        setCommits((prevCommits) =>
+          prevCommits.map((commit) =>
+            commit.id === selectedCommit.id ? { ...commit, status: "posted" } : commit
+          )
+        );
+      } else {
+        alert("Failed to post commit to LinkedIn.");
+      }
+    } catch (error) {
+      console.error("Error posting commit to LinkedIn:", error);
+      alert("An error occurred while posting the commit.");
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
   const handleGitHubLogin = () => {
     localStorage.removeItem("github_user_id");  // clear cache
     const githubClientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
@@ -98,8 +127,11 @@ function App() {
         <ul>
           {commits.map((commit) => (
             <li key={commit.id}>
-              <button onClick={() => handleCommitSelect(commit)}>
-                {commit.message}
+              <button
+                onClick={() => handleCommitSelect(commit)}
+                disabled={commit.status === "posted"}
+              >
+                {commit.message} {commit.status === "posted" ? "✅" : ""}
               </button>
             </li>
           ))}
@@ -120,8 +152,8 @@ function App() {
       />
       <br />
       <div>
-        <button onClick={postToLinkedIn} disabled={isPosting}>
-          {isPosting ? "Posting..." : "Post"}
+        <button onClick={postSelectedCommitToLinkedIn} disabled={isPosting || !selectedCommit}>
+          {isPosting ? "Posting..." : "Post Selected Commit"}
         </button>
         <br />
         <button onClick={handleGitHubLogin}>Login with GitHub</button>

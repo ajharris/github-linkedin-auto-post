@@ -32,12 +32,12 @@ class LinkedInAuthHandler(BaseHTTPRequestHandler):
 def get_authorization_code():
     client_id = os.getenv("LINKEDIN_CLIENT_ID")
     redirect_uri = os.getenv("LINKEDIN_REDIRECT_URI")
-    scope = "r_emailaddress w_member_social"  # Update scopes to match your app's permissions
+    scope = "w_member_social"
     auth_url = (
         f"https://www.linkedin.com/oauth/v2/authorization?response_type=code"
         f"&client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}"
     )
-    print(f"Opening browser for authorization: {auth_url}")
+    print(f"[LinkedIn] Generated auth URL: {auth_url}")
     webbrowser.open(auth_url)
 
     server_address = ("", 8080)

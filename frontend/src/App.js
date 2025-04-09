@@ -150,7 +150,9 @@ function App() {
       alert("Please log in with GitHub first.");
       return;
     }
+  
     const linkedinUrl = `https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin?github_user_id=${githubUserId}`;
+    console.log("[LinkedIn] Redirecting to:", linkedinUrl); // Debug log
     window.location.href = linkedinUrl;
   };
 

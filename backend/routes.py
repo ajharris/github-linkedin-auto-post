@@ -278,7 +278,8 @@ def get_commits(github_id):
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    events = GitHubEvent.query.filter_by(user_id=user.id).order_by(GitHubEvent.timestamp.desc()).all()
+    # Filter for commits that haven't been posted to LinkedIn
+    events = GitHubEvent.query.filter_by(user_id=user.id, status="pending").order_by(GitHubEvent.timestamp.desc()).all()
     commits = [
         {
             "id": event.id,

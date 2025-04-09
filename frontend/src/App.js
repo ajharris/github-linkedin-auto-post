@@ -44,6 +44,41 @@ function App() {
         .catch(err => console.error("Error fetching commits:", err)); // Debug log
     }
   }, []);
+
+  // Fetch unposted commits after GitHub login
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("github_user_id");
+
+    if (id) {
+      localStorage.setItem("github_user_id", id);
+      setGithubUserId(id);
+      window.history.replaceState({}, document.title, "/");
+    }
+
+    const storedId = id || localStorage.getItem("github_user_id");
+    if (storedId) {
+      fetch(`/api/github/${storedId}/status`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.github_id) {
+            setUserInfo(data);
+          }
+        });
+
+      fetch(`/api/github/${storedId}/commits`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.commits) {
+            console.log("Fetched unposted commits:", data.commits); // Debug log
+            setCommits(data.commits);
+          } else {
+            console.error("No unposted commits found:", data); // Debug log
+          }
+        })
+        .catch((err) => console.error("Error fetching commits:", err)); // Debug log
+    }
+  }, []);
   
 
   const handleCommitSelect = (commit) => {
@@ -104,7 +139,7 @@ function App() {
     localStorage.removeItem("github_user_id");  // clear cache
     const githubClientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
     const redirectUri = encodeURIComponent("https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/github/callback");
-    const scope = "read:user";
+    const scope = "repo"; // Ensure the scope includes access to repositories
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${redirectUri}&scope=${scope}`;
     window.location.href = githubAuthUrl;
   };

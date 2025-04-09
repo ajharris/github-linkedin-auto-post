@@ -38,15 +38,22 @@ def serve(path):
 # -------------------- LINKEDIN AUTHENTICATION -------------------- #
 @routes.route("/auth/linkedin")
 def linkedin_auth():
-    print("💬 LinkedIn callback args:", dict(request.args))
-
     github_user_id = request.args.get("github_user_id", "test")
+
+    # Remove existing LinkedIn token and ID from the database
+    user = User.query.filter_by(github_id=github_user_id).first()
+    if user:
+        user.linkedin_token = None
+        user.linkedin_id = None
+        db.session.commit()
+        current_app.logger.info(f"[LinkedIn] Cleared LinkedIn token and ID for GitHub user {github_user_id}")
+
     linkedin_auth_url = (
         f"https://www.linkedin.com/oauth/v2/authorization"
         f"?response_type=code"
         f"&client_id={CLIENT_ID}"
         f"&redirect_uri={REDIRECT_URI}"
-        f"&scope=r_liteprofile%20w_member_social%20r_emailaddress"
+        f"&scope=w_member_social"  # Only request w_member_social
         f"&state={github_user_id}"
     )
     current_app.logger.info(f"[LinkedIn] Redirecting to LinkedIn auth URL: {linkedin_auth_url}")
@@ -324,6 +331,7 @@ def disconnect_linkedin(github_id):
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    # Remove LinkedIn token and ID from the database
     user.linkedin_token = None
     user.linkedin_id = None
     db.session.commit()

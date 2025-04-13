@@ -361,3 +361,16 @@ def disconnect_linkedin(github_id):
 
     current_app.logger.info(f"[LinkedIn] Disconnected LinkedIn for GitHub user {github_id}")
     return jsonify({"status": "success"})
+
+
+@routes.route("/api/github/<github_user_id>/status", methods=["GET"])
+def github_user_status(github_user_id):
+    user = User.query.filter_by(github_id=github_user_id).first()
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
+
+    return jsonify({
+        "github_id": user.github_id,
+        "github_username": user.github_username,
+        "linked": user.has_valid_linkedin_token()
+    }), 200

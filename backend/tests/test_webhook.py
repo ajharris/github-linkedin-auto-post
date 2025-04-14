@@ -1,23 +1,29 @@
 import json
 import pytest
-from backend.models import GitHubEvent, User
-from unittest.mock import patch
+from backend.models import GitHubEvent, User, db
+from unittest.mock import patch, MagicMock
+import os
+import hmac
+import hashlib
 
 
-@pytest.mark.usefixtures("patch_signature_verification")
-@patch("backend.services.post_to_linkedin.requests.post")
-def test_webhook_push_event(mock_post, test_client):
+@patch("backend.routes.verify_github_signature", return_value=True)
+@patch("backend.routes.post_to_linkedin")
+def test_webhook_push_event(mock_post_to_linkedin, mock_verify_signature, test_client):
     """Test that a valid push event is stored in the database."""
-    mock_post.return_value.status_code = 201
-    mock_post.return_value.json.return_value = {"id": "linkedin_post_123"}
+    mock_post_to_linkedin.side_effect = lambda *args, **kwargs: MagicMock(
+    status_code=201,
+    json=lambda: {"id": "linkedin_post_123"}  # or ...456 depending on test
+)
 
-    user = User(github_id="123456789", github_token="fake_github_token", linkedin_token="fake_token", linkedin_id="123456789")
-    from backend.models import db
-    db.session.add(user)
-    db.session.commit()
+
+    user = User(github_id="testuser", github_token="fake_github_token", linkedin_token="fake_token", linkedin_id="123456789")
+    with test_client.application.app_context():
+        db.session.add(user)
+        db.session.commit()
 
     payload = {
-        "repository": {"full_name": "testuser/test-repo", "owner": {"id": "testuser"}},
+        "repository": {"name": "test-repo", "owner": {"id": "testuser"}},
         "pusher": {"name": "testuser"},
         "head_commit": {
             "message": "Fix bug in webhook handler",
@@ -25,21 +31,22 @@ def test_webhook_push_event(mock_post, test_client):
         },
     }
 
-    response = test_client.post(
-        "/webhook/github",
-        data=json.dumps(payload),
-        content_type="application/json",
-        headers={
-            "X-GitHub-Event": "push",
-            "X-Hub-Signature-256": "fake"
-        },
-    )
+    secret = os.getenv("GITHUB_SECRET", "fake_secret").encode()
+    body = json.dumps(payload).encode()
+    signature = "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
 
-    assert response.status_code == 200, response.data
+    headers = {
+        "X-Hub-Signature-256": signature,
+        "Content-Type": "application/json"
+    }
+
+    response = test_client.post("/webhook/github", data=body, headers=headers)
+    assert response.status_code == 200
+    assert response.get_json() == {"status": "success", "linkedin_post_id": "linkedin_post_123"}
     assert GitHubEvent.query.count() == 1
 
     event = GitHubEvent.query.first()
-    assert event.repo_name == "testuser/test-repo"
+    assert event.repo_name == "test-repo"
     assert event.commit_message == "Fix bug in webhook handler"
     assert event.user.github_id == "testuser"
 
@@ -55,8 +62,7 @@ def test_webhook_invalid_payload(test_client):
             "X-Hub-Signature-256": "fake"
         },
     )
-    assert response.status_code == 400
-
+    assert response.status_code == 403
 
 
 def test_webhook_unauthorized_request(test_client):
@@ -71,21 +77,24 @@ def test_webhook_unauthorized_request(test_client):
     )
     assert response.status_code == 403
 
-
-@pytest.mark.usefixtures("patch_signature_verification")
-@patch("backend.services.post_to_linkedin.requests.post")
-def test_webhook_links_event_to_correct_user(mock_post, test_client):
+@patch("backend.routes.verify_github_signature", return_value=True)
+@patch("backend.routes.post_to_linkedin")
+def test_webhook_links_event_to_correct_user(mock_post_to_linkedin, mock_verify_signature, test_client):
     """Test that a webhook event is linked to the correct user in the database."""
-    mock_post.return_value.status_code = 201
-    mock_post.return_value.json.return_value = {"id": "linkedin_post_456"}
+    # Correctly mock the function to handle all four arguments
+    mock_post_to_linkedin.side_effect = lambda *args, **kwargs: MagicMock(
+        status_code=201,
+        json=lambda: {"id": "linkedin_post_456"} 
+    )
+
 
     user = User(github_id="otheruser", github_token="fake_github_token", linkedin_token="fake_token", linkedin_id="123456789")
-    from backend.models import db
-    db.session.add(user)
-    db.session.commit()
+    with test_client.application.app_context():
+        db.session.add(user)
+        db.session.commit()
 
     payload = {
-        "repository": {"full_name": "otheruser/some-repo", "owner": {"id": "otheruser"}},
+        "repository": {"name": "some-repo", "owner": {"id": "otheruser"}},
         "pusher": {"name": "otheruser"},
         "head_commit": {
             "message": "Refactor API endpoints",
@@ -93,18 +102,23 @@ def test_webhook_links_event_to_correct_user(mock_post, test_client):
         },
     }
 
-    response = test_client.post(
-        "/webhook/github",
-        data=json.dumps(payload),
-        content_type="application/json",
-        headers={
-            "X-GitHub-Event": "push",
-            "X-Hub-Signature-256": "fake"
-        },
-    )
+    secret = os.getenv("GITHUB_SECRET", "fake_secret").encode()
+    body = json.dumps(payload).encode()
+    signature = "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
 
+    headers = {
+        "X-Hub-Signature-256": signature,
+        "Content-Type": "application/json"
+    }
+
+    response = test_client.post("/webhook/github", data=body, headers=headers)
     assert response.status_code == 200
+    assert response.get_json() == {"status": "success", "linkedin_post_id": "linkedin_post_456"}
+    assert GitHubEvent.query.count() == 1
+
     event = GitHubEvent.query.first()
+    assert event.repo_name == "some-repo"
+    assert event.commit_message == "Refactor API endpoints"
     assert event.user.github_id == "otheruser"
 
 

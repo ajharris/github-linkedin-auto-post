@@ -9,6 +9,7 @@ from backend.services.post_to_linkedin import post_to_linkedin
 from backend.services.verify_signature import verify_github_signature
 import jwt  # Install with `pip install pyjwt`
 from jwt.exceptions import InvalidTokenError
+from backend.services.utils import login_required  # Updated import path
 
 # Load environment variables
 load_dotenv()
@@ -209,16 +210,15 @@ def github_webhook():
 
 
 @routes.route("/api/github/<github_id>/status")
+@login_required
 def check_github_link_status(github_id):
-    user = User.query.filter_by(github_id=str(github_id)).first()
-    if user:
-        return jsonify({
-            "linked": bool(user.linkedin_id),
-            "github_id": user.github_id,
-            "github_username": user.github_username,
-            "linkedin_id": user.linkedin_id
-        }), 200
-    return jsonify({"error": "User not found"}), 404
+    user = request.user  # Access the authenticated user from the request context
+    return jsonify({
+        "linked": bool(user.linkedin_id),
+        "github_id": user.github_id,
+        "github_username": user.github_username,
+        "linkedin_id": user.linkedin_id
+    }), 200
 
 @routes.route("/auth/github/callback")
 def github_callback():
@@ -313,11 +313,9 @@ def list_routes():
     return jsonify(sorted(output))
 
 @routes.route("/api/github/<github_id>/commits")
+@login_required
 def get_commits(github_id):
-    user = User.query.filter_by(github_id=str(github_id)).first()
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
+    user = request.user  # Access the authenticated user from the request context
     events = GitHubEvent.query.filter_by(user_id=user.id).all()
     commits = [
         {

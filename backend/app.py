@@ -28,6 +28,13 @@ def create_app(config_name=None):
     app.config.from_object(config_obj)
     app.logger.info("[App] Configuration loaded successfully.")
 
+    # Validate required environment variables
+    required_env_vars = ["LINKEDIN_ACCESS_TOKEN", "LINKEDIN_USER_ID"]
+    missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+    if missing_vars:
+        app.logger.error(f"[App] Missing required environment variables: {missing_vars}")
+        raise RuntimeError(f"Missing required environment variables: {missing_vars}")
+
     app.register_blueprint(routes)
 
     db.init_app(app)

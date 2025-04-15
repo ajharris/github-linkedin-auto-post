@@ -1,4 +1,4 @@
-from flask import Blueprint, json, request, redirect, send_from_directory, jsonify, current_app
+from flask import Blueprint, json, request, redirect, send_from_directory, jsonify, current_app, url_for
 import os
 import requests
 import logging
@@ -9,6 +9,7 @@ from backend.services.post_to_linkedin import post_to_linkedin
 from backend.services.verify_signature import verify_github_signature
 import jwt  # Install with `pip install pyjwt`
 from jwt.exceptions import InvalidTokenError
+from backend.services.utils import login_required  # Updated import path
 
 # Load environment variables
 load_dotenv()
@@ -209,18 +210,16 @@ def github_webhook():
 
 
 @routes.route("/api/github/<github_id>/status")
+@login_required
 def check_github_link_status(github_id):
-    user = User.query.filter_by(github_id=str(github_id)).first()
-    if user:
-        return jsonify({
-            "linked": bool(user.linkedin_id),
-            "github_id": user.github_id,
-            "github_username": user.github_username,
-            "linkedin_id": user.linkedin_id
-        }), 200
-    return jsonify({"error": "User not found"}), 404
+    user = request.user  # Access the authenticated user from the request context
+    return jsonify({
+        "linked": bool(user.linkedin_id),
+        "github_id": user.github_id,
+        "github_username": user.github_username,
+        "linkedin_id": user.linkedin_id
+    }), 200
 
-@routes.route("/auth/github/callback")
 @routes.route("/auth/github/callback")
 def github_callback():
     from urllib.parse import urlencode
@@ -263,6 +262,9 @@ def github_callback():
         user_data = user_res.json()
         github_id = user_data.get("id")
         github_username = user_data.get("login")
+        name = user_data.get("name")  # Fetch name
+        email = user_data.get("email")  # Fetch email
+        avatar_url = user_data.get("avatar_url")  # Fetch avatar URL
 
         if not github_id:
             current_app.logger.error("[GitHub] Missing GitHub ID in user response")
@@ -273,17 +275,32 @@ def github_callback():
         if not user:
             user = User(
                 github_id=str(github_id),
-                github_username=github_username
+                github_username=github_username,
+                github_token=access_token,  # Set github_token for new users
+                name=name,
+                email=email,
+                avatar_url=avatar_url
             )
             db.session.add(user)
         else:
             user.github_username = github_username
+            user.github_token = access_token  # Update github_token for existing users
+            user.name = name
+            user.email = email
+            user.avatar_url = avatar_url
 
         db.session.commit()
 
-        # Step 4: Redirect frontend with GitHub user ID
-        redirect_url = f"/?{urlencode({'github_user_id': github_id})}"
-        return redirect(redirect_url)
+        # Step 4: Set a secure cookie with the GitHub user ID
+        response = redirect(f"/?github_user_id={github_id}")  # Include github_user_id in the redirect URL
+        response.set_cookie(
+            "github_user_id",
+            str(github_id),
+            httponly=True,  # Prevent JavaScript access
+            secure=True,    # Ensure the cookie is sent over HTTPS
+            samesite="Strict"  # Prevent cross-site request forgery
+        )
+        return response
 
     except Exception as e:
         current_app.logger.error(f"[GitHub] OAuth flow failed: {e}")
@@ -298,11 +315,9 @@ def list_routes():
     return jsonify(sorted(output))
 
 @routes.route("/api/github/<github_id>/commits")
+@login_required
 def get_commits(github_id):
-    user = User.query.filter_by(github_id=str(github_id)).first()
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
+    user = request.user  # Access the authenticated user from the request context
     events = GitHubEvent.query.filter_by(user_id=user.id).all()
     commits = [
         {
@@ -315,3 +330,13 @@ def get_commits(github_id):
         for e in events
     ]
     return jsonify({"commits": commits}), 200
+
+@routes.route("/auth/github")
+def github_login():
+    client_id = os.getenv("GITHUB_CLIENT_ID")
+    redirect_uri = url_for("routes.github_callback", _external=True)  # Include the blueprint name
+    github_oauth_url = (
+        f"https://github.com/login/oauth/authorize?"
+        f"client_id={client_id}&redirect_uri={redirect_uri}&scope=repo"
+    )
+    return redirect(github_oauth_url)

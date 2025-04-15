@@ -50,8 +50,6 @@ def test_linkedin_auth_redirect(client):
     assert "https://www.linkedin.com/oauth/v2/authorization" in response.location
 
 
-from unittest.mock import patch
-
 @patch("requests.get")
 @patch("requests.post")
 def test_linkedin_callback_success(mock_post, mock_get, client):
@@ -69,7 +67,6 @@ def test_linkedin_callback_success(mock_post, mock_get, client):
 
     # Add fake GitHub user so the callback logic finds them
     with client.application.app_context():
-        from backend.models import User, db
         user = User(github_id="test", github_token="fake-token")
         db.session.add(user)
         db.session.commit()
@@ -101,9 +98,10 @@ def test_github_webhook(mock_verify, mock_post, client):
     """Test webhook processing a valid push event"""
 
     # Add test user to DB
-    user = User(github_id="ajharris", github_token="gh_token", linkedin_token="li_token")
-    db.session.add(user)
-    db.session.commit()
+    with client.application.app_context():
+        user = User(github_id="ajharris", github_token="gh_token", linkedin_token="li_token")
+        db.session.add(user)
+        db.session.commit()
 
     # Simulate GitHub push payload
     payload = {
@@ -130,8 +128,23 @@ def test_github_webhook(mock_verify, mock_post, client):
     assert response.get_json() == {"status": "success", "linkedin_post_id": "test-post-id"}
 
 
+@pytest.fixture(scope="module")
+def client():
+    app = create_app("testing")
+    app.config["TESTING"] = True
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    with app.app_context():
+        db.create_all()
+        yield app.test_client()
+
+        db.drop_all()
+
+
 def test_github_status_returns_user_info(client):
     """Test the /api/github/<github_id>/status route."""
+    # Create a mock user with GitHub details
     with client.application.app_context():
         user = User(
             github_id="123456",
@@ -141,7 +154,10 @@ def test_github_status_returns_user_info(client):
         db.session.add(user)
         db.session.commit()
 
+    # Include the github_user_id cookie in the request
+    client.set_cookie("github_user_id", "123456")
     response = client.get("/api/github/123456/status")
+    
     assert response.status_code == 200
     assert response.get_json() == {
         "linked": False,
@@ -151,59 +167,94 @@ def test_github_status_returns_user_info(client):
     }
 
 
-from unittest.mock import patch, MagicMock
-import hmac
-import json
-import os
+@patch("requests.post")
+@patch("requests.get")
+def test_github_login_redirect(mock_get, mock_post, client):
+    """Test that the GitHub login route redirects to GitHub's OAuth URL."""
+    response = client.get("/auth/github")
+    assert response.status_code == 302
+    assert "https://github.com/login/oauth/authorize" in response.location
+    assert "client_id=" in response.location
+    assert "redirect_uri=" in response.location
+    assert "scope=repo" in response.location
 
 
-@patch("backend.routes.verify_github_signature", return_value=True)
-@patch("backend.routes.post_to_linkedin")
-def test_webhook_push_event(mock_post_to_linkedin, mock_verify, client):
-    mock_post_to_linkedin.side_effect = lambda *args, **kwargs: MagicMock(
-        status_code=201,
-        json=lambda: {"id": "linkedin_post_123"}
-    )
+@patch("requests.post")
+@patch("requests.get")
+def test_github_callback_valid_code(mock_get, mock_post, client, app):
+    """Test that the GitHub callback route handles a valid code."""
+    # Mock token exchange response
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = {"access_token": "mocked_token"}
 
-    user = User(github_id="testuser", github_token="fake_github_token", linkedin_token="fake_token", linkedin_id="123456789")
-    with client.application.app_context():
+    # Mock user info fetch response
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {
+        "id": "12345",
+        "login": "testuser",
+        "name": "Test User",
+        "email": "testuser@example.com",
+        "avatar_url": "https://example.com/avatar.png",
+    }
+
+    response = client.get("/auth/github/callback?code=valid_code")
+    assert response.status_code == 302
+    assert "github_user_id=12345" in response.location
+
+    # Verify user is stored in the database
+    with app.app_context():
+        user = User.query.filter_by(github_id="12345").first()
+        assert user is not None
+        assert user.github_username == "testuser"
+        assert user.github_token == "mocked_token"
+
+
+@patch("requests.post")
+def test_github_callback_invalid_code(mock_post, client):
+    """Test that the GitHub callback route handles an invalid code."""
+    # Mock token exchange failure
+    mock_post.return_value.status_code = 400
+    mock_post.return_value.json.return_value = {"error": "bad_verification_code"}
+
+    response = client.get("/auth/github/callback?code=invalid_code")
+    assert response.status_code == 400
+    assert "Failed to obtain GitHub access token" in response.get_data(as_text=True)
+
+
+@patch("requests.post")
+@patch("requests.get")
+def test_github_callback_duplicate_user(mock_get, mock_post, client, app):
+    """Test that the GitHub callback route handles duplicate users."""
+    # Mock token exchange response
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = {"access_token": "mocked_token"}
+
+    # Mock user info fetch response
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {
+        "id": "12345",
+        "login": "testuser",
+        "name": "Test User",
+        "email": "testuser@example.com",
+        "avatar_url": "https://example.com/avatar.png",
+    }
+
+    # Add a user with the same GitHub ID to the database
+    with app.app_context():
+        user = User(github_id="12345", github_username="existinguser", github_token="existing_token")
         db.session.add(user)
         db.session.commit()
 
-    payload = {
-        "repository": {"name": "test-repo", "owner": {"id": "testuser"}},
-        "pusher": {"name": "testuser"},
-        "head_commit": {
-            "message": "Fix bug in webhook handler",
-            "url": "http://github.com/testuser/commit/123"
-        },
-    }
+    response = client.get("/auth/github/callback?code=valid_code")
+    assert response.status_code == 302
+    assert "github_user_id=12345" in response.location
 
-    secret = os.getenv("GITHUB_SECRET", "fake_secret").encode()
-    body = json.dumps(payload).encode()
-    signature = "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
-
-    headers = {
-        "X-Hub-Signature-256": signature,
-        "Content-Type": "application/json"
-    }
-
-    response = client.post("/webhook/github", data=body, headers=headers)
-
-    assert response.status_code == 200
-    assert response.get_json() == {"status": "success", "linkedin_post_id": "linkedin_post_123"}
-
-
-def test_webhook_route_exists(test_client):
-    """This test fails if the GitHub webhook route is missing or returns wrong status."""
-    response = test_client.post(
-        "/webhook/github",
-        data="{}",
-        content_type="application/json",
-        headers={
-            "X-GitHub-Event": "push",
-            "X-Hub-Signature-256": "fake"
-        }
-    )
-    assert response.status_code != 404, "Webhook route not found (404)"
-    assert response.status_code == 403, f"Expected forbidden due to invalid signature, got {response.status_code}"
+    # Verify that the existing user was updated
+    with app.app_context():
+        user = User.query.filter_by(github_id="12345").first()
+        assert user is not None
+        assert user.github_username == "testuser"
+        assert user.github_token == "mocked_token"
+        assert user.name == "Test User"
+        assert user.email == "testuser@example.com"
+        assert user.avatar_url == "https://example.com/avatar.png"

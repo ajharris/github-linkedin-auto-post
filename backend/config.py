@@ -16,7 +16,7 @@ REQUIRED_ENV_VARS = [
     "LINKEDIN_CLIENT_ID",
     "LINKEDIN_CLIENT_SECRET",
     "LINKEDIN_ACCESS_TOKEN",
-    "LINKEDIN_USER_ID",
+    "SEED_LINKEDIN_ID",  # Use SEED_LINKEDIN_ID instead of LINKEDIN_USER_ID
 ]
 
 def get_required_env_var(key):
@@ -38,7 +38,7 @@ else:
 class BaseConfig:
     SECRET_KEY = os.getenv("SECRET_KEY", "default_secret")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    LINKEDIN_USER_ID = os.getenv("LINKEDIN_USER_ID")
+    LINKEDIN_USER_ID = os.getenv("LINKEDIN_USER_ID", os.getenv("SEED_LINKEDIN_ID", "default_user_id"))  # Fallback to SEED_LINKEDIN_ID
     GITHUB_WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET")
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///app.db")
     DEBUG = False

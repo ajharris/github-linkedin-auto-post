@@ -1,6 +1,8 @@
 import React from "react";
 
-function CommitList({ commits, onSelectCommit }) {
+function CommitList({ commits, handleCommitSelect }) {
+  console.log("Rendering CommitList with commits:", commits);
+
   return (
     <div>
       <h3>Available Commits</h3>
@@ -8,7 +10,7 @@ function CommitList({ commits, onSelectCommit }) {
         {commits.map((commit) => (
           <li key={commit.id}>
             <button
-              onClick={() => onSelectCommit(commit)}
+              onClick={() => handleCommitSelect(commit)}
               disabled={commit.status === "posted"}
             >
               {commit.message} {commit.status === "posted" ? "✅" : ""}

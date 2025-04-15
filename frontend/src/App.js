@@ -2,20 +2,13 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import CommitList from "./components/CommitList";
 import UserInfo from "./components/UserInfo";
-import Header from "./components/Header";
-import LinkedInActions from "./components/LinkedInActions";
-import GitHubActions from "./components/GitHubActions";
-import {
-  handleCommitSelect,
-  postToLinkedIn,
-  postSelectedCommitToLinkedIn,
-  handleGitHubLogin,
-  handleLinkedInLogin,
-  handleGitHubLogout,
-  handleLinkedInDisconnect,
-} from "./utils/githubLinkedInActions";
+import PostPreview from "./components/PostPreview";
+import LoginButtons from "./components/LoginButtons";
 
 function App() {
+  console.log("App component is mounting"); // Add this at the top of the App component
+  console.log("App component is rendering"); // Debug log
+
   const [repo, setRepo] = useState("");
   const [message, setMessage] = useState("");
   const [githubUserId, setGithubUserId] = useState(localStorage.getItem("github_user_id") || "");
@@ -26,36 +19,45 @@ function App() {
 
   // Check for GitHub OAuth callback with ?github_user_id=
   useEffect(() => {
+    console.log("useEffect for GitHub OAuth callback is running"); // Debug log
     const params = new URLSearchParams(window.location.search);
     const id = params.get("github_user_id");
-  
+
     if (id) {
+      console.log("GitHub user ID found in URL:", id); // Debug log
       localStorage.setItem("github_user_id", id);
       setGithubUserId(id);
-      window.history.replaceState({}, document.title, "/");
+      window.history.replaceState({}, document.title, "/"); // Remove query params from URL
     }
-  
+
     const storedId = id || localStorage.getItem("github_user_id");
     if (storedId) {
+      console.log("Using stored GitHub user ID:", storedId); // Debug log
       fetch(`/api/github/${storedId}/status`)
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("GitHub user status fetched:", data); // Debug log
           if (data.github_id) {
             setUserInfo(data);
+          } else {
+            console.error("Invalid user status data:", data); // Debug log
           }
-        });
+        })
+        .catch((err) => console.error("Error fetching user status:", err)); // Debug log
 
       fetch(`/api/github/${storedId}/commits`)
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("Fetched commits:", data.commits); // Debug log
           if (data.commits) {
-            console.log("Fetched commits:", data.commits); // Debug log
             setCommits(data.commits);
           } else {
             console.error("No commits found:", data); // Debug log
           }
         })
-        .catch(err => console.error("Error fetching commits:", err)); // Debug log
+        .catch((err) => console.error("Error fetching commits:", err)); // Debug log
+    } else {
+      console.log("No GitHub user ID found in URL or localStorage"); // Debug log
     }
   }, []);
 
@@ -75,16 +77,18 @@ function App() {
       fetch(`/api/github/${storedId}/status`)
         .then((res) => res.json())
         .then((data) => {
+          console.log("GitHub user status:", data); // Debug log
           if (data.github_id) {
             setUserInfo(data);
           }
-        });
+        })
+        .catch((err) => console.error("Error fetching user status:", err)); // Debug log;
 
       fetch(`/api/github/${storedId}/commits`)
         .then((res) => res.json())
         .then((data) => {
+          console.log("Fetched commits:", data.commits); // Debug log
           if (data.commits) {
-            console.log("Fetched unposted commits:", data.commits); // Debug log
             setCommits(data.commits);
           } else {
             console.error("No unposted commits found:", data); // Debug log
@@ -95,29 +99,157 @@ function App() {
   }, []);
   
 
+  const handleCommitSelect = (commit) => {
+    setSelectedCommit(commit);
+    setMessage(`Commit: ${commit.message}`);
+  };
+
+  const postToLinkedIn = async () => {
+    if (!selectedCommit) {
+      alert("Please select a commit first.");
+      return;
+    }
+    setIsPosting(true);
+    try {
+      await axios.post("http://localhost:5000/webhook", {
+        repository: { full_name: repo, owner: { id: githubUserId } },
+        head_commit: { message },
+        pusher: { name: githubUserId }, // fallback if needed
+      });
+      alert("Posted!");
+    } catch (error) {
+      alert("Failed to post. Please try again.");
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
+  const postSelectedCommitToLinkedIn = async () => {
+    if (!selectedCommit) {
+      alert("Please select a commit first.");
+      return;
+    }
+  
+    setIsPosting(true);
+    try {
+      const response = await axios.post(`/api/github/${githubUserId}/post_commit`, {
+        commit_id: selectedCommit.id,
+      });
+      if (response.data.status === "success") {
+        alert("Commit posted to LinkedIn successfully!");
+        setCommits((prevCommits) =>
+          prevCommits.map((commit) =>
+            commit.id === selectedCommit.id ? { ...commit, status: "posted" } : commit
+          )
+        );
+      } else {
+        alert("Failed to post commit to LinkedIn.");
+      }
+    } catch (error) {
+      console.error("Error posting commit to LinkedIn:", error);
+      alert("An error occurred while posting the commit.");
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
+  const handleGitHubLogin = () => {
+    console.log("GitHub login initiated");
+    localStorage.removeItem("github_user_id"); // clear cache
+    const githubClientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
+    const redirectUri = encodeURIComponent("https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/github/callback"); // Revert to Heroku URL
+    const scope = "repo"; // Ensure the scope includes access to repositories
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+    
+    console.log("[GitHub] Redirecting to:", githubAuthUrl); // Log the URL for debugging
+    window.location.href = githubAuthUrl; // Redirect to Heroku
+  };
+  
+
+  const handleLinkedInLogin = () => {
+    if (!githubUserId) {
+      alert("Please log in with GitHub first.");
+      return;
+    }
+  
+    const linkedinUrl = `https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin?github_user_id=${githubUserId}`;
+    console.log("[LinkedIn] Redirecting to:", linkedinUrl); // Debug log
+    window.location.href = linkedinUrl;
+  };
+
+  const handleGitHubLogout = () => {
+    console.log("GitHub logout initiated");
+    localStorage.removeItem("github_user_id");
+    setGithubUserId("");
+    setUserInfo(null); // Clear user info
+    setCommits([]); // Clear commits
+    alert("Logged out of GitHub.");
+  };
+
+  const handleLinkedInDisconnect = async () => {
+    if (!githubUserId) {
+      alert("You need to log in with GitHub first.");
+      return;
+    }
+  
+    try {
+      console.log("LinkedIn disconnect initiated");
+      const response = await axios.post(`/api/github/${githubUserId}/disconnect_linkedin`);
+      if (response.data.status === "success") {
+        setUserInfo((prev) => ({ ...prev, linked: false })); // Update linked status
+        alert("Disconnected LinkedIn successfully.");
+      } else {
+        alert("Failed to disconnect LinkedIn.");
+      }
+    } catch (error) {
+      console.error("Error disconnecting LinkedIn:", error);
+      alert("An error occurred while disconnecting LinkedIn.");
+    }
+  };
+
+  // Debug log to verify state updates
+  useEffect(() => {
+    console.log("GitHub User ID:", githubUserId);
+    console.log("User Info:", userInfo);
+  }, [githubUserId, userInfo]);
+
+  useEffect(() => {
+    console.log("GitHub User ID:", githubUserId);
+    console.log("User Info:", userInfo);
+    console.log("Commits:", commits);
+  }, [githubUserId, userInfo, commits]);
+
+  const renderAuthSection = () => {
+    console.log("Rendering Auth Section");
+    return (
+      <div>
+        <UserInfo userInfo={userInfo} />
+        <LoginButtons
+          handleGitHubLogin={handleGitHubLogin}
+          handleGitHubLogout={handleGitHubLogout}
+          isGitHubLoggedIn={!!githubUserId}
+          handleLinkedInLogin={handleLinkedInLogin}
+          handleLinkedInDisconnect={handleLinkedInDisconnect}
+          isLinkedInLinked={userInfo?.linked}
+        />
+      </div>
+    );
+  };
+
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
-      <Header />
-      <CommitList commits={commits} onSelectCommit={(commit) => handleCommitSelect(commit, setSelectedCommit, setMessage)} />
-      <UserInfo
-        userInfo={userInfo}
-        onGitHubLogout={() => handleGitHubLogout(setGithubUserId, setUserInfo, setCommits)}
-        onLinkedInLogin={() => handleLinkedInLogin(githubUserId)}
-        onLinkedInDisconnect={() => handleLinkedInDisconnect(githubUserId, setUserInfo)}
-        onGitHubLogin={handleGitHubLogin}
-      />
-      <LinkedInActions
-        githubUserId={githubUserId}
-        onLinkedInLogin={() => handleLinkedInLogin(githubUserId)}
-        onLinkedInDisconnect={() => handleLinkedInDisconnect(githubUserId, setUserInfo)}
-      />
-      <GitHubActions
-        onGitHubLogin={handleGitHubLogin}
-        onGitHubLogout={() => handleGitHubLogout(setGithubUserId, setUserInfo, setCommits)}
-        githubUserId={githubUserId}
-      />
+      <h2>GitHub to LinkedIn Post</h2>
+      <CommitList commits={commits} handleCommitSelect={handleCommitSelect} />
+      <PostPreview selectedCommit={selectedCommit} repo={repo} />
+      {selectedCommit && (
+        <button onClick={() => alert("Previewing LinkedIn post!")}>
+          Preview LinkedIn Post
+        </button>
+      )}
+      <div>{renderAuthSection()}</div>
     </div>
   );
 }
 
 export default App;
+

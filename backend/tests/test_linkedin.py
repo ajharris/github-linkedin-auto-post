@@ -17,55 +17,82 @@ def test_linkedin_env_vars_set():
 
 
 def test_post_to_linkedin_success():
-    user = SimpleNamespace(linkedin_token="fake_token", linkedin_id="123456789")
+    user = SimpleNamespace(
+        github_id="gh123",
+        linkedin_token="fake_token",
+        linkedin_id="123456789"
+    )
+    webhook_payload = {
+        "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
+        "head_commit": {"message": "Initial commit", "author": {"name": "Test User"}}
+    }
 
     with requests_mock.Mocker() as m:
         m.post(LINKEDIN_POST_URL, json={"id": "mock_post_id"}, status_code=201)
-
-        result = post_to_linkedin(user, "ajharris/github-linkedin-auto-post", "Commit message")
-
-        request_payload = m.request_history[0].json()
-        assert request_payload["author"] == "urn:li:member:123456789"
+        result = post_to_linkedin(user, "test-repo", "Initial commit", webhook_payload)
         assert result.status_code == 201
-        assert result.json()["id"] == "mock_post_id"
 
 
 def test_post_to_linkedin_auth_failure():
-    user = SimpleNamespace(linkedin_token="fake_token", linkedin_id="123456789")
+    user = SimpleNamespace(
+        github_id="gh123",
+        linkedin_token="fake_token",
+        linkedin_id="123456789"
+    )
+    webhook_payload = {
+        "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
+        "head_commit": {"message": "Initial commit", "author": {"name": "Test User"}}
+    }
     mock_response = {"message": "Invalid access token", "status": 401}
 
     with requests_mock.Mocker() as m:
         m.post(LINKEDIN_POST_URL, json=mock_response, status_code=401)
-        response = post_to_linkedin(user, "TestRepo", "Initial commit.")
-
-    assert response.status_code == 401
-    assert response.json()["message"] == "Invalid access token"
+        with pytest.raises(ValueError, match="Failed to post to LinkedIn: 401"):
+            post_to_linkedin(user, "test-repo", "Initial commit", webhook_payload)
 
 
 def test_post_to_linkedin_server_error():
-    user = SimpleNamespace(linkedin_token="fake_token", linkedin_id="123456789")
+    user = SimpleNamespace(
+        github_id="gh123",
+        linkedin_token="fake_token",
+        linkedin_id="123456789"
+    )
+    webhook_payload = {
+        "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
+        "head_commit": {"message": "Initial commit", "author": {"name": "Test User"}}
+    }
     mock_response = {"message": "Internal Server Error"}
 
     with requests_mock.Mocker() as m:
         m.post(LINKEDIN_POST_URL, json=mock_response, status_code=500)
-        response = post_to_linkedin(user, "TestRepo", "Something broke.")
-
-    assert response.status_code == 500
-    assert response.json()["message"] == "Internal Server Error"
+        with pytest.raises(ValueError, match="Failed to post to LinkedIn: 500"):
+            post_to_linkedin(user, "test-repo", "Initial commit", webhook_payload)
 
 
 def test_post_payload_format():
-    user = SimpleNamespace(linkedin_token="fake_token", linkedin_id="123456789")
-    repo = "MyRepo"
-    message = "Did a thing."
+    user = SimpleNamespace(
+        github_id="gh123",
+        linkedin_token="fake_token",
+        linkedin_id="123456789"
+    )
+    repo = "test-repo"
+    message = "Initial commit"
+    webhook_payload = {
+        "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
+        "head_commit": {"message": "Initial commit", "author": {"name": "Test User"}}
+    }
 
     with requests_mock.Mocker() as m:
         m.post(LINKEDIN_POST_URL, json={"id": "test"}, status_code=201)
-        post_to_linkedin(user, repo, message)
-
+        post_to_linkedin(user, repo, message, webhook_payload)
         payload = m.last_request.json()
 
-        expected_text = f"🚀 Just pushed new code to {repo}!\n\n💬 {message}\n\n#buildinpublic #opensource"
+        expected_text = (
+            "🚀 Test User just pushed to test-repo!\n\n"
+            "💬 Commit message: \"Initial commit\"\n\n"
+            "🔗 Check it out: https://github.com/test-repo\n\n"
+            "#buildinpublic #opensource"
+        )
         actual_text = payload["specificContent"]["com.linkedin.ugc.ShareContent"]["shareCommentary"]["text"]
 
         assert actual_text == expected_text

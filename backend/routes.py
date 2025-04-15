@@ -107,24 +107,29 @@ def linkedin_callback():
 
         token_data = token_response.json()
         access_token = token_data.get("access_token")
-        id_token = token_data.get("id_token")  # OpenID Connect ID token
 
-        if not access_token or not id_token:
-            current_app.logger.error("[LinkedIn] Missing access token or ID token.")
-            return "Missing access token or ID token from LinkedIn", 400
+        if not access_token:
+            current_app.logger.error("[LinkedIn] Missing access token.")
+            return "Missing access token from LinkedIn", 400
 
-        # Verify the ID token
-        try:
-            decoded_id_token = jwt.decode(
-                id_token,
-                options={"verify_signature": False},  # LinkedIn does not provide a public key for signature verification
-                algorithms=["RS256"]
-            )
-            linkedin_user_id = decoded_id_token.get("sub")
-            current_app.logger.info(f"[LinkedIn] Decoded ID token: {decoded_id_token}")
-        except InvalidTokenError as e:
-            current_app.logger.error(f"[LinkedIn] Invalid ID token: {e}")
-            return "Invalid ID token", 400
+        id_token = token_data.get("id_token")
+        if not id_token:
+            current_app.logger.warning("[LinkedIn] Missing ID token. Proceeding without it.")
+            id_token = None  # Allow processing to continue without ID token
+
+        # Decode the ID token if present
+        linkedin_user_id = None
+        if id_token:
+            try:
+                decoded_id_token = jwt.decode(
+                    id_token,
+                    options={"verify_signature": False},  # LinkedIn does not provide public keys for verification
+                    algorithms=["RS256"]
+                )
+                linkedin_user_id = decoded_id_token.get("sub")
+            except InvalidTokenError as e:
+                current_app.logger.error(f"[LinkedIn] Invalid ID token: {e}")
+                return "Invalid ID token", 400
 
         user = User.query.filter_by(github_id=github_user_id).first()
         if not user:
@@ -133,7 +138,6 @@ def linkedin_callback():
 
         user.linkedin_token = access_token
         user.linkedin_id = linkedin_user_id
-
         db.session.commit()
 
         current_app.logger.info(f"[LinkedIn] Stored token and ID for GitHub user {github_user_id}")
@@ -144,119 +148,64 @@ def linkedin_callback():
 
 
 # -------------------- GITHUB WEBHOOK HANDLING -------------------- #
-def is_linkedin_token_valid(access_token):
-    """Validate LinkedIn access token."""
-    try:
-        response = requests.get(
-            "https://api.linkedin.com/v2/me",
-            headers={"Authorization": f"Bearer {access_token}"}
-        )
-        if response.status_code == 200:
-            return True
-        else:
-            current_app.logger.warning(
-                f"[LinkedIn Token Validation] Token validation failed with status code {response.status_code}. "
-                f"Response: {response.text}"
-            )
-            return False
-    except requests.RequestException as e:
-        current_app.logger.error(f"[LinkedIn Token Validation] Exception occurred: {e}")
-        return False
-
-def is_github_token_valid(access_token):
-    """Validate GitHub access token."""
-    response = requests.get(
-        "https://api.github.com/user",
-        headers={"Authorization": f"token {access_token}"}
-    )
-    return response.status_code == 200
-
 @routes.route("/webhook/github", methods=["POST"])
 def github_webhook():
-    payload = request.get_json()
-
-    if not payload:
+    if not request.data:
         current_app.logger.error("[Webhook] Missing payload in request.")
         return jsonify({"error": "Missing payload"}), 400
 
-    github_user_id = (
-        str(payload.get("sender", {}).get("id"))
-        or str(payload.get("repository", {}).get("owner", {}).get("id"))
-        or str(payload.get("pusher", {}).get("name"))
+    signature = request.headers.get("X-Hub-Signature-256")
+    if not signature:
+        current_app.logger.error("[Webhook] Missing signature header.")
+        return jsonify({"error": "Invalid signature"}), 403
+
+    if not verify_github_signature(request.data, signature):
+        current_app.logger.error("[Webhook] Invalid signature.")
+        return jsonify({"error": "Unauthorized"}), 403
+
+    payload = request.get_json()
+
+    repo = payload.get("repository", {}).get("name")
+    commit_message = payload.get("head_commit", {}).get("message")
+    user_id = (
+        payload.get("repository", {}).get("owner", {}).get("id")
+        or payload.get("pusher", {}).get("name")
     )
 
-    repo_name = payload.get("repository", {}).get("name")
-    commit_message = payload.get("head_commit", {}).get("message")
-    commit_url = payload.get("head_commit", {}).get("url")
+    current_app.logger.info(f"[Webhook] Extracted values → user_id: {user_id}, repo: {repo}, commit: {commit_message}")
 
-    if not github_user_id or not repo_name or not commit_message:
+    if not repo or not commit_message or not user_id:
         current_app.logger.error("[Webhook] Missing required fields in payload.")
         return jsonify({"error": "Invalid payload"}), 400
 
-    current_app.logger.info(f"[Webhook] Extracted values → user_id: {github_user_id}, repo: {repo_name}, commit: {commit_message}")
-
-    user = User.query.filter_by(github_id=github_user_id).first()
+    user = User.query.filter_by(github_id=user_id).first()
     if not user:
         current_app.logger.warning("[Webhook] No user found.")
         return jsonify({"error": "No user found"}), 400
 
-    # Record the commit in the database
-    github_event = GitHubEvent(
-        user_id=user.id,
-        repo_name=repo_name,
-        commit_message=commit_message,
-        commit_url=commit_url,
-        event_type="push",
-        status="pending"
-    )
-    db.session.add(github_event)
-    db.session.commit()
-    current_app.logger.info(f"[Webhook] Commit recorded in database with ID: {github_event.id}")
+    try:
+        response = post_to_linkedin(user, repo, commit_message, payload)
+        post_id = response.json().get("id")
 
-    return jsonify({"status": "success"})
+        # Save to DB
+        event = GitHubEvent(
+            user_id=user.id,
+            repo_name=repo,
+            commit_message=commit_message,
+            commit_url=payload.get("head_commit", {}).get("url"),
+            linkedin_post_id=post_id
+        )
+        db.session.add(event)
+        db.session.commit()
 
+        return jsonify({"status": "success", "linkedin_post_id": post_id}), 200
 
-@routes.route("/auth/github/callback")
-def github_callback():
-    code = request.args.get("code")
-    if not code:
-        return "Missing code", 400
-
-    token_resp = requests.post(
-        "https://github.com/login/oauth/access_token",
-        data={
-            "client_id": os.getenv("GITHUB_CLIENT_ID"),
-            "client_secret": os.getenv("GITHUB_CLIENT_SECRET"),
-            "code": code,
-        },
-        headers={"Accept": "application/json"}
-    )
-
-    token_json = token_resp.json()
-    access_token = token_json.get("access_token")
-    if not access_token:
-        return "Failed to obtain GitHub access token", 400
-
-    user_resp = requests.get(
-        "https://api.github.com/user",
-        headers={"Authorization": f"token {access_token}"}
-    )
-    github_data = user_resp.json()
-    github_user_id = str(github_data.get("id"))
-    github_username = github_data.get("login")
-
-    user = User.query.filter_by(github_id=github_user_id).first()
-    if not user:
-        user = User(github_id=github_user_id)
-
-    user.github_token = access_token
-    user.github_username = github_username
-    db.session.add(user)
-    db.session.commit()
-
-    # Use the FRONTEND_URL environment variable for the redirect
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
-    return redirect(f"{frontend_url}?github_user_id={github_user_id}")
+    except ValueError as e:
+        current_app.logger.error(f"[Webhook] Exception during post: {e}")
+        return jsonify({"error": "An error occurred during processing"}), 500
+    except Exception as e:
+        current_app.logger.error(f"[Webhook] Unexpected exception: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @routes.route("/api/github/<github_id>/status")
@@ -268,96 +217,5 @@ def check_github_link_status(github_id):
             "github_id": user.github_id,
             "github_username": user.github_username,
             "linkedin_id": user.linkedin_id
-        })
-    return jsonify({"linked": False}), 404
-
-
-@routes.route("/debug/fetch_linkedin_id")
-def debug_fetch_linkedin_id():
-    try:
-        github_user_id = request.args.get("github_user_id")
-    except (TypeError, ValueError):
-        return "Invalid github_user_id parameter", 400
-
-    user = User.query.filter_by(github_id=github_user_id).first()
-    if not user or not user.linkedin_token or not is_linkedin_token_valid(user.linkedin_token):
-        return f"No valid LinkedIn token found for GitHub user {github_user_id}", 404
-
-    access_token = user.linkedin_token
-    profile_response = requests.get(
-        "https://api.linkedin.com/v2/me",
-        headers={"Authorization": f"Bearer {access_token}"}
-    )
-
-    if profile_response.status_code != 200:
-        return f"Failed to fetch LinkedIn profile: {profile_response.text}", 400
-
-    linkedin_id = profile_response.json().get("id")
-    if not linkedin_id:
-        return "LinkedIn profile missing ID", 400
-
-    user.linkedin_id = f"urn:li:person:{linkedin_id}"
-    db.session.commit()
-
-    return f"✅ Updated LinkedIn ID to {user.linkedin_id} for GitHub user {github_user_id}"
-
-
-@routes.route("/api/github/<github_id>/commits")
-def get_commits(github_id):
-    user = User.query.filter_by(github_id=str(github_id)).first()
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    # Filter for commits that haven't been posted to LinkedIn
-    events = GitHubEvent.query.filter_by(user_id=user.id, status="pending").order_by(GitHubEvent.timestamp.desc()).all()
-    commits = [
-        {
-            "id": event.id,
-            "repo_name": event.repo_name,
-            "message": event.commit_message,
-            "timestamp": event.timestamp.isoformat(),
-        }
-        for event in events
-    ]
-    return jsonify({"commits": commits})
-
-@routes.route("/api/github/<github_id>/post_commit", methods=["POST"])
-def post_commit_to_linkedin(github_id):
-    user = User.query.filter_by(github_id=str(github_id)).first()
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    if not user.linkedin_token or not is_linkedin_token_valid(user.linkedin_token):
-        return jsonify({"error": "Invalid or missing LinkedIn token"}), 400
-
-    data = request.get_json()
-    commit_id = data.get("commit_id")
-    if not commit_id:
-        return jsonify({"error": "Missing commit ID"}), 400
-
-    commit = GitHubEvent.query.filter_by(id=commit_id, user_id=user.id).first()
-    if not commit:
-        return jsonify({"error": "Commit not found"}), 404
-
-    try:
-        post_to_linkedin(user, commit.repo_name, commit.commit_message)
-        commit.status = "posted"
-        db.session.commit()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        current_app.logger.error(f"[Post Commit] Failed to post to LinkedIn: {e}")
-        return jsonify({"error": str(e)}), 500
-
-@routes.route("/api/github/<github_id>/disconnect_linkedin", methods=["POST"])
-def disconnect_linkedin(github_id):
-    user = User.query.filter_by(github_id=str(github_id)).first()
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    # Remove LinkedIn token and ID from the database
-    user.linkedin_token = None
-    user.linkedin_id = None
-    db.session.commit()
-
-    current_app.logger.info(f"[LinkedIn] Disconnected LinkedIn for GitHub user {github_id}")
-    return jsonify({"status": "success"})
+        }), 200
+    return jsonify({"error": "User not found"}), 404

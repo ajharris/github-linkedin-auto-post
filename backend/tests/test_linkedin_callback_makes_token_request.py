@@ -5,16 +5,13 @@ from backend.models import User, db
 
 def test_linkedin_callback_makes_token_request(app, test_client):
     with app.app_context():
-        # Seed a user with github_id='123456789' so the callback can match it
+        # Seed a user with github_id='test' so the callback can match it
         user = User(
-            github_id="123456789",
+            github_id="test",
             github_username="testuser",
-            github_token="fake-token",  # <-- this must NOT be None
+            github_token="fake-token",
             linkedin_token="mock_access_token"
         )
-
-
-
         db.session.add(user)
         db.session.commit()
 
@@ -22,6 +19,7 @@ def test_linkedin_callback_makes_token_request(app, test_client):
         # Mock LinkedIn access token exchange
         m.post("https://www.linkedin.com/oauth/v2/accessToken", json={
             "access_token": "mock_access_token",
+            "id_token": "mock_id_token",
             "expires_in": 5184000
         })
 
@@ -31,11 +29,18 @@ def test_linkedin_callback_makes_token_request(app, test_client):
             
         })
 
+        # Mock decoding of the ID token
+        decoded_id_token = {
+            "sub": "123456789"
+        }
+        import jwt
+        jwt.decode = lambda token, options, algorithms: decoded_id_token
+
         # Trigger the OAuth callback with mock code and user ID
         response = test_client.get("/auth/linkedin/callback?code=mock_code&state=test")
 
         assert response.status_code == 200, response.data
-        assert b"LinkedIn Access Token stored successfully" in response.data
+        assert "✅ LinkedIn Access Token and ID stored successfully" in response.get_data(as_text=True)
         assert m.called, "Expected POST to LinkedIn was not made"
 
         # Inspect payload to LinkedIn token endpoint
@@ -50,7 +55,7 @@ def test_linkedin_callback_makes_token_request(app, test_client):
         assert parsed["code"] == ["mock_code"]
 
     with app.app_context():
-        updated_user = User.query.filter_by(github_id="123456789").first()
+        updated_user = User.query.filter_by(github_id="test").first()
         assert updated_user.linkedin_token == "mock_access_token"
         assert updated_user.linkedin_id == "123456789"
 

@@ -1,15 +1,21 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
+from sqlalchemy.dialects.postgresql import JSON  # For JSON column support in PostgreSQL
+
 db = SQLAlchemy()
 
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     github_id = db.Column(db.String, unique=True, nullable=False)
-    github_username = db.Column(db.String, nullable=True)  # ✅ Add this line
-    linkedin_id = db.Column(db.String, unique=True, nullable=True)
+    github_username = db.Column(db.String, nullable=True)
     github_token = db.Column(db.String, nullable=False)
+    linkedin_id = db.Column(db.String, unique=True, nullable=True)
     linkedin_token = db.Column(db.String, nullable=True)
+    name = db.Column(db.String, nullable=True)  # Optional: GitHub user's name
+    email = db.Column(db.String, nullable=True)  # Optional: GitHub user's email
+    avatar_url = db.Column(db.String, nullable=True)  # Optional: GitHub user's avatar URL
+    extra_metadata = db.Column(JSON, nullable=True)  # Renamed from `metadata` to `extra_metadata`
 
     def has_valid_linkedin_token(self):
         """Check if the user has a valid LinkedIn token."""

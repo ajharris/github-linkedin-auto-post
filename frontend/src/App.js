@@ -4,6 +4,7 @@ import CommitList from "./components/CommitList";
 import UserInfo from "./components/UserInfo";
 import PostPreview from "./components/PostPreview";
 import LoginButtons from "./components/LoginButtons";
+import Cookies from "js-cookie"; // Install with `npm install js-cookie`
 
 function App() {
   console.log("App component is mounting"); // Add this at the top of the App component
@@ -11,7 +12,7 @@ function App() {
 
   const [repo, setRepo] = useState("");
   const [message, setMessage] = useState("");
-  const [githubUserId, setGithubUserId] = useState(localStorage.getItem("github_user_id") || "");
+  const [githubUserId, setGithubUserId] = useState(Cookies.get("github_user_id") || "");
   const [userInfo, setUserInfo] = useState(null);
   const [isPosting, setIsPosting] = useState(false);
   const [commits, setCommits] = useState([]);
@@ -20,20 +21,14 @@ function App() {
   // Check for GitHub OAuth callback with ?github_user_id=
   useEffect(() => {
     console.log("useEffect for GitHub OAuth callback is running"); // Debug log
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("github_user_id");
 
-    if (id) {
-      console.log("GitHub user ID found in URL:", id); // Debug log
-      localStorage.setItem("github_user_id", id);
-      setGithubUserId(id);
-      window.history.replaceState({}, document.title, "/"); // Remove query params from URL
-    }
+    // Read the GitHub user ID from the secure cookie
+    const githubUserIdFromCookie = Cookies.get("github_user_id");
+    if (githubUserIdFromCookie) {
+      console.log("GitHub user ID found in cookie:", githubUserIdFromCookie); // Debug log
+      setGithubUserId(githubUserIdFromCookie);
 
-    const storedId = id || localStorage.getItem("github_user_id");
-    if (storedId) {
-      console.log("Using stored GitHub user ID:", storedId); // Debug log
-      fetch(`/api/github/${storedId}/status`)
+      fetch(`/api/github/${githubUserIdFromCookie}/status`)
         .then((res) => res.json())
         .then((data) => {
           console.log("GitHub user status fetched:", data); // Debug log
@@ -45,7 +40,7 @@ function App() {
         })
         .catch((err) => console.error("Error fetching user status:", err)); // Debug log
 
-      fetch(`/api/github/${storedId}/commits`)
+      fetch(`/api/github/${githubUserIdFromCookie}/commits`)
         .then((res) => res.json())
         .then((data) => {
           console.log("Fetched commits:", data.commits); // Debug log
@@ -57,7 +52,7 @@ function App() {
         })
         .catch((err) => console.error("Error fetching commits:", err)); // Debug log
     } else {
-      console.log("No GitHub user ID found in URL or localStorage"); // Debug log
+      console.log("No GitHub user ID found in cookie"); // Debug log
     }
   }, []);
 
@@ -179,7 +174,7 @@ function App() {
 
   const handleGitHubLogout = () => {
     console.log("GitHub logout initiated");
-    localStorage.removeItem("github_user_id");
+    Cookies.remove("github_user_id"); // Remove the secure cookie
     setGithubUserId("");
     setUserInfo(null); // Clear user info
     setCommits([]); // Clear commits

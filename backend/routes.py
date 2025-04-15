@@ -221,7 +221,6 @@ def check_github_link_status(github_id):
     return jsonify({"error": "User not found"}), 404
 
 @routes.route("/auth/github/callback")
-@routes.route("/auth/github/callback")
 def github_callback():
     from urllib.parse import urlencode
 
@@ -263,6 +262,9 @@ def github_callback():
         user_data = user_res.json()
         github_id = user_data.get("id")
         github_username = user_data.get("login")
+        name = user_data.get("name")  # Fetch name
+        email = user_data.get("email")  # Fetch email
+        avatar_url = user_data.get("avatar_url")  # Fetch avatar URL
 
         if not github_id:
             current_app.logger.error("[GitHub] Missing GitHub ID in user response")
@@ -273,17 +275,30 @@ def github_callback():
         if not user:
             user = User(
                 github_id=str(github_id),
-                github_username=github_username
+                github_username=github_username,
+                name=name,
+                email=email,
+                avatar_url=avatar_url
             )
             db.session.add(user)
         else:
             user.github_username = github_username
+            user.name = name
+            user.email = email
+            user.avatar_url = avatar_url
 
         db.session.commit()
 
-        # Step 4: Redirect frontend with GitHub user ID
-        redirect_url = f"/?{urlencode({'github_user_id': github_id})}"
-        return redirect(redirect_url)
+        # Step 4: Set a secure cookie with the GitHub user ID
+        response = redirect("/")
+        response.set_cookie(
+            "github_user_id",
+            str(github_id),
+            httponly=True,  # Prevent JavaScript access
+            secure=True,    # Ensure the cookie is sent over HTTPS
+            samesite="Strict"  # Prevent cross-site request forgery
+        )
+        return response
 
     except Exception as e:
         current_app.logger.error(f"[GitHub] OAuth flow failed: {e}")

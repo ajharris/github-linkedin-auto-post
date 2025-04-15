@@ -30,7 +30,10 @@ def create_app(config_name=None):
 
     # Validate required environment variables
     required_env_vars = ["LINKEDIN_ACCESS_TOKEN", "LINKEDIN_USER_ID"]
-    missing_vars = [var for var in required_env_vars if not os.getenv(var)]
+    missing_vars = [
+        var for var in required_env_vars
+        if not os.getenv(var) and not (var == "LINKEDIN_USER_ID" and os.getenv("SEED_LINKEDIN_ID"))
+    ]
     if missing_vars:
         app.logger.error(f"[App] Missing required environment variables: {missing_vars}")
         raise RuntimeError(f"Missing required environment variables: {missing_vars}")

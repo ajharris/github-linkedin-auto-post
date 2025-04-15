@@ -1,7 +1,9 @@
 {
-    "scripts": {
-      "start": "gunicorn backend.app:app",
-      "heroku-postbuild": "cd frontend && npm install && npm run build"
-    }
+  "scripts": {
+    "start": "gunicorn backend.app:app",
+    "heroku-postbuild": "cd frontend && npm install && npm run build"
+  },
+  "engines": {
+    "node": "16.x" // Specify the Node.js version
   }
-  
+}

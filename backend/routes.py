@@ -296,4 +296,22 @@ def list_routes():
     for rule in current_app.url_map.iter_rules():
         output.append(f"{rule.endpoint}: {rule.rule}")
     return jsonify(sorted(output))
-# -------------------- CLI COMMANDS -------------------- #
+
+@routes.route("/api/github/<github_id>/commits")
+def get_commits(github_id):
+    user = User.query.filter_by(github_id=str(github_id)).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    events = GitHubEvent.query.filter_by(user_id=user.id).all()
+    commits = [
+        {
+            "id": e.id,
+            "repo": e.repo_name,
+            "message": e.commit_message,
+            "url": e.commit_url,
+            "status": "posted" if e.linkedin_post_id else "unposted"
+        }
+        for e in events
+    ]
+    return jsonify({"commits": commits}), 200

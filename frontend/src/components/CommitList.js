@@ -1,12 +1,8 @@
 import React from "react";
 
-<<<<<<< HEAD
 function CommitList({ commits, handleCommitSelect }) {
   console.log("Rendering CommitList with commits:", commits);
 
-=======
-function CommitList({ commits, onSelectCommit }) {
->>>>>>> heroku/main
   return (
     <div>
       <h3>Available Commits</h3>
@@ -14,11 +10,7 @@ function CommitList({ commits, onSelectCommit }) {
         {commits.map((commit) => (
           <li key={commit.id}>
             <button
-<<<<<<< HEAD
               onClick={() => handleCommitSelect(commit)}
-=======
-              onClick={() => onSelectCommit(commit)}
->>>>>>> heroku/main
               disabled={commit.status === "posted"}
             >
               {commit.message} {commit.status === "posted" ? "✅" : ""}

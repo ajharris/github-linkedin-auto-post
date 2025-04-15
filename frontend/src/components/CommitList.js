@@ -1,6 +1,8 @@
 import React from "react";
 
 function CommitList({ commits, handleCommitSelect }) {
+  console.log("Rendering CommitList with commits:", commits);
+
   return (
     <div>
       <h3>Available Commits</h3>

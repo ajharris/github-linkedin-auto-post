@@ -1,20 +1,18 @@
 import React from "react";
 
-function UserInfo({ userInfo, handleGitHubLogout, handleLinkedInLogin, handleLinkedInDisconnect }) {
+function UserInfo({ userInfo }) {
+  if (!userInfo) {
+    return <p>👤 Not logged in to GitHub</p>;
+  }
+
   return (
     <div>
       <p>
         👤 GitHub: <strong>{userInfo.github_username}</strong> (ID: {userInfo.github_id})
       </p>
-      {userInfo.linked ? (
-        <>
-          <p>🔗 Linked to LinkedIn ✅</p>
-          <button onClick={handleLinkedInDisconnect}>Disconnect LinkedIn</button>
-        </>
-      ) : (
-        <button onClick={handleLinkedInLogin}>Link LinkedIn</button>
-      )}
-      <button onClick={handleGitHubLogout}>Logout from GitHub</button>
+      <p>
+        🔗 LinkedIn: {userInfo.linked ? "Linked ✅" : "Not linked ❌"}
+      </p>
     </div>
   );
 }

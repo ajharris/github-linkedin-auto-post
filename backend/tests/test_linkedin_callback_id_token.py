@@ -24,21 +24,19 @@ def test_linkedin_callback_handles_id_token(app, test_client):
             "expires_in": 5184000
         })
 
-        # Mock decoding of the ID token (since LinkedIn doesn't provide public keys for verification)
+        # Mock decoding of the ID token
         decoded_id_token = {
             "sub": "mock_linkedin_user_id",
             "email": "testuser@example.com"
         }
-
-        # Mock the JWT decode function
         import jwt
         jwt.decode = lambda token, options, algorithms: decoded_id_token
 
-        # Trigger the OAuth callback with mock code and user ID
+        # Trigger the OAuth callback
         response = test_client.get("/auth/linkedin/callback?code=mock_code&state=123456789")
 
         assert response.status_code == 200, response.data
-        assert b"LinkedIn Access Token and ID stored successfully" in response.data
+        assert "✅ LinkedIn Access Token and ID stored successfully" in response.get_data(as_text=True)
         assert m.called, "Expected POST to LinkedIn was not made"
 
         # Inspect payload to LinkedIn token endpoint

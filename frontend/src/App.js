@@ -3,6 +3,7 @@ import axios from "axios";
 import CommitList from "./components/CommitList";
 import UserInfo from "./components/UserInfo";
 import LoginButtons from "./components/LoginButtons";
+import PostPreview from "./components/PostPreview";
 
 function App() {
   const [repo, setRepo] = useState("");
@@ -191,6 +192,7 @@ function App() {
     <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
       <h2>GitHub to LinkedIn Post</h2>
       <CommitList commits={commits} handleCommitSelect={handleCommitSelect} />
+      <PostPreview selectedCommit={selectedCommit} repo={repo} />
       <div>
         {userInfo ? (
           <UserInfo

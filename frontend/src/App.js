@@ -233,8 +233,8 @@ function App() {
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
       <h2>GitHub to LinkedIn Post</h2>
-      <CommitList commits={commits} handleCommitSelect={handleCommitSelect} />
       <PostPreview selectedCommit={selectedCommit} repo={repo} />
+      <CommitList commits={commits} handleCommitSelect={handleCommitSelect} />
       {selectedCommit && (
         <button onClick={() => alert("Previewing LinkedIn post!")}>
           Preview LinkedIn Post

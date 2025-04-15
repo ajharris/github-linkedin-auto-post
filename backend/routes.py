@@ -1,4 +1,4 @@
-from flask import Blueprint, json, request, redirect, send_from_directory, jsonify, current_app
+from flask import Blueprint, json, request, redirect, send_from_directory, jsonify, current_app, url_for
 import os
 import requests
 import logging
@@ -276,6 +276,7 @@ def github_callback():
             user = User(
                 github_id=str(github_id),
                 github_username=github_username,
+                github_token=access_token,  # Set github_token for new users
                 name=name,
                 email=email,
                 avatar_url=avatar_url
@@ -283,6 +284,7 @@ def github_callback():
             db.session.add(user)
         else:
             user.github_username = github_username
+            user.github_token = access_token  # Update github_token for existing users
             user.name = name
             user.email = email
             user.avatar_url = avatar_url
@@ -290,7 +292,7 @@ def github_callback():
         db.session.commit()
 
         # Step 4: Set a secure cookie with the GitHub user ID
-        response = redirect("/")
+        response = redirect(f"/?github_user_id={github_id}")  # Include github_user_id in the redirect URL
         response.set_cookie(
             "github_user_id",
             str(github_id),
@@ -328,3 +330,13 @@ def get_commits(github_id):
         for e in events
     ]
     return jsonify({"commits": commits}), 200
+
+@routes.route("/auth/github")
+def github_login():
+    client_id = os.getenv("GITHUB_CLIENT_ID")
+    redirect_uri = url_for("routes.github_callback", _external=True)  # Include the blueprint name
+    github_oauth_url = (
+        f"https://github.com/login/oauth/authorize?"
+        f"client_id={client_id}&redirect_uri={redirect_uri}&scope=repo"
+    )
+    return redirect(github_oauth_url)

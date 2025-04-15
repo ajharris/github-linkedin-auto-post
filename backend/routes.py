@@ -202,7 +202,7 @@ def github_webhook():
 
     except ValueError as e:
         current_app.logger.error(f"[Webhook] Exception during post: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An error occurred during processing"}), 500
     except Exception as e:
         current_app.logger.error(f"[Webhook] Unexpected exception: {e}")
         return jsonify({"error": "Internal server error"}), 500

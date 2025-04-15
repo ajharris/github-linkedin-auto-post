@@ -219,3 +219,24 @@ def check_github_link_status(github_id):
             "linkedin_id": user.linkedin_id
         }), 200
     return jsonify({"error": "User not found"}), 404
+
+@routes.route("/auth/github/callback")
+def github_callback():
+    code = request.args.get("code")
+    if not code:
+        return "Missing code from GitHub", 400
+
+    # TODO: exchange `code` for access_token (your GitHub OAuth flow logic goes here)
+
+
+    # For now, redirect with dummy ID
+    return redirect("/?github_user_id=7585359")
+
+@routes.route("/routes")
+def list_routes():
+    from flask import url_for
+    output = []
+    for rule in current_app.url_map.iter_rules():
+        output.append(f"{rule.endpoint}: {rule.rule}")
+    return jsonify(sorted(output))
+# -------------------- CLI COMMANDS -------------------- #

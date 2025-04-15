@@ -155,14 +155,14 @@ function App() {
 
   const handleGitHubLogin = () => {
     console.log("GitHub login initiated");
-    localStorage.removeItem("github_user_id"); // clear cache
+    localStorage.removeItem("github_user_id"); // Clear cache
     const githubClientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
-    const redirectUri = encodeURIComponent("https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/github/callback"); // Revert to Heroku URL
+    const redirectUri = encodeURIComponent("https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/github/callback"); // Ensure this matches GitHub app settings
     const scope = "repo"; // Ensure the scope includes access to repositories
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${redirectUri}&scope=${scope}`;
     
-    console.log("[GitHub] Redirecting to:", githubAuthUrl); // Log the URL for debugging
-    window.location.href = githubAuthUrl; // Redirect to Heroku
+    console.log("[GitHub] Redirecting to:", githubAuthUrl); // Debug log
+    window.location.href = githubAuthUrl; // Redirect to GitHub OAuth
   };
   
 
@@ -187,16 +187,10 @@ function App() {
   };
 
   const handleLinkedInDisconnect = async () => {
-    if (!githubUserId) {
-      alert("You need to log in with GitHub first.");
-      return;
-    }
-  
     try {
-      console.log("LinkedIn disconnect initiated");
       const response = await axios.post(`/api/github/${githubUserId}/disconnect_linkedin`);
       if (response.data.status === "success") {
-        setUserInfo((prev) => ({ ...prev, linked: false })); // Update linked status
+        setUserInfo((prev) => ({ ...prev, linked: false }));
         alert("Disconnected LinkedIn successfully.");
       } else {
         alert("Failed to disconnect LinkedIn.");

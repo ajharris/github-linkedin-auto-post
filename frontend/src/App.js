@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import CommitList from "./components/CommitList";
+import UserInfo from "./components/UserInfo";
+import LoginButtons from "./components/LoginButtons";
 
 function App() {
   const [repo, setRepo] = useState("");
@@ -187,42 +190,20 @@ function App() {
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
       <h2>GitHub to LinkedIn Post</h2>
-      <div>
-        <h3>Available Commits</h3>
-        <ul>
-          {commits.map((commit) => (
-            <li key={commit.id}>
-              <button
-                onClick={() => handleCommitSelect(commit)}
-                disabled={commit.status === "posted"}
-              >
-                {commit.message} {commit.status === "posted" ? "✅" : ""}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <CommitList commits={commits} handleCommitSelect={handleCommitSelect} />
       <div>
         {userInfo ? (
-          <>
-            <p>👤 GitHub: <strong>{userInfo.github_username}</strong> (ID: {userInfo.github_id})</p>
-            {userInfo.linked ? (
-              <>
-                <p>🔗 Linked to LinkedIn ✅</p>
-                <button onClick={handleLinkedInDisconnect}>Disconnect LinkedIn</button>
-              </>
-            ) : (
-              <button onClick={handleLinkedInLogin}>Link LinkedIn</button>
-            )}
-            <button onClick={handleGitHubLogout}>Logout from GitHub</button>
-          </>
+          <UserInfo
+            userInfo={userInfo}
+            handleGitHubLogout={handleGitHubLogout}
+            handleLinkedInLogin={handleLinkedInLogin}
+            handleLinkedInDisconnect={handleLinkedInDisconnect}
+          />
         ) : (
-          <>
-            <button onClick={handleGitHubLogin}>Login with GitHub</button>
-            <button onClick={handleLinkedInLogin} disabled>
-              Link LinkedIn
-            </button>
-          </>
+          <LoginButtons
+            handleGitHubLogin={handleGitHubLogin}
+            handleLinkedInLogin={handleLinkedInLogin}
+          />
         )}
       </div>
     </div>

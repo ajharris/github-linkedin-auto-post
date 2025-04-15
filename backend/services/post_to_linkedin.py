@@ -5,17 +5,21 @@ from dotenv import load_dotenv
 import logging
 
 from backend.models import User
+from backend.services.post_generator import generate_post_from_webhook
 
 load_dotenv()
 
 LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
 
-def post_to_linkedin(user, repo_name, commit_message):
+def post_to_linkedin(user, repo_name, commit_message, webhook_payload):
     if not user:
         current_app.logger.warning(f"[post_to_linkedin] No user provided.")
         user = User.query.first()
         if not user:
-            raise ValueError("User not found")
+            response = requests.Response()
+            response.status_code = 404
+            response._content = b"User not found"
+            return response
         current_app.logger.warning(f"[Webhook] Fallback user: {getattr(user, 'github_id', 'None')}")
 
     access_token = user.linkedin_token
@@ -24,11 +28,13 @@ def post_to_linkedin(user, repo_name, commit_message):
     logging.info(f"[LinkedIn] User ID: {user_id}")
 
     if not access_token or not user_id:
-        raise ValueError("Missing LinkedIn credentials")
+        response = requests.Response()
+        response.status_code = 400
+        response._content = b"Missing LinkedIn credentials"
+        return response
 
-    # Ensure the user_id is properly formatted
-    if not user_id.startswith("urn:li:person:"):
-        user_id = f"urn:li:person:{user_id}"  # Correct the format if necessary
+    if not user_id.startswith("urn:li:"):
+        user_id = f"urn:li:member:{user_id}"
 
     author_urn = user_id
 
@@ -38,13 +44,15 @@ def post_to_linkedin(user, repo_name, commit_message):
         "X-Restli-Protocol-Version": "2.0.0"
     }
 
+    post_text = generate_post_from_webhook(webhook_payload)
+
     payload = {
         "author": author_urn,
         "lifecycleState": "PUBLISHED",
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {
                 "shareCommentary": {
-                    "text": f"New update from {repo_name}: {commit_message}"
+                    "text": post_text
                 },
                 "shareMediaCategory": "NONE"
             }
@@ -56,9 +64,13 @@ def post_to_linkedin(user, repo_name, commit_message):
 
     response = requests.post(LINKEDIN_POST_URL, headers=headers, json=payload)
 
-    if response.status_code != 201:
-        current_app.logger.error(f"[LinkedIn] Failed to post: {response.status_code} {response.text}")
-        raise ValueError(f"Failed to post to LinkedIn: {response.status_code} {response.text}")
+    if response.status_code == 401:
+        current_app.logger.error(f"[LinkedIn] Authentication failed: {response.text}")
+        raise ValueError(f"Failed to post to LinkedIn: {response.status_code}")
+    elif response.status_code >= 500:
+        current_app.logger.error(f"[LinkedIn] Server error: {response.text}")
+        raise ValueError(f"Failed to post to LinkedIn: {response.status_code}")
+    elif response.status_code not in {201, 401} and response.status_code < 500:
+        current_app.logger.error(f"[LinkedIn] Unexpected error: {response.status_code} {response.text}")
 
-    current_app.logger.info(f"[LinkedIn] Successfully posted to LinkedIn for user {user.github_id}")
-    return response.json()
+    return response

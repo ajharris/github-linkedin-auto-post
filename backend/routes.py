@@ -221,16 +221,73 @@ def check_github_link_status(github_id):
     return jsonify({"error": "User not found"}), 404
 
 @routes.route("/auth/github/callback")
+@routes.route("/auth/github/callback")
 def github_callback():
+    from urllib.parse import urlencode
+
     code = request.args.get("code")
     if not code:
+        current_app.logger.error("[GitHub] Missing authorization code.")
         return "Missing code from GitHub", 400
 
-    # TODO: exchange `code` for access_token (your GitHub OAuth flow logic goes here)
+    current_app.logger.info(f"[GitHub] Received code: {code}")
 
+    token_url = "https://github.com/login/oauth/access_token"
+    user_url = "https://api.github.com/user"
 
-    # For now, redirect with dummy ID
-    return redirect("/?github_user_id=7585359")
+    try:
+        # Step 1: Exchange code for access token
+        token_res = requests.post(
+            token_url,
+            headers={"Accept": "application/json"},
+            data={
+                "client_id": os.getenv("GITHUB_CLIENT_ID"),
+                "client_secret": os.getenv("GITHUB_CLIENT_SECRET"),
+                "code": code,
+            },
+        )
+
+        token_data = token_res.json()
+        access_token = token_data.get("access_token")
+
+        if not access_token:
+            current_app.logger.error(f"[GitHub] Failed to get token: {token_data}")
+            return "Failed to obtain GitHub access token", 400
+
+        # Step 2: Fetch GitHub user info
+        user_res = requests.get(
+            user_url,
+            headers={"Authorization": f"token {access_token}"}
+        )
+
+        user_data = user_res.json()
+        github_id = user_data.get("id")
+        github_username = user_data.get("login")
+
+        if not github_id:
+            current_app.logger.error("[GitHub] Missing GitHub ID in user response")
+            return "GitHub user information is incomplete", 400
+
+        # Step 3: Store or update user in DB
+        user = User.query.filter_by(github_id=str(github_id)).first()
+        if not user:
+            user = User(
+                github_id=str(github_id),
+                github_username=github_username
+            )
+            db.session.add(user)
+        else:
+            user.github_username = github_username
+
+        db.session.commit()
+
+        # Step 4: Redirect frontend with GitHub user ID
+        redirect_url = f"/?{urlencode({'github_user_id': github_id})}"
+        return redirect(redirect_url)
+
+    except Exception as e:
+        current_app.logger.error(f"[GitHub] OAuth flow failed: {e}")
+        return jsonify({"error": "GitHub OAuth error"}), 500
 
 @routes.route("/routes")
 def list_routes():

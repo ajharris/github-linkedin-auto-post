@@ -119,7 +119,8 @@ def test_github_webhook(mock_verify, mock_post, client):
 
     headers = {
         "X-Hub-Signature-256": signature,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-GitHub-Event": "push",  # Added missing event type header
     }
 
     response = client.post("/webhook/github", data=body, headers=headers)

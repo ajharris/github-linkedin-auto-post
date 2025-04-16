@@ -3,9 +3,11 @@ from flask import current_app, json, jsonify
 import requests
 from dotenv import load_dotenv
 import logging
+import time
 
-from backend.models import User
+from backend.models import User, db
 from backend.services.post_generator import generate_post_from_webhook
+from backend.services.linkedin_oauth import exchange_code_for_access_token
 
 load_dotenv()
 
@@ -74,3 +76,43 @@ def post_to_linkedin(user, repo_name, commit_message, webhook_payload):
         current_app.logger.error(f"[LinkedIn] Unexpected error: {response.status_code} {response.text}")
 
     return response
+
+def send_post_to_linkedin(user, repo_name, commit_message, webhook_payload, retries=3, delay=2):
+    """
+    Sends a post to LinkedIn using the user's credentials with retry logic.
+
+    Args:
+        user (User): The user object containing LinkedIn credentials.
+        repo_name (str): The name of the repository.
+        commit_message (str): The commit message.
+        webhook_payload (dict): The webhook payload from GitHub.
+        retries (int): Number of retry attempts in case of failure.
+        delay (int): Delay in seconds between retries.
+
+    Returns:
+        Response: The response from the LinkedIn API.
+    """
+    if not user.linkedin_token:
+        logging.warning("[LinkedIn] Missing LinkedIn token. Attempting to refresh.")
+        try:
+            user.linkedin_token = exchange_code_for_access_token(user.github_token)
+            db.session.commit()
+        except Exception as e:
+            logging.error(f"[LinkedIn] Failed to refresh token: {e}")
+            raise
+
+    for attempt in range(retries):
+        try:
+            response = post_to_linkedin(user, repo_name, commit_message, webhook_payload)
+            if response.status_code == 201:
+                logging.info(f"[LinkedIn] Post successful: {response.json()}")
+                return response
+            else:
+                logging.error(f"[LinkedIn] Post failed: {response.status_code} {response.text}")
+                return response
+        except Exception as e:
+            logging.error(f"[LinkedIn] Exception during post (attempt {attempt + 1}): {e}")
+            if attempt < retries - 1:
+                time.sleep(delay)
+            else:
+                raise

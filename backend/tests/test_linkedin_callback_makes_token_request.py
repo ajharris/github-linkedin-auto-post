@@ -34,7 +34,7 @@ def test_linkedin_callback_makes_token_request(app, test_client):
             "sub": "123456789"
         }
         import jwt
-        jwt.decode = lambda token, options, algorithms: decoded_id_token
+        jwt.decode = lambda token, options, algorithms=None: decoded_id_token  # Fix mock to handle 'algorithms' argument
 
         # Trigger the OAuth callback with mock code and user ID
         response = test_client.get("/auth/linkedin/callback?code=mock_code&state=test")

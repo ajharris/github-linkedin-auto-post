@@ -157,7 +157,23 @@ def github_webhook():
         current_app.logger.error("[Webhook] Invalid signature.")
         return jsonify({"error": "Unauthorized"}), 403
 
+    event_type = request.headers.get("X-GitHub-Event", None)
+    if not event_type:
+        current_app.logger.error("[Webhook] Missing event type header.")
+        return jsonify({"error": "Missing event type"}), 400
+
+    if event_type not in ["push", "pull_request"]:
+        current_app.logger.info(f"[Webhook] Unsupported event type: {event_type}")
+        return jsonify({"error": "Unsupported event type"}), 400
+
     payload = request.get_json()
+
+    current_app.logger.info(f"[Webhook] Received event type: {event_type}")
+    current_app.logger.info(f"[Webhook] Payload: {payload}")
+
+    if event_type == "pull_request":
+        current_app.logger.info("[Webhook] Pull request event received.")
+        return jsonify({"message": "Pull request event received"}), 204
 
     repo = payload.get("repository", {}).get("name")
     commit_message = payload.get("head_commit", {}).get("message")
@@ -177,9 +193,28 @@ def github_webhook():
         current_app.logger.warning("[Webhook] No user found.")
         return jsonify({"error": "No user found"}), 400
 
+    current_app.logger.info(f"[Webhook] Found user: {user.github_id}")
+
+    # Check for redundant events (e.g., already posted commits)
+    existing_event = GitHubEvent.query.filter_by(
+        user_id=user.id, repo_name=repo, commit_message=commit_message
+    ).first()
+    if existing_event:
+        current_app.logger.info("[Webhook] Redundant event detected. Skipping.")
+        return jsonify({"message": "Redundant event"}), 200
+
+    current_app.logger.info("[Webhook] Event is not redundant. Proceeding with LinkedIn post.")
+
     try:
         response = post_to_linkedin(user, repo, commit_message, payload)
+
+        # Ensure response is valid before accessing .json()
+        if response is None or not hasattr(response, 'json'):
+            current_app.logger.error("[Webhook] Invalid response from post_to_linkedin.")
+            return jsonify({"error": "Failed to post to LinkedIn"}), 500
+
         post_id = response.json().get("id")
+        current_app.logger.info(f"[Webhook] LinkedIn post ID: {post_id}")
 
         # Save to DB
         event = GitHubEvent(
@@ -192,6 +227,7 @@ def github_webhook():
         db.session.add(event)
         db.session.commit()
 
+        current_app.logger.info("[Webhook] Event successfully saved to database.")
         return jsonify({"status": "success", "linkedin_post_id": post_id}), 200
 
     except ValueError as e:

@@ -6,6 +6,8 @@ from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
 from backend.models import User, db
 from backend.services.post_to_linkedin import send_post_to_linkedin
+import time
+from unittest.mock import call
 
 
 @pytest.mark.parametrize("linkedin_id, expected_urn", [
@@ -175,5 +177,37 @@ def test_send_post_to_linkedin_handles_post_errors(app):
 
             with pytest.raises(Exception, match="Mocked post error"):
                 send_post_to_linkedin(user, "test-repo", "Test commit message", {})
+
+
+def test_retry_logic_if_post_fails(app):
+    """Test retry logic when LinkedIn post fails temporarily."""
+    with app.app_context():
+        user = User(
+            github_id="12345",
+            github_username="testuser",
+            github_token="mock_github_token",
+            linkedin_token="mock_token",
+            linkedin_id="mock_linkedin_id"
+        )
+        db.session.add(user)
+        db.session.commit()
+
+        with patch("backend.services.post_to_linkedin.post_to_linkedin") as mock_post_to_linkedin:
+            # Simulate temporary failure followed by success
+            mock_post_to_linkedin.side_effect = [
+                Exception("Temporary LinkedIn API failure"),
+                MagicMock(status_code=201, json=lambda: {"id": "mock_post_id"})
+            ]
+
+            with patch("time.sleep", return_value=None) as mock_sleep:
+                response = send_post_to_linkedin(user, "test-repo", "Test commit message", {})
+
+                # Ensure retry logic was triggered
+                assert mock_post_to_linkedin.call_count == 2
+                mock_sleep.assert_called_once_with(2)  # Ensure sleep was called between retries
+
+                # Verify the successful response
+                assert response.status_code == 201
+                assert response.json()["id"] == "mock_post_id"
 
 

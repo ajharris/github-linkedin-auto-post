@@ -47,9 +47,9 @@ def create_app(config_name=None):
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def serve_frontend(path):
-        file_path = os.path.join(app.static_folder, path)
+        file_path = os.path.normpath(os.path.join(app.static_folder, path))
 
-        if os.path.exists(file_path) and os.path.isfile(file_path):
+        if file_path.startswith(app.static_folder) and os.path.exists(file_path) and os.path.isfile(file_path):
             return send_from_directory(app.static_folder, path)
         else:
             return send_from_directory(app.static_folder, "index.html")

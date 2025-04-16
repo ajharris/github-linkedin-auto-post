@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 import logging
+import requests  # Added import for requests
 
 load_dotenv()
 

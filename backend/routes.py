@@ -340,3 +340,33 @@ def github_login():
         f"client_id={client_id}&redirect_uri={redirect_uri}&scope=repo"
     )
     return redirect(github_oauth_url)
+
+@routes.route("/api/github/<github_id>/link_linkedin", methods=["POST"])
+@login_required
+def link_linkedin_account(github_id):
+    user = request.user  # Access the authenticated user from the request context
+    if not user or user.github_id != github_id:
+        return jsonify({"error": "Unauthorized or invalid user"}), 403
+
+    linkedin_token = request.json.get("linkedin_token")
+    linkedin_id = request.json.get("linkedin_id")
+
+    if not linkedin_token or not linkedin_id:
+        return jsonify({"error": "Missing LinkedIn token or ID"}), 400
+
+    user.linkedin_token = linkedin_token
+    user.linkedin_id = linkedin_id
+    db.session.commit()
+
+    return jsonify({"status": "success", "message": "LinkedIn account linked successfully"}), 200
+
+@routes.route("/api/get_user_profile", methods=["GET"])
+@login_required
+def get_user_profile():
+    user = request.user  # Access the authenticated user from the request context
+    return jsonify({
+        "linkedin_connected": bool(user.linkedin_token and user.linkedin_id),
+        "github_id": user.github_id,
+        "github_username": user.github_username,
+        "linkedin_id": user.linkedin_id
+    }), 200

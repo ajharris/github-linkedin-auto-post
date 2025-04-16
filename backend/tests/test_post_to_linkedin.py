@@ -4,6 +4,8 @@ from types import SimpleNamespace
 from backend.services.post_to_linkedin import post_to_linkedin
 from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
+from backend.models import User, db
+from backend.services.post_to_linkedin import send_post_to_linkedin
 
 
 @pytest.mark.parametrize("linkedin_id, expected_urn", [
@@ -128,5 +130,50 @@ def test_post_to_linkedin_missing_credentials(mock_requests_post):
     response = post_to_linkedin(mock_user, "test-repo", "Initial commit", {})
     assert response.status_code == 400
     assert response.text == "Missing LinkedIn credentials"
+
+
+def test_send_post_to_linkedin_refreshes_token(app):
+    """Test that send_post_to_linkedin refreshes the token if missing."""
+    with app.app_context():
+        user = User(
+            github_id="12345",
+            github_username="testuser",
+            github_token="mock_github_token",
+            linkedin_token=None,  # Simulate missing token
+            linkedin_id="mock_linkedin_id"
+        )
+        db.session.add(user)
+        db.session.commit()
+
+        with patch("backend.services.post_to_linkedin.exchange_code_for_access_token", return_value="new_mock_token") as mock_refresh_token, \
+             patch("backend.services.post_to_linkedin.post_to_linkedin") as mock_post_to_linkedin:
+
+            mock_post_to_linkedin.return_value = MagicMock(status_code=201, json=lambda: {"id": "mock_post_id"})
+
+            response = send_post_to_linkedin(user, "test-repo", "Test commit message", {})
+
+            mock_refresh_token.assert_called_once_with(user.github_token)
+            assert user.linkedin_token == "new_mock_token"
+            assert response.status_code == 201
+            assert response.json()["id"] == "mock_post_id"
+
+def test_send_post_to_linkedin_handles_post_errors(app):
+    """Test that send_post_to_linkedin handles errors during posting."""
+    with app.app_context():
+        user = User(
+            github_id="12345",
+            github_username="testuser",
+            github_token="mock_github_token",
+            linkedin_token="mock_token",
+            linkedin_id="mock_linkedin_id"
+        )
+        db.session.add(user)
+        db.session.commit()
+
+        with patch("backend.services.post_to_linkedin.post_to_linkedin") as mock_post_to_linkedin:
+            mock_post_to_linkedin.side_effect = Exception("Mocked post error")
+
+            with pytest.raises(Exception, match="Mocked post error"):
+                send_post_to_linkedin(user, "test-repo", "Test commit message", {})
 
 

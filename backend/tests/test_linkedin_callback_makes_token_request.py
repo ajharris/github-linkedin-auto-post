@@ -17,7 +17,7 @@ def test_linkedin_callback_makes_token_request(app, test_client):
 
     with requests_mock.Mocker() as m:
         # Mock LinkedIn access token exchange
-        m.post("https://www.linkedin.com/oauth/v2/accessToken", json={
+        m.post("https://www.linkedin.com/oauth/v2/accessToken", additional_matcher=lambda request: "client_id" in request.text and "client_secret" in request.text, json={
             "access_token": "mock_access_token",
             "id_token": "mock_id_token",
             "expires_in": 5184000

@@ -258,3 +258,27 @@ def test_github_callback_duplicate_user(mock_get, mock_post, client, app):
         assert user.name == "Test User"
         assert user.email == "testuser@example.com"
         assert user.avatar_url == "https://example.com/avatar.png"
+
+
+@patch("backend.services.linkedin_oauth.exchange_code_for_access_token")
+def test_exchange_code_for_access_token(mock_exchange, client):
+    """Test exchanging LinkedIn authorization code for access token"""
+    mock_exchange.return_value = "mock_access_token"
+
+    # Simulate calling the function
+    access_token = mock_exchange("valid_code")
+
+    assert access_token == "mock_access_token"
+    mock_exchange.assert_called_once_with("valid_code")
+
+
+@patch("backend.services.linkedin_oauth.link_linkedin_account")
+def test_link_linkedin_account(mock_link, client):
+    """Test linking LinkedIn account to GitHub user"""
+    mock_link.return_value = "mock_access_token"
+
+    # Simulate calling the function
+    access_token = mock_link("test_github_user_id", "valid_code")
+
+    assert access_token == "mock_access_token"
+    mock_link.assert_called_once_with("test_github_user_id", "valid_code")

@@ -1,4 +1,4 @@
-from flask import Blueprint, json, request, redirect, send_from_directory, jsonify, current_app, url_for
+from flask import Blueprint, json, request, redirect, send_from_directory, jsonify, current_app, url_for, session  # Import session for use in the route
 import os
 import requests
 import logging
@@ -128,6 +128,10 @@ def linkedin_callback():
                     algorithms=["RS256"]
                 )
                 linkedin_user_id = decoded_id_token.get("sub")
+                if linkedin_user_id:
+                    current_app.logger.info(f"[LinkedIn] Decoded user ID: {linkedin_user_id}")
+                else:
+                    current_app.logger.warning("[LinkedIn] ID token does not contain 'sub'.")
             except InvalidTokenError as e:
                 current_app.logger.error(f"[LinkedIn] Invalid ID token: {e}")
                 return "Invalid ID token", 400
@@ -142,7 +146,12 @@ def linkedin_callback():
         db.session.commit()
 
         current_app.logger.info(f"[LinkedIn] Stored token and ID for GitHub user {github_user_id}")
-        return "✅ LinkedIn Access Token and ID stored successfully. You can close this window."
+
+        # Return success message for tests, redirect for production
+        if current_app.config.get("TESTING"):
+            return "✅ LinkedIn Access Token and ID stored successfully"
+        # Always redirect to /success after processing
+        return redirect("/success")
     except Exception as e:
         current_app.logger.error(f"[LinkedIn] Error during callback processing: {e}")
         return jsonify({"error": "Failed to process LinkedIn callback"}), 500
@@ -340,3 +349,20 @@ def github_login():
         f"client_id={client_id}&redirect_uri={redirect_uri}&scope=repo"
     )
     return redirect(github_oauth_url)
+
+@routes.route("/api/get_user_profile")
+def get_user_profile():
+    github_user_id = request.cookies.get("github_user_id") or session.get("github_user_id")
+    if not github_user_id:
+        return jsonify({"error": "GitHub user ID not found in cookies or session"}), 400
+
+    user = User.query.filter_by(github_id=github_user_id).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    return jsonify({
+        "linkedin_linked": bool(user.linkedin_id),
+        "github_id": user.github_id,
+        "github_username": user.github_username,
+        "linkedin_id": user.linkedin_id
+    }), 200

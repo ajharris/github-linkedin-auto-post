@@ -33,6 +33,8 @@ def patch_env(monkeypatch):
     """Default test environment variables for LinkedIn."""
     monkeypatch.setenv("LINKEDIN_ACCESS_TOKEN", "test_token")
     monkeypatch.setenv("LINKEDIN_USER_ID", "urn:li:member:testuser")
+    monkeypatch.setenv("LINKEDIN_CLIENT_ID", "test_client_id")  # Added client_id
+    monkeypatch.setenv("LINKEDIN_CLIENT_SECRET", "test_client_secret")  # Added client_secret
 
 # Optional: a named variant if you want to override patch_env in specific tests
 @pytest.fixture

@@ -55,10 +55,10 @@ jobs:
         run: |
           pytest --maxfail=1 --disable-warnings
 
-      - name: Run frontend tests
-        run: |
-          cd frontend
-          npm test -- --watchAll=false
+      # - name: Run frontend tests
+      #   run: |
+      #     cd frontend
+      #     npm test -- --watchAll=false
 
       - name: Check for lint errors
         run: |

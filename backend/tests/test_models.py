@@ -1,5 +1,7 @@
 import pytest
 from datetime import datetime, timezone
+
+import sqlalchemy
 from backend.models import db, User, GitHubEvent
 
 @pytest.fixture
@@ -62,3 +64,23 @@ def test_create_github_event(session):
     assert fetched_event is not None
     assert fetched_event.repo_name == "test/repo"
     assert fetched_event.commit_message == "Initial commit"
+
+def test_github_event_creation_with_missing_fields(session):
+    """Test that GitHubEvent creation fails gracefully if required fields are missing."""
+    user = User(github_id="123456", SECRET_GITHUB_TOKEN="gh_token")
+    session.add(user)
+    session.commit()
+
+    # Attempt to create an event with missing fields
+    event = GitHubEvent(
+        user_id=user.id,
+        repo_name=None,  # Missing repo_name
+        commit_message=None,  # Missing commit_message
+        commit_url="http://github.com/test",
+        status="pending",
+        timestamp=datetime.now(timezone.utc)
+    )
+
+    with pytest.raises(sqlalchemy.exc.IntegrityError, match="NOT NULL constraint failed: git_hub_event.repo_name"):
+        session.add(event)
+        session.commit()

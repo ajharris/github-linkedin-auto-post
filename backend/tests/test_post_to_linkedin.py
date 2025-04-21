@@ -134,6 +134,42 @@ def test_post_to_linkedin_missing_credentials(mock_requests_post):
     assert response.text == "Missing LinkedIn credentials"
 
 
+@patch("backend.services.post_to_linkedin.requests.post")
+def test_post_to_linkedin_duplicate_event(mock_requests_post):
+    """Test that no duplicate LinkedIn posts are created for the same webhook event."""
+    mock_user = MagicMock()
+    mock_user.linkedin_token = "test-token"
+    mock_user.linkedin_id = "12345"
+    mock_user.github_id = "test-github-id"
+
+    webhook_payload = {
+        "repository": {
+            "name": "test-repo",
+            "html_url": "https://github.com/test-repo"
+        },
+        "head_commit": {
+            "message": "Initial commit",
+            "author": {
+                "name": "Test User"
+            }
+        }
+    }
+
+    mock_response = MagicMock()
+    mock_response.status_code = 201
+    mock_response.json.return_value = {"id": "mock_post_id"}
+    mock_requests_post.return_value = mock_response
+
+    # Simulate the first post
+    response1 = post_to_linkedin(mock_user, "test-repo", "Initial commit", webhook_payload)
+    assert response1.status_code == 201
+
+    # Simulate a duplicate post
+    mock_requests_post.side_effect = Exception("Duplicate event detected")
+    with pytest.raises(Exception, match="Duplicate event detected"):
+        post_to_linkedin(mock_user, "test-repo", "Initial commit", webhook_payload)
+
+
 def test_send_post_to_linkedin_refreshes_token(app):
     """Test that send_post_to_linkedin refreshes the token if missing."""
     with app.app_context():

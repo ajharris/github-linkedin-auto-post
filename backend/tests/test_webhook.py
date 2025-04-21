@@ -248,3 +248,26 @@ def test_webhook_pull_request_event(mock_verify, test_client):
 
     assert response.status_code in [204, 400]
     assert "Pull request event received" in response.get_data(as_text=True) or response.status_code == 204
+
+
+@patch("backend.routes.verify_github_signature", return_value=False)
+def test_webhook_invalid_signature(mock_verify, test_client):
+    """Test that payloads with invalid signatures are rejected."""
+    payload = {
+        "repository": {"name": "test-repo", "owner": {"id": "testuser"}},
+        "pusher": {"name": "testuser"},
+        "head_commit": {
+            "message": "Fix bug in webhook handler",
+            "url": "http://github.com/testuser/commit/123"
+        },
+    }
+
+    headers = {
+        "X-GitHub-Event": "push",
+        "X-Hub-Signature-256": "invalid_signature",
+        "Content-Type": "application/json"
+    }
+
+    response = test_client.post("/webhook/github", json=payload, headers=headers)
+    assert response.status_code == 403
+    assert response.get_json()["error"] == "Unauthorized"

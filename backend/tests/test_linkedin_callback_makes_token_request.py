@@ -1,14 +1,18 @@
-import pytest
-import requests_mock
-from urllib.parse import parse_qs, urlencode
-from backend.models import User, db
+import os
 from unittest.mock import patch, MagicMock
+from urllib.parse import urlencode, parse_qs
+from backend.models import db, User  # Correct the import path for db and User
+import pytest   
+
+@pytest.fixture(autouse=True)
+def patch_env_vars(monkeypatch):
+    # Ensure environment variables are patched before any code runs
+    monkeypatch.setenv("LINKEDIN_CLIENT_ID", "fake-client-id")
+    monkeypatch.setenv("LINKEDIN_CLIENT_SECRET", "fake-client-secret")
 
 @patch("requests.post")
 def test_linkedin_callback_makes_token_request(mock_post, app, test_client):
-    mock_post.return_value.status_code = 200
-
-    # Ensure the mock response for the token exchange is not overwritten
+    # Simulate LinkedIn token exchange and profile lookup
     mock_post.side_effect = [
         MagicMock(status_code=200, json=lambda: {
             "access_token": "mock_access_token",
@@ -31,17 +35,12 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client):
         db.session.add(user)
         db.session.commit()
 
-    # Mock LinkedIn profile response with numeric member ID
-    mock_post.return_value.json.return_value = {
-        "sub": "123456789"
-    }
-
     # Mock decoding of the ID token
     decoded_id_token = {
         "sub": "123456789"
     }
     import jwt
-    jwt.decode = lambda token, options, algorithms=None: decoded_id_token  # Fix mock to handle 'algorithms' argument
+    jwt.decode = lambda token, options, algorithms=None: decoded_id_token
 
     # Trigger the OAuth callback with mock code and user ID
     response = test_client.get("/auth/linkedin/callback?code=mock_code&state=test")
@@ -49,9 +48,8 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client):
     assert response.status_code == 200, response.data
     assert "✅ LinkedIn Access Token and ID stored successfully" in response.get_data(as_text=True)
 
-    # Inspect payload to LinkedIn token endpoint
-    # Ensure the `request_body` is URL-encoded before parsing
-    request_body = urlencode(mock_post.call_args[1]['data'])
+    # Inspect the payload sent to the LinkedIn token endpoint
+    request_body = urlencode(mock_post.call_args_list[0][1]['data'])  # Look at the first call
     parsed = parse_qs(request_body)
     print("🔍 LinkedIn token exchange request payload:", parsed)
 
@@ -60,10 +58,11 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client):
 
     assert parsed["grant_type"] == ["authorization_code"]
     assert parsed["code"] == ["mock_code"]
+    assert parsed["client_id"] == ["fake-client-id"]
+    assert parsed["client_secret"][0].strip()  # Assert it's non-empty
+
 
     with app.app_context():
         updated_user = User.query.filter_by(github_id="test").first()
         assert updated_user.linkedin_token == "mock_access_token"
         assert updated_user.linkedin_id == "123456789"
-
-

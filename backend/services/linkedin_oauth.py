@@ -5,18 +5,18 @@ import requests
 
 load_dotenv()
 
-CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID", "").strip()
+CLIENT_ID = lambda: os.getenv("LINKEDIN_CLIENT_ID", "").strip()
 CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 REDIRECT_URI = "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback"
 
 def build_linkedin_auth_url(github_user_id: str) -> str:
-    if not CLIENT_ID:
+    if not CLIENT_ID():
         logging.error("[LinkedIn OAuth] CLIENT_ID is not set in environment variables.")
         raise ValueError("Missing LinkedIn CLIENT_ID")
 
     return (
         f"https://www.linkedin.com/oauth/v2/authorization?response_type=code"
-        f"&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}"
+        f"&client_id={CLIENT_ID()}&redirect_uri={REDIRECT_URI}"
         f"&scope=w_member_social"  # Only request w_member_social
         f"&state={github_user_id}"
     )
@@ -27,7 +27,7 @@ def exchange_code_for_access_token(auth_code: str) -> str:
         "grant_type": "authorization_code",
         "code": auth_code,
         "redirect_uri": REDIRECT_URI,
-        "client_id": CLIENT_ID,  # Ensure client_id is included
+        "client_id": CLIENT_ID(),  # Ensure client_id is included
         "client_secret": CLIENT_SECRET,  # Ensure client_secret is included
     }
     headers = {"Content-Type": "application/x-www-form-urlencoded"}

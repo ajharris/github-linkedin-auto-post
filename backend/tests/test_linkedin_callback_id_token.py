@@ -18,7 +18,7 @@ def test_linkedin_callback_handles_id_token(mock_post, app, test_client):
         user = User(
             github_id="123456789",
             github_username="testuser",
-            github_token="fake-token",
+            SECRET_GITHUB_TOKEN="fake-token",
             linkedin_token=None,
             linkedin_id=None
         )

@@ -4,7 +4,7 @@ import os
 # === CONFIG ===
 REPO_OWNER = "ajharris"   # e.g. "gizmo"
 REPO_NAME = "github-linkedin-auto-post"          # e.g. "github-to-linkedin"
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")  # set this in your environment
+SECRET_GITHUB_TOKEN = os.environ.get("SECRET_GITHUB_TOKEN")  # set this in your environment
 
 BRANCH_TASKS = {
     "feature/env-variable-checks-for-production": "Check and fail gracefully if critical env vars are missing in production.",
@@ -23,7 +23,7 @@ BRANCH_TASKS = {
 }
 
 HEADERS = {
-    "Authorization": f"Bearer {GITHUB_TOKEN}",
+    "Authorization": f"Bearer {SECRET_GITHUB_TOKEN}",
     "Accept": "application/vnd.github+json",
 }
 

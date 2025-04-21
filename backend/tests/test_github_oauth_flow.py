@@ -23,7 +23,7 @@ def test_github_status_returns_user_info(test_client):
         user = User(
             github_id="123456",
             github_username="octocat",
-            github_token="fake-token"
+            SECRET_GITHUB_TOKEN="fake-token"
         )
         db.session.add(user)
         db.session.commit()

@@ -11,7 +11,7 @@ def seed_main_user(app=None):
 
     github_id = os.getenv("SEED_GITHUB_ID", "7585359")
     github_username = os.getenv("SEED_GITHUB_USERNAME", "ajharris")
-    github_token = os.getenv("SEED_GITHUB_TOKEN", "placeholder_github_token")
+    SECRET_GITHUB_TOKEN = os.getenv("SEED_SECRET_GITHUB_TOKEN", "placeholder_SECRET_GITHUB_TOKEN")
     linkedin_id = os.getenv("SEED_LINKEDIN_ID", "1485595039")
     linkedin_token = os.getenv("SEED_LINKEDIN_TOKEN", "placeholder_linkedin_token")
 
@@ -21,7 +21,7 @@ def seed_main_user(app=None):
         if user:
             print(f"⚠️ User with github_id={github_id} already exists — updating values.")
             user.github_username = github_username
-            user.github_token = github_token
+            user.SECRET_GITHUB_TOKEN = SECRET_GITHUB_TOKEN
             user.linkedin_id = linkedin_id
             user.linkedin_token = linkedin_token
         else:
@@ -29,7 +29,7 @@ def seed_main_user(app=None):
             user = User(
                 github_id=github_id,
                 github_username=github_username,
-                github_token=github_token,
+                SECRET_GITHUB_TOKEN=SECRET_GITHUB_TOKEN,
                 linkedin_id=linkedin_id,
                 linkedin_token=linkedin_token
             )

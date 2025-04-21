@@ -13,7 +13,7 @@ def github_user(db_session):
     user = User(
         github_id="12345",
         github_username="testuser",
-        github_token="mock_github_token"  # Added a valid value for github_token
+        SECRET_GITHUB_TOKEN="mock_SECRET_GITHUB_TOKEN"  # Added a valid value for SECRET_GITHUB_TOKEN
     )
     db.session.add(user)
     db.session.commit()

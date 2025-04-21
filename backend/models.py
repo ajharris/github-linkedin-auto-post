@@ -9,7 +9,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     github_id = db.Column(db.String, unique=True, nullable=False)
     github_username = db.Column(db.String, nullable=True)
-    github_token = db.Column(db.String, nullable=False)
+    SECRET_GITHUB_TOKEN = db.Column(db.String, nullable=False)
     linkedin_id = db.Column(db.String, unique=True, nullable=True)
     linkedin_token = db.Column(db.String, nullable=True)
     name = db.Column(db.String, nullable=True)  # Optional: GitHub user's name

@@ -11,7 +11,7 @@ from backend.app import create_app
 # Set test environment variables
 os.environ["LINKEDIN_ACCESS_TOKEN"] = "test_token"
 os.environ["LINKEDIN_USER_ID"] = "test_user_id"
-os.environ["GITHUB_SECRET"] = "t4keth1s"
+os.environ["SECRET_GITHUB_SECRET"] = "t4keth1s"
 
 
 @pytest.fixture
@@ -67,7 +67,7 @@ def test_linkedin_callback_success(mock_post, mock_get, client):
 
     # Add fake GitHub user so the callback logic finds them
     with client.application.app_context():
-        user = User(github_id="test", github_token="fake-token")
+        user = User(github_id="test", SECRET_GITHUB_TOKEN="fake-token")
         db.session.add(user)
         db.session.commit()
 
@@ -99,7 +99,7 @@ def test_github_webhook(mock_verify, mock_post, client):
 
     # Add test user to DB
     with client.application.app_context():
-        user = User(github_id="ajharris", github_token="gh_token", linkedin_token="li_token")
+        user = User(github_id="ajharris", SECRET_GITHUB_TOKEN="gh_token", linkedin_token="li_token")
         db.session.add(user)
         db.session.commit()
 
@@ -113,7 +113,7 @@ def test_github_webhook(mock_verify, mock_post, client):
         }
     }
 
-    secret = os.getenv("GITHUB_SECRET").encode()
+    secret = os.getenv("SECRET_GITHUB_SECRET").encode()
     body = json.dumps(payload).encode()
     signature = "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
 
@@ -150,7 +150,7 @@ def test_github_status_returns_user_info(client):
         user = User(
             github_id="123456",
             github_username="octocat",
-            github_token="fake-token"
+            SECRET_GITHUB_TOKEN="fake-token"
         )
         db.session.add(user)
         db.session.commit()
@@ -207,7 +207,7 @@ def test_github_callback_valid_code(mock_get, mock_post, client, app):
         user = User.query.filter_by(github_id="12345").first()
         assert user is not None
         assert user.github_username == "testuser"
-        assert user.github_token == "mocked_token"
+        assert user.SECRET_GITHUB_TOKEN == "mocked_token"
 
 
 @patch("requests.post")
@@ -242,7 +242,7 @@ def test_github_callback_duplicate_user(mock_get, mock_post, client, app):
 
     # Add a user with the same GitHub ID to the database
     with app.app_context():
-        user = User(github_id="12345", github_username="existinguser", github_token="existing_token")
+        user = User(github_id="12345", github_username="existinguser", SECRET_GITHUB_TOKEN="existing_token")
         db.session.add(user)
         db.session.commit()
 
@@ -255,7 +255,7 @@ def test_github_callback_duplicate_user(mock_get, mock_post, client, app):
         user = User.query.filter_by(github_id="12345").first()
         assert user is not None
         assert user.github_username == "testuser"
-        assert user.github_token == "mocked_token"
+        assert user.SECRET_GITHUB_TOKEN == "mocked_token"
         assert user.name == "Test User"
         assert user.email == "testuser@example.com"
         assert user.avatar_url == "https://example.com/avatar.png"

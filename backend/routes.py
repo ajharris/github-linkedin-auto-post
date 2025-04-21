@@ -60,6 +60,14 @@ def linkedin_auth():
             f"&state={github_user_id}"
         )
         current_app.logger.info(f"[LinkedIn] Generated auth URL: {linkedin_auth_url}")
+        import reprlib
+
+        current_app.logger.info(f"[DEBUG] CLIENT_ID: {repr(CLIENT_ID)}")
+        current_app.logger.info(f"[DEBUG] REDIRECT_URI: {repr(REDIRECT_URI)}")
+        current_app.logger.info(f"[DEBUG] scope: {repr(scope)}")
+        current_app.logger.info(f"[DEBUG] github_user_id: {repr(github_user_id)}")
+        current_app.logger.info(f"[DEBUG] Full LinkedIn URL: {repr(linkedin_auth_url)}")
+
         return redirect(linkedin_auth_url)
     except Exception as e:
         current_app.logger.error(f"[LinkedIn] Error generating auth URL: {e}")
@@ -305,7 +313,7 @@ def github_callback():
             user = User(
                 github_id=str(github_id),
                 github_username=github_username,
-                github_token=access_token,  # Set github_token for new users
+                SECRET_GITHUB_TOKEN=access_token,  # Set SECRET_GITHUB_TOKEN for new users
                 name=name,
                 email=email,
                 avatar_url=avatar_url
@@ -313,7 +321,7 @@ def github_callback():
             db.session.add(user)
         else:
             user.github_username = github_username
-            user.github_token = access_token  # Update github_token for existing users
+            user.SECRET_GITHUB_TOKEN = access_token  # Update SECRET_GITHUB_TOKEN for existing users
             user.name = name
             user.email = email
             user.avatar_url = avatar_url

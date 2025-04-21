@@ -140,7 +140,7 @@ def test_send_post_to_linkedin_refreshes_token(app):
         user = User(
             github_id="12345",
             github_username="testuser",
-            github_token="mock_github_token",
+            SECRET_GITHUB_TOKEN="mock_SECRET_GITHUB_TOKEN",
             linkedin_token=None,  # Simulate missing token
             linkedin_id="mock_linkedin_id"
         )
@@ -154,7 +154,7 @@ def test_send_post_to_linkedin_refreshes_token(app):
 
             response = send_post_to_linkedin(user, "test-repo", "Test commit message", {})
 
-            mock_refresh_token.assert_called_once_with(user.github_token)
+            mock_refresh_token.assert_called_once_with(user.SECRET_GITHUB_TOKEN)
             assert user.linkedin_token == "new_mock_token"
             assert response.status_code == 201
             assert response.json()["id"] == "mock_post_id"
@@ -165,7 +165,7 @@ def test_send_post_to_linkedin_handles_post_errors(app):
         user = User(
             github_id="12345",
             github_username="testuser",
-            github_token="mock_github_token",
+            SECRET_GITHUB_TOKEN="mock_SECRET_GITHUB_TOKEN",
             linkedin_token="mock_token",
             linkedin_id="mock_linkedin_id"
         )
@@ -185,7 +185,7 @@ def test_retry_logic_if_post_fails(app):
         user = User(
             github_id="12345",
             github_username="testuser",
-            github_token="mock_github_token",
+            SECRET_GITHUB_TOKEN="mock_SECRET_GITHUB_TOKEN",
             linkedin_token="mock_token",
             linkedin_id="mock_linkedin_id"
         )

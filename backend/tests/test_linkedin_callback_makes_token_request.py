@@ -25,7 +25,7 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client):
         user = User(
             github_id="test",
             github_username="testuser",
-            github_token="fake-token",
+            SECRET_GITHUB_TOKEN="fake-token",
             linkedin_token="mock_access_token"
         )
         db.session.add(user)

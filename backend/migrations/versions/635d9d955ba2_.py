@@ -22,7 +22,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('github_id', sa.String(), nullable=False),
     sa.Column('linkedin_id', sa.String(), nullable=True),
-    sa.Column('github_token', sa.String(), nullable=False),
+    sa.Column('SECRET_GITHUB_TOKEN', sa.String(), nullable=False),
     sa.Column('linkedin_token', sa.String(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('github_id'),

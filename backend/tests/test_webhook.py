@@ -9,7 +9,7 @@ from backend.models import GitHubEvent, User, db
 
 def generate_signature(payload):
     """Generate a valid GitHub signature for the payload."""
-    secret = os.getenv("GITHUB_SECRET", "fake_secret").encode()
+    secret = os.getenv("SECRET_GITHUB_SECRET", "fake_secret").encode()
     body = json.dumps(payload).encode()
     return "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
 
@@ -21,7 +21,7 @@ def test_github_webhook(mock_verify, mock_post, client):
 
     # Add test user to DB
     with client.application.app_context():
-        user = User(github_id="ajharris", github_token="gh_token", linkedin_token="li_token")
+        user = User(github_id="ajharris", SECRET_GITHUB_TOKEN="gh_token", linkedin_token="li_token")
         db.session.add(user)
         db.session.commit()
 
@@ -35,7 +35,7 @@ def test_github_webhook(mock_verify, mock_post, client):
         }
     }
 
-    secret = os.getenv("GITHUB_SECRET", "fake_secret").encode()
+    secret = os.getenv("SECRET_GITHUB_SECRET", "fake_secret").encode()
     body = json.dumps(payload).encode()
     signature = "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
 
@@ -63,7 +63,7 @@ def test_github_webhook(mock_verify, mock_post, client):
 def test_webhook_links_event_to_correct_user(mock_verify, mock_post_to_linkedin, test_client):
     """Test that a webhook event is linked to the correct user in the database."""
 
-    user = User(github_id="otheruser", github_token="fake_github_token", linkedin_token="fake_token", linkedin_id="123456789")
+    user = User(github_id="otheruser", SECRET_GITHUB_TOKEN="fake_SECRET_GITHUB_TOKEN", linkedin_token="fake_token", linkedin_id="123456789")
     with test_client.application.app_context():
         db.session.add(user)
         db.session.commit()
@@ -168,7 +168,7 @@ def test_webhook_redundant_event(mock_verify, test_client):
 
     # Add test user to DB
     with test_client.application.app_context():
-        user = User(github_id="testuser", github_token="fake_github_token", linkedin_token="fake_token", linkedin_id="123456789")
+        user = User(github_id="testuser", SECRET_GITHUB_TOKEN="fake_SECRET_GITHUB_TOKEN", linkedin_token="fake_token", linkedin_id="123456789")
         db.session.add(user)
         db.session.commit()
 

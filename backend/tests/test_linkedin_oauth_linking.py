@@ -22,7 +22,7 @@ def test_client():
     ctx.pop()
 
 def test_linkedin_auth_redirect(test_client):
-    user = User(github_id="123", github_token="test-token", github_username="octocat",
+    user = User(github_id="123", SECRET_GITHUB_TOKEN="test-token", github_username="octocat",
                 linkedin_token="old-token", linkedin_id="old-id")
     db.session.add(user)
     db.session.commit()
@@ -54,7 +54,7 @@ def test_linkedin_callback_success(test_client, requests_mock):
     jwt.decode = lambda *_args, **_kwargs: decoded_id_token
 
     # Set up user in database
-    user = User(github_id="123", github_token="test-token", github_username="octocat")
+    user = User(github_id="123", SECRET_GITHUB_TOKEN="test-token", github_username="octocat")
     db.session.add(user)
     db.session.commit()
 

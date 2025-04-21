@@ -95,7 +95,7 @@ def send_post_to_linkedin(user, repo_name, commit_message, webhook_payload, retr
     if not user.linkedin_token:
         logging.warning("[LinkedIn] Missing LinkedIn token. Attempting to refresh.")
         try:
-            user.linkedin_token = exchange_code_for_access_token(user.github_token)
+            user.linkedin_token = exchange_code_for_access_token(user.SECRET_GITHUB_TOKEN)
             db.session.commit()
         except Exception as e:
             logging.error(f"[LinkedIn] Failed to refresh token: {e}")

@@ -33,7 +33,7 @@ def session(app):
 
 def test_create_user(session):
     """Test creating a user"""
-    user = User(github_id="123456", linkedin_id="654321", github_token="gh_token", linkedin_token="li_token")
+    user = User(github_id="123456", linkedin_id="654321", SECRET_GITHUB_TOKEN="gh_token", linkedin_token="li_token")
     session.add(user)
     session.commit()
 
@@ -43,7 +43,7 @@ def test_create_user(session):
 
 def test_create_github_event(session):
     """Test creating a GitHub event"""
-    user = User(github_id="123456", github_token="gh_token")
+    user = User(github_id="123456", SECRET_GITHUB_TOKEN="gh_token")
     session.add(user)
     session.commit()
 

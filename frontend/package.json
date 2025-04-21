@@ -18,7 +18,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "heroku-postbuild": "cd frontend && npm install && npm run build"
+    "heroku-postbuild": "cd frontend && npm install && npm run build",
+    "lint": "eslint 'src/**/*.{js,jsx}' --quiet --fix"
   },
   "eslintConfig": {
     "extends": [

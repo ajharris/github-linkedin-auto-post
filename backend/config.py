@@ -23,17 +23,17 @@ def get_required_env_var(key):
     value = os.getenv(key)
     if value is None:
         raise RuntimeError(f"Missing required environment variable: {key}")
-    return value
+    return value.strip()
 
 # Load env vars conditionally based on environment
 env = os.getenv("FLASK_ENV", "development")
 
 if env == "production":
     for key in REQUIRED_ENV_VARS:
-        globals()[key] = get_required_env_var(key)
+        globals()[key] = get_required_env_var(key).strip()
 else:
     for key in REQUIRED_ENV_VARS:
-        globals()[key] = os.getenv(key, "")
+        globals()[key] = os.getenv(key, "").strip()
 
 class BaseConfig:
     SECRET_KEY = os.getenv("SECRET_KEY", "default_secret")

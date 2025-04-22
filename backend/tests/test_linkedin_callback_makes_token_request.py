@@ -64,6 +64,9 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client, monk
     assert parsed["client_id"] == ["fake-client-id"]
     assert parsed["client_secret"][0].strip()  # Assert it's non-empty
 
+    # Ensure CLIENT_SECRET is explicitly included in the payload
+    assert "client_secret" in parsed, "CLIENT_SECRET is missing from the payload"
+    assert parsed["client_secret"] == ["fake-client-secret"], "CLIENT_SECRET value is incorrect"
 
     with app.app_context():
         updated_user = User.query.filter_by(github_id="test").first()

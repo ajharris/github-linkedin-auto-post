@@ -65,7 +65,7 @@ jobs:
           SEED_LINKEDIN_TOKEN: ${{ secrets.SEED_LINKEDIN_TOKEN }}
         run: |
           pytest --maxfail=1 --disable-warnings
-
+          # TODO: Add frontend tests when working on the frontend
       # - name: Run frontend tests
       #   run: |
       #     cd frontend

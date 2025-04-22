@@ -11,7 +11,10 @@ def patch_env_vars(monkeypatch):
     monkeypatch.setenv("LINKEDIN_CLIENT_SECRET", "fake-client-secret")
 
 @patch("requests.post")
-def test_linkedin_callback_makes_token_request(mock_post, app, test_client):
+def test_linkedin_callback_makes_token_request(mock_post, app, test_client, monkeypatch):
+        # Patch env vars early so the app uses them during the route
+    monkeypatch.setenv("LINKEDIN_CLIENT_ID", "fake-client-id")
+    monkeypatch.setenv("LINKEDIN_CLIENT_SECRET", "fake-client-secret")
     # Simulate LinkedIn token exchange and profile lookup
     mock_post.side_effect = [
         MagicMock(status_code=200, json=lambda: {

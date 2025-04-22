@@ -82,9 +82,6 @@ def linkedin_callback():
     current_app.logger.info("[LinkedIn Callback] Starting callback processing.")
     current_app.logger.info(f"[LinkedIn Callback] Request args: {request.args}")
 
-    # Debugging: Log the values of CLIENT_ID and CLIENT_SECRET
-    current_app.logger.info(f"[LinkedIn Callback] CLIENT_ID: {CLIENT_ID}")
-    current_app.logger.info(f"[LinkedIn Callback] CLIENT_SECRET: {CLIENT_SECRET}")
 
     error = request.args.get("error")
     if error:

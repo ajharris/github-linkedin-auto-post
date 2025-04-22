@@ -21,11 +21,7 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client, monk
     app.config["LINKEDIN_CLIENT_ID"] = "mock_client_id"
     app.config["LINKEDIN_CLIENT_SECRET"] = "mock_client_secret"
 
-    # Debugging: Print environment variables and app config
-    print(f"LINKEDIN_CLIENT_ID (env): {os.getenv('LINKEDIN_CLIENT_ID')}")
-    print(f"LINKEDIN_CLIENT_SECRET (env): {os.getenv('LINKEDIN_CLIENT_SECRET')}")
-    print(f"LINKEDIN_CLIENT_ID (config): {app.config['LINKEDIN_CLIENT_ID']}")
-    print(f"LINKEDIN_CLIENT_SECRET (config): {app.config['LINKEDIN_CLIENT_SECRET']}")
+
 
     # Fail early if env vars are not provided (moved after monkeypatch)
     linkedin_client_id = get_linkedin_client_id()

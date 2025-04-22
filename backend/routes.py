@@ -15,8 +15,8 @@ from backend.services.utils import login_required  # Updated import path
 load_dotenv()
 
 # Runtime-safe helpers
-CLIENT_ID = "os.getenv('LINKEDIN_CLIENT_ID', '').strip()"
-CLIENT_SECRET = "os.getenv('LINKEDIN_CLIENT_SECRET', '').strip()"
+CLIENT_ID = os.getenv('LINKEDIN_CLIENT_ID', '').strip()
+CLIENT_SECRET = os.getenv('LINKEDIN_CLIENT_SECRET', '').strip()
 REDIRECT_URI = os.getenv("LINKEDIN_REDIRECT_URI", "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback").strip()
 
 routes = Blueprint("routes", __name__)
@@ -55,7 +55,7 @@ def linkedin_auth():
         linkedin_auth_url = (
             f"https://www.linkedin.com/oauth/v2/authorization"
             f"?response_type=code"
-            f"&client_id={CLIENT_ID()}"
+            f"&client_id={CLIENT_ID}"
             f"&redirect_uri={REDIRECT_URI}"
             f"&scope={scope}"
             f"&state={github_user_id}"
@@ -63,7 +63,7 @@ def linkedin_auth():
         current_app.logger.info(f"[LinkedIn] Generated auth URL: {linkedin_auth_url}")
         import reprlib
 
-        current_app.logger.info(f"[DEBUG] CLIENT_ID: {repr(CLIENT_ID())}")
+        current_app.logger.info(f"[DEBUG] CLIENT_ID: {repr(CLIENT_ID)}")
         current_app.logger.info(f"[DEBUG] REDIRECT_URI: {repr(REDIRECT_URI)}")
         current_app.logger.info(f"[DEBUG] scope: {repr(scope)}")
         current_app.logger.info(f"[DEBUG] github_user_id: {repr(github_user_id)}")
@@ -100,7 +100,7 @@ def linkedin_callback():
                 "grant_type": "authorization_code",
                 "code": code,
                 "redirect_uri": REDIRECT_URI,
-                "client_id": CLIENT_ID(),
+                "client_id": CLIENT_ID,
                 "client_secret": CLIENT_SECRET,
             }
         )

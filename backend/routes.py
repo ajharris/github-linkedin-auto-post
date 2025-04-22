@@ -15,8 +15,8 @@ from backend.services.utils import login_required  # Updated import path
 load_dotenv()
 
 # Runtime-safe helpers
-CLIENT_ID = os.getenv('LINKEDIN_CLIENT_ID', '').strip()
-CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET", "test_client_secret").strip()
+CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID", "").strip()
+CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET", "").strip()
 REDIRECT_URI = os.getenv("LINKEDIN_REDIRECT_URI", "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback").strip()
 
 routes = Blueprint("routes", __name__)

@@ -14,7 +14,7 @@ def generate_signature(payload):
     return "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
 
 
-@patch("backend.routes.post_to_linkedin", return_value=MagicMock(status_code=201, json=lambda: {"id": "test-post-id"}))
+@patch("backend.routes.post_to_linkedin", return_value=MagicMock(status_code=201, json="{'id': 'test-post-id'}"))
 @patch("backend.routes.verify_github_signature", return_value=True)
 def test_github_webhook(mock_verify, mock_post, client):
     """Test webhook processing a valid push event"""
@@ -58,7 +58,7 @@ def test_github_webhook(mock_verify, mock_post, client):
     assert response.get_json()["status"] == "success"
 
 
-@patch("backend.routes.post_to_linkedin", return_value=MagicMock(status_code=201, json=lambda: {"id": "linkedin_post_456"}))
+@patch("backend.routes.post_to_linkedin", return_value=MagicMock(status_code=201, json="{'id': 'linkedin_post_456'}"))
 @patch("backend.routes.verify_github_signature", return_value=True)
 def test_webhook_links_event_to_correct_user(mock_verify, mock_post_to_linkedin, test_client):
     """Test that a webhook event is linked to the correct user in the database."""

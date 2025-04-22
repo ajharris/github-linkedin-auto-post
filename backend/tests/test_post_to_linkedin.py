@@ -27,7 +27,7 @@ def test_post_to_linkedin_formats_author_correctly(monkeypatch, linkedin_id, exp
 
     def mock_post(url, json, headers):
         assert json["author"] == expected_urn
-        return SimpleNamespace(status_code=201, json=lambda: {"id": "fake-post-id"}, text="OK")
+        return SimpleNamespace(status_code=201, json="{'id': 'fake-post-id'}", text="OK")
 
     monkeypatch.setattr("backend.services.post_to_linkedin.requests.post", mock_post)
     response = post_to_linkedin(user, "repo/example", "Fixed a bug", webhook_payload)
@@ -104,7 +104,7 @@ def test_post_to_linkedin(mock_generate_post, mock_requests_post):
 
     mock_response = MagicMock()
     mock_response.status_code = 201
-    mock_response.json.return_value = {"id": "mock_post_id"}
+    mock_response.json.return_value = "{'id': 'mock_post_id'}"
     mock_requests_post.return_value = mock_response
 
     response = post_to_linkedin(mock_user, "test-repo", "Initial commit", webhook_payload)
@@ -157,7 +157,7 @@ def test_post_to_linkedin_duplicate_event(mock_requests_post):
 
     mock_response = MagicMock()
     mock_response.status_code = 201
-    mock_response.json.return_value = {"id": "mock_post_id"}
+    mock_response.json.return_value = "{'id': 'mock_post_id'}"
     mock_requests_post.return_value = mock_response
 
     # Simulate the first post

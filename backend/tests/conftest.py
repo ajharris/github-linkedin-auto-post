@@ -54,7 +54,7 @@ def patch_post_to_linkedin():
     with patch("backend.routes.post_to_linkedin") as mock_func:
         mock_func.side_effect = lambda user, repo, msg: type("Response", (), {
             "status_code": 201,
-            "json": lambda self: {"id": "mocked-id"}
+            "json": "{'id': 'mocked-id'}"  # Replaced lambda with string
         })()
         yield mock_func
 

@@ -18,14 +18,8 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client, monk
 
     # Simulate LinkedIn token exchange and profile lookup
     mock_post.side_effect = [
-        MagicMock(status_code=200, json=lambda: {
-            "access_token": "mock_access_token",
-            "id_token": "mock_id_token",
-            "expires_in": 5184000
-        }),
-        MagicMock(status_code=200, json=lambda: {
-            "sub": "123456789"
-        })
+        MagicMock(status_code=200, json="{'access_token': 'mock_access_token', 'id_token': 'mock_id_token', 'expires_in': 5184000}"),
+        MagicMock(status_code=200, json="{'sub': '123456789'}")
     ]
 
     with app.app_context():

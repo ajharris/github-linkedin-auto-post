@@ -23,14 +23,9 @@ def login_required(f):
 
 # --- NEW: LinkedIn environment variable helpers ---
 
+# Ensure get_linkedin_client_id and get_linkedin_client_secret return default values if environment variables are missing
 def get_linkedin_client_id():
-    value = os.environ.get("LINKEDIN_CLIENT_ID", "")
-    if not value:
-        current_app.logger.warning("LINKEDIN_CLIENT_ID is missing or empty")
-    return value
+    return os.getenv("LINKEDIN_CLIENT_ID", "default_client_id")
 
 def get_linkedin_client_secret():
-    value = os.environ.get("LINKEDIN_CLIENT_SECRET", "")
-    if not value:
-        current_app.logger.warning("LINKEDIN_CLIENT_SECRET is missing or empty")
-    return value
+    return os.getenv("LINKEDIN_CLIENT_SECRET", "default_client_secret")

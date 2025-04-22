@@ -48,6 +48,15 @@ jobs:
           cd frontend
           npm install
 
+      - name: Debug env vars
+        run: |
+          echo "LINKEDIN_CLIENT_ID=$LINKEDIN_CLIENT_ID"
+          echo "LINKEDIN_CLIENT_SECRET=$LINKEDIN_CLIENT_SECRET"
+        env:
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+
+
       - name: Run backend tests
         env:
           LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}

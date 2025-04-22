@@ -15,8 +15,6 @@ from backend.services.utils import login_required, get_linkedin_client_secret, g
 load_dotenv()
 
 # Runtime-safe helpers
-CLIENT_ID = get_linkedin_client_id()
-CLIENT_SECRET = get_linkedin_client_secret()
 REDIRECT_URI = os.getenv("LINKEDIN_REDIRECT_URI", "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback").strip()
 
 routes = Blueprint("routes", __name__)
@@ -40,6 +38,8 @@ def serve(path):
 # -------------------- LINKEDIN AUTHENTICATION -------------------- #
 @routes.route("/auth/linkedin")
 def linkedin_auth():
+    CLIENT_ID = current_app.config.get("LINKEDIN_CLIENT_ID", "").strip()
+    REDIRECT_URI = current_app.config.get("LINKEDIN_REDIRECT_URI", "").strip()
     github_user_id = request.args.get("github_user_id", "test")
     current_app.logger.info(f"[LinkedIn] Received request to link LinkedIn for GitHub user ID: {github_user_id}")
 
@@ -77,6 +77,8 @@ def linkedin_auth():
 
 @routes.route("/auth/linkedin/callback")
 def linkedin_callback():
+    CLIENT_ID = current_app.config.get("LINKEDIN_CLIENT_ID", "").strip()
+    CLIENT_SECRET = current_app.config.get("LINKEDIN_CLIENT_SECRET", "").strip()
     current_app.logger.info("[LinkedIn Callback] Starting callback processing.")
     current_app.logger.info(f"[LinkedIn Callback] Request args: {request.args}")
 

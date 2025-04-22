@@ -9,14 +9,14 @@ from backend.services.post_to_linkedin import post_to_linkedin
 from backend.services.verify_signature import verify_github_signature
 import jwt  # Install with `pip install pyjwt`
 from jwt.exceptions import InvalidTokenError
-from backend.services.utils import login_required  # Updated import path
+from backend.services.utils import login_required, get_linkedin_client_secret, get_linkedin_client_id  # Updated import path
 
 # Load environment variables
 load_dotenv()
 
 # Runtime-safe helpers
-CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID", "").strip()
-CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET", "").strip()
+CLIENT_ID = get_linkedin_client_id()
+CLIENT_SECRET = get_linkedin_client_secret()
 REDIRECT_URI = os.getenv("LINKEDIN_REDIRECT_URI", "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback").strip()
 
 routes = Blueprint("routes", __name__)

@@ -1,3 +1,4 @@
+import os
 from functools import wraps
 from flask import request, jsonify, current_app
 from backend.models import User
@@ -19,3 +20,17 @@ def login_required(f):
         request.user = user
         return f(*args, **kwargs)
     return decorated_function
+
+# --- NEW: LinkedIn environment variable helpers ---
+
+def get_linkedin_client_id():
+    value = os.environ.get("LINKEDIN_CLIENT_ID", "")
+    if not value:
+        current_app.logger.warning("LINKEDIN_CLIENT_ID is missing or empty")
+    return value
+
+def get_linkedin_client_secret():
+    value = os.environ.get("LINKEDIN_CLIENT_SECRET", "")
+    if not value:
+        current_app.logger.warning("LINKEDIN_CLIENT_SECRET is missing or empty")
+    return value

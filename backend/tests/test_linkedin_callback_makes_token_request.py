@@ -57,7 +57,7 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client, monk
     print("🔍 LinkedIn token exchange request payload:", parsed)
 
     # Log the CLIENT_SECRET to confirm it is patched correctly
-    print("CLIENT_SECRET in test:", monkeypatch.getenv("LINKEDIN_CLIENT_SECRET"))
+    print("CLIENT_SECRET in test:", os.getenv("LINKEDIN_CLIENT_SECRET"))
 
     # Log the payload sent to the LinkedIn token endpoint
     print("Payload sent to LinkedIn token endpoint:", mock_post.call_args_list[0][1]['data'])

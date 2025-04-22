@@ -103,3 +103,24 @@ jobs:
       - name: Verify environment variables
         run: |
           python -c "import os; assert os.getenv('LINKEDIN_ACCESS_TOKEN'), 'Missing LINKEDIN_ACCESS_TOKEN'; assert os.getenv('LINKEDIN_USER_ID'), 'Missing LINKEDIN_USER_ID'"
+
+      - name: Lint Python Code
+        run: |
+          pip install flake8
+          flake8 .
+
+      - name: Check Python Code Formatting
+        run: |
+          pip install black
+          black --check .
+
+      - name: Debug All Environment Variables
+        run: |
+          env | sort
+
+      - name: CI/CD Dry Run
+        run: |
+          echo "Simulating CI/CD pipeline..."
+          pytest --maxfail=1 --disable-warnings
+          echo "Linting and formatting checks passed."
+          echo "Tests passed. CI/CD simulation complete."

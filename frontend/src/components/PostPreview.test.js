@@ -11,7 +11,7 @@ describe("PostPreview Component", () => {
   it("renders the LinkedIn post preview when a commit is selected", () => {
     const selectedCommit = { message: "Initial commit" };
     render(<PostPreview selectedCommit={selectedCommit} repo="test-repo" />);
-    expect(screen.getByText("Repository:").closest("p")).toHaveTextContent("Repository: test-repo");
-    expect(screen.getByText("Commit Message:").closest("p")).toHaveTextContent("Commit Message: Initial commit");
+    expect(screen.getByText(/repository:/i)).toHaveTextContent("Repository: test-repo");
+    expect(screen.getByText(/commit message:/i)).toHaveTextContent("Commit Message: Initial commit");
   });
 });

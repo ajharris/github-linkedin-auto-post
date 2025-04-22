@@ -53,15 +53,15 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client, monk
     assert "✅ LinkedIn Access Token and ID stored successfully" in response.get_data(as_text=True)
 
     # Inspect the payload sent to the LinkedIn token endpoint
-    request_body = urlencode(mock_post.call_args_list[0][1]['data'])  # Look at the first call
-    parsed = parse_qs(request_body)
+    request_body = mock_post.call_args_list[0][1]['data']  # Look at the first call
+    parsed = {key: [value] if isinstance(value, str) else value for key, value in request_body.items()}
     print("🔍 LinkedIn token exchange request payload:", parsed)
 
     # Log the CLIENT_SECRET to confirm it is patched correctly
     print("CLIENT_SECRET in test:", os.getenv("LINKEDIN_CLIENT_SECRET"))
 
     # Log the payload sent to the LinkedIn token endpoint
-    print("Payload sent to LinkedIn token endpoint:", mock_post.call_args_list[0][1]['data'])
+    print("Payload sent to LinkedIn token endpoint:", request_body)
 
     for key in ["grant_type", "code", "redirect_uri", "client_id", "client_secret"]:
         assert key in parsed, f"Missing expected param: {key}"

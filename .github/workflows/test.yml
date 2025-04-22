@@ -72,6 +72,14 @@ jobs:
           LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
           LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
 
+      - name: Verify Secrets in CI/CD
+        run: |
+          echo "LINKEDIN_ACCESS_TOKEN is set to: ${LINKEDIN_ACCESS_TOKEN:+[REDACTED]}"
+          echo "LINKEDIN_USER_ID is set to: ${LINKEDIN_USER_ID:+[REDACTED]}"
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+
       - name: Run backend tests
         env:
           LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}

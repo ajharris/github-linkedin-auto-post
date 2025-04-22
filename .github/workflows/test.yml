@@ -50,7 +50,6 @@ jobs:
 
       - name: Debug env vars
         run: |
-          printenv | sort
           echo "LINKEDIN_CLIENT_ID=$LINKEDIN_CLIENT_ID"
           echo "LINKEDIN_CLIENT_SECRET=$LINKEDIN_CLIENT_SECRET"
         env:

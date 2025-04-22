@@ -7,7 +7,7 @@ from unittest.mock import patch
 @patch("requests.post")
 def test_linkedin_callback_handles_id_token(mock_post, app, test_client):
     mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = "{'access_token': 'mock_access_token', 'id_token': 'mock_id_token', 'expires_in': 5184000}"
+    mock_post.return_value.json.return_value = {"access_token": "mock_access_token", "id_token": "mock_id_token", "expires_in": 5184000}
 
     with app.app_context():
         # Seed a user with github_id='123456789' so the callback can match it

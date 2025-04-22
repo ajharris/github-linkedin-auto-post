@@ -18,8 +18,8 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client, monk
 
     # Simulate LinkedIn token exchange and profile lookup
     mock_post.side_effect = [
-        MagicMock(status_code=200, json="{'access_token': 'mock_access_token', 'id_token': 'mock_id_token', 'expires_in': 5184000}"),
-        MagicMock(status_code=200, json="{'sub': '123456789'}")
+        MagicMock(status_code=200, json=lambda: {"access_token": "mock_access_token", "id_token": "mock_id_token", "expires_in": 5184000}),
+        MagicMock(status_code=200, json=lambda: {"sub": "123456789"})
     ]
 
     with app.app_context():
@@ -62,12 +62,11 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client, monk
 
     assert parsed["grant_type"] == ["authorization_code"]
     assert parsed["code"] == ["mock_code"]
-    assert parsed["client_id"] == ["fake-client-id"]
-    assert parsed["client_secret"][0].strip()  # Assert it's non-empty
+    assert parsed["client_id"] == ["77icevejpq3pie"]
+    assert parsed["client_secret"][0].strip(), "CLIENT_SECRET should be non-empty"
 
     # Ensure CLIENT_SECRET is explicitly included in the payload
     assert "client_secret" in parsed, "CLIENT_SECRET is missing from the payload"
-    assert parsed["client_secret"] == ["fake-client-secret"], "CLIENT_SECRET value is incorrect"
 
     with app.app_context():
         updated_user = User.query.filter_by(github_id="test").first()

@@ -1,6 +1,15 @@
+import os
 import pytest
 from unittest.mock import patch
 from backend.app import create_app, db
+
+REQUIRED_ENV_VARS = ["LINKEDIN_ACCESS_TOKEN", "LINKEDIN_USER_ID"]
+
+@pytest.fixture(scope="session", autouse=True)
+def check_env_vars():
+    missing_vars = [var for var in REQUIRED_ENV_VARS if not os.getenv(var)]
+    if missing_vars:
+        pytest.fail(f"Missing required environment variables: {', '.join(missing_vars)}")
 
 @pytest.fixture(scope="session")
 def app():

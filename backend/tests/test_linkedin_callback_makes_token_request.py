@@ -4,11 +4,18 @@ from urllib.parse import urlencode, parse_qs
 from backend.models import db, User
 import pytest
 
+def get_linkedin_client_id():
+    return os.environ.get("LINKEDIN_CLIENT_ID", "")
+
+def get_linkedin_client_secret():
+    return os.environ.get("LINKEDIN_CLIENT_SECRET", "")
+
+
 @patch("requests.post")
 def test_linkedin_callback_makes_token_request(mock_post, app, test_client):
     # Fail early if env vars are not provided
-    linkedin_client_id = os.getenv("LINKEDIN_CLIENT_ID")
-    linkedin_client_secret = os.getenv("LINKEDIN_CLIENT_SECRET")
+    linkedin_client_id = get_linkedin_client_id()
+    linkedin_client_secret = get_linkedin_client_secret()
     assert linkedin_client_id, "Missing LINKEDIN_CLIENT_ID in environment"
     assert linkedin_client_secret, "Missing LINKEDIN_CLIENT_SECRET in environment"
 

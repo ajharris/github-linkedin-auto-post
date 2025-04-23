@@ -7,6 +7,7 @@ REQUIRED_ENV_VARS = ["LINKEDIN_ACCESS_TOKEN", "LINKEDIN_USER_ID"]
 
 @pytest.fixture(scope="session", autouse=True)
 def check_env_vars():
+    """Ensure required environment variables are set."""
     missing_vars = [var for var in REQUIRED_ENV_VARS if not os.getenv(var)]
     if missing_vars:
         pytest.fail(f"Missing required environment variables: {', '.join(missing_vars)}")

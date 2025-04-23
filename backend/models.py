@@ -7,6 +7,7 @@ db = SQLAlchemy()
 
 class User(db.Model):
     """User model."""
+
     id = db.Column(db.Integer, primary_key=True)
     github_id = db.Column(db.String(255), unique=True, nullable=False)
     github_username = db.Column(db.String, nullable=True)
@@ -15,8 +16,12 @@ class User(db.Model):
     linkedin_token = db.Column(db.String(255), nullable=True)
     name = db.Column(db.String, nullable=True)  # Optional: GitHub user's name
     email = db.Column(db.String, nullable=True)  # Optional: GitHub user's email
-    avatar_url = db.Column(db.String, nullable=True)  # Optional: GitHub user's avatar URL
-    extra_metadata = db.Column(JSON, nullable=True)  # Renamed from `metadata` to `extra_metadata`
+    avatar_url = db.Column(
+        db.String, nullable=True
+    )  # Optional: GitHub user's avatar URL
+    extra_metadata = db.Column(
+        JSON, nullable=True
+    )  # Renamed from `metadata` to `extra_metadata`
 
     def has_valid_linkedin_token(self):
         """Check if the user has a valid LinkedIn token."""
@@ -25,7 +30,7 @@ class User(db.Model):
 
 class GitHubEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     repo_name = db.Column(db.String(255), nullable=False)
     commit_message = db.Column(db.Text, nullable=False)
     commit_url = db.Column(db.String(512), nullable=True)
@@ -35,4 +40,3 @@ class GitHubEvent(db.Model):
     linkedin_post_id = db.Column(db.String(255), nullable=True)
 
     user = db.relationship("User", backref=db.backref("github_events", lazy=True))
-

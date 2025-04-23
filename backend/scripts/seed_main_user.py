@@ -1,17 +1,22 @@
 import sys
 import os
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from backend.models import db, User
 
+
 def seed_main_user(app=None):
     if app is None:
         from backend.app import create_app
+
         app = create_app()
 
     github_id = os.getenv("SEED_GITHUB_ID", "7585359")
     github_username = os.getenv("SEED_GITHUB_USERNAME", "ajharris")
-    SECRET_GITHUB_TOKEN = os.getenv("SEED_SECRET_GITHUB_TOKEN", "placeholder_SECRET_GITHUB_TOKEN")
+    SECRET_GITHUB_TOKEN = os.getenv(
+        "SEED_SECRET_GITHUB_TOKEN", "placeholder_SECRET_GITHUB_TOKEN"
+    )
     linkedin_id = os.getenv("SEED_LINKEDIN_ID", "1485595039")
     linkedin_token = os.getenv("SEED_LINKEDIN_TOKEN", "placeholder_linkedin_token")
 
@@ -19,7 +24,9 @@ def seed_main_user(app=None):
         user = User.query.filter_by(github_id=github_id).first()
 
         if user:
-            print(f"⚠️ User with github_id={github_id} already exists — updating values.")
+            print(
+                f"⚠️ User with github_id={github_id} already exists — updating values."
+            )
             user.github_username = github_username
             user.SECRET_GITHUB_TOKEN = SECRET_GITHUB_TOKEN
             user.linkedin_id = linkedin_id
@@ -31,12 +38,13 @@ def seed_main_user(app=None):
                 github_username=github_username,
                 SECRET_GITHUB_TOKEN=SECRET_GITHUB_TOKEN,
                 linkedin_id=linkedin_id,
-                linkedin_token=linkedin_token
+                linkedin_token=linkedin_token,
             )
             db.session.add(user)
 
         db.session.commit()
         print(f"✅ Seeded user with github_id={github_id}")
+
 
 if __name__ == "__main__":
     seed_main_user()

@@ -4,10 +4,12 @@ from datetime import datetime, timezone
 import sqlalchemy
 from backend.models import db, User, GitHubEvent
 
+
 @pytest.fixture
 def app():
     """Create a test Flask app"""
     from flask import Flask
+
     app = Flask(__name__)
     app.config["TESTING"] = True
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
@@ -22,10 +24,12 @@ def app():
     with app.app_context():
         db.drop_all()
 
+
 @pytest.fixture
 def client(app):
     """Flask test client"""
     return app.test_client()
+
 
 @pytest.fixture
 def session(app):
@@ -33,15 +37,22 @@ def session(app):
     with app.app_context():
         yield db.session
 
+
 def test_create_user(session):
     """Test creating a user"""
-    user = User(github_id="123456", linkedin_id="654321", SECRET_GITHUB_TOKEN="gh_token", linkedin_token="li_token")
+    user = User(
+        github_id="123456",
+        linkedin_id="654321",
+        SECRET_GITHUB_TOKEN="gh_token",
+        linkedin_token="li_token",
+    )
     session.add(user)
     session.commit()
 
     fetched_user = User.query.filter_by(github_id="123456").first()
     assert fetched_user is not None
     assert fetched_user.linkedin_id == "654321"
+
 
 def test_create_github_event(session):
     """Test creating a GitHub event"""
@@ -55,7 +66,7 @@ def test_create_github_event(session):
         commit_message="Initial commit",
         commit_url="http://github.com/test",
         status="pending",
-        timestamp=datetime.now(timezone.utc)
+        timestamp=datetime.now(timezone.utc),
     )
     session.add(event)
     session.commit()
@@ -64,6 +75,7 @@ def test_create_github_event(session):
     assert fetched_event is not None
     assert fetched_event.repo_name == "test/repo"
     assert fetched_event.commit_message == "Initial commit"
+
 
 def test_github_event_creation_with_missing_fields(session):
     """Test that GitHubEvent creation fails gracefully if required fields are missing."""
@@ -78,9 +90,12 @@ def test_github_event_creation_with_missing_fields(session):
         commit_message=None,  # Missing commit_message
         commit_url="http://github.com/test",
         status="pending",
-        timestamp=datetime.now(timezone.utc)
+        timestamp=datetime.now(timezone.utc),
     )
 
-    with pytest.raises(sqlalchemy.exc.IntegrityError, match="NOT NULL constraint failed: git_hub_event.repo_name"):
+    with pytest.raises(
+        sqlalchemy.exc.IntegrityError,
+        match="NOT NULL constraint failed: git_hub_event.repo_name",
+    ):
         session.add(event)
         session.commit()

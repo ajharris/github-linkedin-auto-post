@@ -2,6 +2,7 @@ import pytest
 from backend.app import create_app
 from backend.models import db, User
 
+
 @pytest.fixture(scope="module")
 def test_client():
     app = create_app("testing")
@@ -23,7 +24,7 @@ def test_github_status_returns_user_info(test_client):
         user = User(
             github_id="123456",
             github_username="octocat",
-            SECRET_GITHUB_TOKEN="fake-token"
+            SECRET_GITHUB_TOKEN="fake-token",
         )
         db.session.add(user)
         db.session.commit()
@@ -31,11 +32,11 @@ def test_github_status_returns_user_info(test_client):
     # Include the github_user_id cookie in the request
     test_client.set_cookie("github_user_id", "123456")
     response = test_client.get("/api/github/123456/status")
-    
+
     assert response.status_code == 200
     assert response.get_json() == {
         "linked": False,
         "github_id": "123456",
         "github_username": "octocat",
-        "linkedin_id": None
+        "linkedin_id": None,
     }

@@ -4,15 +4,21 @@ from urllib.parse import urlencode, parse_qs
 from backend.models import db, User
 import pytest
 
+
 def get_linkedin_client_id():
     return os.environ.get("LINKEDIN_CLIENT_ID", "mock_client_id")  # Added fallback
 
+
 def get_linkedin_client_secret():
-    return os.environ.get("LINKEDIN_CLIENT_SECRET", "mock_client_secret")  # Added fallback
+    return os.environ.get(
+        "LINKEDIN_CLIENT_SECRET", "mock_client_secret"
+    )  # Added fallback
 
 
 @patch("requests.post")
-def test_linkedin_callback_makes_token_request(mock_post, app, test_client, monkeypatch):
+def test_linkedin_callback_makes_token_request(
+    mock_post, app, test_client, monkeypatch
+):
     # Set environment variables explicitly for the test
     monkeypatch.setenv("LINKEDIN_CLIENT_ID", "mock_client_id")
     monkeypatch.setenv("LINKEDIN_CLIENT_SECRET", "mock_client_secret")
@@ -20,8 +26,6 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client, monk
     # Set application config explicitly for the test
     app.config["LINKEDIN_CLIENT_ID"] = "mock_client_id"
     app.config["LINKEDIN_CLIENT_SECRET"] = "mock_client_secret"
-
-
 
     # Fail early if env vars are not provided (moved after monkeypatch)
     linkedin_client_id = get_linkedin_client_id()
@@ -31,14 +35,15 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client, monk
 
     # Simulate LinkedIn token exchange and profile lookup
     mock_post.side_effect = [
-        MagicMock(status_code=200, json=lambda: {
-            "access_token": "mock_access_token",
-            "id_token": "mock_id_token",
-            "expires_in": 5184000
-        }),
-        MagicMock(status_code=200, json=lambda: {
-            "sub": "123456789"
-        })
+        MagicMock(
+            status_code=200,
+            json=lambda: {
+                "access_token": "mock_access_token",
+                "id_token": "mock_id_token",
+                "expires_in": 5184000,
+            },
+        ),
+        MagicMock(status_code=200, json=lambda: {"sub": "123456789"}),
     ]
 
     with app.app_context():
@@ -47,24 +52,30 @@ def test_linkedin_callback_makes_token_request(mock_post, app, test_client, monk
             github_id="test",
             github_username="testuser",
             SECRET_GITHUB_TOKEN="fake-token",
-            linkedin_token="mock_access_token"
+            linkedin_token="mock_access_token",
         )
         db.session.add(user)
         db.session.commit()
 
     # Mock decoding of the ID token
     import jwt
+
     jwt.decode = lambda token, options, algorithms=None: {"sub": "123456789"}
 
     # Trigger the OAuth callback
     response = test_client.get("/auth/linkedin/callback?code=mock_code&state=test")
 
     assert response.status_code == 200, response.data
-    assert "✅ LinkedIn Access Token and ID stored successfully" in response.get_data(as_text=True)
+    assert "✅ LinkedIn Access Token and ID stored successfully" in response.get_data(
+        as_text=True
+    )
 
     # Inspect the request payload
-    request_body = mock_post.call_args_list[0][1]['data']
-    parsed = {key: [value] if isinstance(value, str) else value for key, value in request_body.items()}
+    request_body = mock_post.call_args_list[0][1]["data"]
+    parsed = {
+        key: [value] if isinstance(value, str) else value
+        for key, value in request_body.items()
+    }
     print("🔍 LinkedIn token exchange request payload:", parsed)
 
     # Check all expected fields are present

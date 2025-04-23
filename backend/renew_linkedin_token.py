@@ -18,10 +18,14 @@ class LinkedInAuthHandler(BaseHTTPRequestHandler):
             self.wfile.write(b"Authorization code received. You can close this window.")
             self.server.auth_code = auth_code
         elif "error" in self.path:
-            error_description = self.path.split("error_description=")[-1].replace("+", " ")
+            error_description = self.path.split("error_description=")[-1].replace(
+                "+", " "
+            )
             self.send_response(400)
             self.end_headers()
-            self.wfile.write(b"Error occurred during authorization. Check the logs for details.")
+            self.wfile.write(
+                b"Error occurred during authorization. Check the logs for details."
+            )
         else:
             self.send_response(400)
             self.end_headers()

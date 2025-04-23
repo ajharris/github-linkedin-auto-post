@@ -58,7 +58,7 @@ def test_linkedin_callback_success(mock_post, mock_get, client):
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = {
         "access_token": "test_token",
-        "id_token": "mock_id_token"
+        "id_token": "mock_id_token",
     }
 
     # Mock profile fetch
@@ -87,30 +87,44 @@ def test_linkedin_callback_no_code(client):
 
 def test_github_webhook_no_signature(client):
     """Test GitHub webhook request with missing signature."""
-    response = client.post("/webhook/github", json={"test": "data"}, headers={"Content-Type": "application/json"})
+    response = client.post(
+        "/webhook/github",
+        json={"test": "data"},
+        headers={"Content-Type": "application/json"},
+    )
     assert response.status_code == 403
     assert response.get_json() == {"error": "Invalid signature"}
 
 
-@patch("backend.routes.post_to_linkedin", return_value=MagicMock(status_code=201, json=lambda: {"id": "test-post-id"}))
+@patch(
+    "backend.routes.post_to_linkedin",
+    return_value=MagicMock(status_code=201, json=lambda: {"id": "test-post-id"}),
+)
 @patch("backend.routes.verify_github_signature", return_value=True)
 def test_github_webhook(mock_verify, mock_post, client):
     """Test webhook processing a valid push event"""
 
     # Add test user to DB
     with client.application.app_context():
-        user = User(github_id="ajharris", SECRET_GITHUB_TOKEN="gh_token", linkedin_token="li_token")
+        user = User(
+            github_id="ajharris",
+            SECRET_GITHUB_TOKEN="gh_token",
+            linkedin_token="li_token",
+        )
         db.session.add(user)
         db.session.commit()
 
     # Simulate GitHub push payload
     payload = {
         "pusher": {"name": "ajharris"},
-        "repository": {"name": "github-linkedin-auto-post", "owner": {"id": "ajharris"}},
+        "repository": {
+            "name": "github-linkedin-auto-post",
+            "owner": {"id": "ajharris"},
+        },
         "head_commit": {
             "message": "Test commit",
-            "url": "https://github.com/ajharris/test/commit/abc123"
-        }
+            "url": "https://github.com/ajharris/test/commit/abc123",
+        },
     }
 
     secret = os.getenv("SECRET_GITHUB_SECRET").encode()
@@ -126,7 +140,10 @@ def test_github_webhook(mock_verify, mock_post, client):
     response = client.post("/webhook/github", data=body, headers=headers)
 
     assert response.status_code == 200, response.data
-    assert response.get_json() == {"status": "success", "linkedin_post_id": "test-post-id"}
+    assert response.get_json() == {
+        "status": "success",
+        "linkedin_post_id": "test-post-id",
+    }
 
 
 @pytest.fixture(scope="module")
@@ -150,7 +167,7 @@ def test_github_status_returns_user_info(client):
         user = User(
             github_id="123456",
             github_username="octocat",
-            SECRET_GITHUB_TOKEN="fake-token"
+            SECRET_GITHUB_TOKEN="fake-token",
         )
         db.session.add(user)
         db.session.commit()
@@ -158,13 +175,13 @@ def test_github_status_returns_user_info(client):
     # Include the github_user_id cookie in the request
     client.set_cookie("github_user_id", "123456")
     response = client.get("/api/github/123456/status")
-    
+
     assert response.status_code == 200
     assert response.get_json() == {
         "linked": False,
         "github_id": "123456",
         "github_username": "octocat",
-        "linkedin_id": None
+        "linkedin_id": None,
     }
 
 
@@ -242,7 +259,11 @@ def test_github_callback_duplicate_user(mock_get, mock_post, client, app):
 
     # Add a user with the same GitHub ID to the database
     with app.app_context():
-        user = User(github_id="12345", github_username="existinguser", SECRET_GITHUB_TOKEN="existing_token")
+        user = User(
+            github_id="12345",
+            github_username="existinguser",
+            SECRET_GITHUB_TOKEN="existing_token",
+        )
         db.session.add(user)
         db.session.commit()
 

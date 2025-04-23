@@ -1,6 +1,7 @@
 import os
 import logging
 
+
 def generate_post_from_webhook(payload):
     try:
         linkedin_user_id = os.getenv("LINKEDIN_USER_ID", "someone")
@@ -15,11 +16,10 @@ def generate_post_from_webhook(payload):
 
         return (
             f"🚀 {commit_author} just pushed to {repo}!\n\n"
-            f"💬 Commit message: \"{message}\"\n\n"
+            f'💬 Commit message: "{message}"\n\n'
             f"🔗 Check it out: {url}\n\n"
             "#buildinpublic #opensource"
         )
     except Exception as e:
         logging.error(f"[Post Generator] Failed to generate post: {e}")
         raise
-

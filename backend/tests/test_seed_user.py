@@ -1,6 +1,7 @@
 from backend.models import db, User
 from backend.scripts.seed_main_user import seed_main_user
 
+
 def test_seed_main_user(app, monkeypatch):
     monkeypatch.setenv("SEED_GITHUB_ID", "123456789")
     monkeypatch.setenv("SEED_SECRET_GITHUB_TOKEN", "test_gh_token")
@@ -20,5 +21,3 @@ def test_seed_main_user(app, monkeypatch):
         assert user is not None
         assert user.SECRET_GITHUB_TOKEN == "test_gh_token"
         assert user.linkedin_token == "test_li_token"
-
-

@@ -30,7 +30,9 @@ def verify_env_vars():
     ]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
-        pytest.fail(f"Missing required environment variables: {', '.join(missing_vars)}")
+        pytest.fail(
+            f"Missing required environment variables: {', '.join(missing_vars)}"
+        )
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -38,7 +40,9 @@ def check_env_vars():
     """Ensure required environment variables are set."""
     missing_vars = [var for var in REQUIRED_ENV_VARS if not os.getenv(var)]
     if missing_vars:
-        pytest.fail(f"Missing required environment variables: {', '.join(missing_vars)}")
+        pytest.fail(
+            f"Missing required environment variables: {', '.join(missing_vars)}"
+        )
 
 
 @pytest.fixture(scope="session")
@@ -72,6 +76,7 @@ def patch_signature_verification():
 
 # Removed the patch_env fixture to ensure tests fail if required environment variables are not set.
 
+
 # Optional: a named variant if you want to override patch_env in specific tests
 @pytest.fixture
 def patch_linkedin_env(monkeypatch):
@@ -82,6 +87,7 @@ def patch_linkedin_env(monkeypatch):
 @pytest.fixture(autouse=True)
 def clean_db(app):
     from backend.models import db
+
     db.session.remove()
     db.drop_all()
     db.create_all()
@@ -90,9 +96,12 @@ def clean_db(app):
 @pytest.fixture(autouse=True)
 def patch_post_to_linkedin():
     with patch("backend.routes.post_to_linkedin") as mock_func:
-        mock_func.side_effect = lambda user, repo, msg: type("Response", (), {
-            "status_code": 201,
-            "json": "{'id': 'mocked-id'}"  # Replaced lambda with string
-        })()
+        mock_func.side_effect = lambda user, repo, msg: type(
+            "Response",
+            (),
+            {
+                "status_code": 201,
+                "json": "{'id': 'mocked-id'}",  # Replaced lambda with string
+            },
+        )()
         yield mock_func
-

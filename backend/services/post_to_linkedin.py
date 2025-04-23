@@ -23,7 +23,9 @@ def post_to_linkedin(user, repo_name, commit_message, webhook_payload):
             response.status_code = 404
             response._content = b"User not found"
             return response
-        current_app.logger.warning(f"[Webhook] Fallback user: {getattr(user, 'github_id', 'None')}")
+        current_app.logger.warning(
+            f"[Webhook] Fallback user: {getattr(user, 'github_id', 'None')}"
+        )
 
     access_token = user.linkedin_token
     user_id = user.linkedin_id
@@ -44,7 +46,7 @@ def post_to_linkedin(user, repo_name, commit_message, webhook_payload):
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
-        "X-Restli-Protocol-Version": "2.0.0"
+        "X-Restli-Protocol-Version": "2.0.0",
     }
 
     post_text = generate_post_from_webhook(webhook_payload)
@@ -54,15 +56,11 @@ def post_to_linkedin(user, repo_name, commit_message, webhook_payload):
         "lifecycleState": "PUBLISHED",
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {
-                "shareCommentary": {
-                    "text": post_text
-                },
-                "shareMediaCategory": "NONE"
+                "shareCommentary": {"text": post_text},
+                "shareMediaCategory": "NONE",
             }
         },
-        "visibility": {
-            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-        }
+        "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"},
     }
 
     response = requests.post(LINKEDIN_POST_URL, headers=headers, json=payload)
@@ -74,12 +72,16 @@ def post_to_linkedin(user, repo_name, commit_message, webhook_payload):
         current_app.logger.error(f"[LinkedIn] Server error: {response.text}")
         raise ValueError(f"Failed to post to LinkedIn: {response.status_code}")
     elif response.status_code not in {201, 401} and response.status_code < 500:
-        current_app.logger.error(f"[LinkedIn] Unexpected error: {response.status_code} {response.text}")
+        current_app.logger.error(
+            f"[LinkedIn] Unexpected error: {response.status_code} {response.text}"
+        )
 
     return response
 
 
-def send_post_to_linkedin(user, repo_name, commit_message, webhook_payload, retries=3, delay=2):
+def send_post_to_linkedin(
+    user, repo_name, commit_message, webhook_payload, retries=3, delay=2
+):
     """
     Sends a post to LinkedIn using the user's credentials with retry logic.
 
@@ -97,7 +99,9 @@ def send_post_to_linkedin(user, repo_name, commit_message, webhook_payload, retr
     if not user.linkedin_token:
         logging.warning("[LinkedIn] Missing LinkedIn token. Attempting to refresh.")
         try:
-            user.linkedin_token = exchange_code_for_access_token(user.SECRET_GITHUB_TOKEN)
+            user.linkedin_token = exchange_code_for_access_token(
+                user.SECRET_GITHUB_TOKEN
+            )
             db.session.commit()
         except Exception as e:
             logging.error(f"[LinkedIn] Failed to refresh token: {e}")
@@ -105,15 +109,21 @@ def send_post_to_linkedin(user, repo_name, commit_message, webhook_payload, retr
 
     for attempt in range(retries):
         try:
-            response = post_to_linkedin(user, repo_name, commit_message, webhook_payload)
+            response = post_to_linkedin(
+                user, repo_name, commit_message, webhook_payload
+            )
             if response.status_code == 201:
                 logging.info(f"[LinkedIn] Post successful: {response.json()}")
                 return response
             else:
-                logging.error(f"[LinkedIn] Post failed: {response.status_code} {response.text}")
+                logging.error(
+                    f"[LinkedIn] Post failed: {response.status_code} {response.text}"
+                )
                 return response
         except Exception as e:
-            logging.error(f"[LinkedIn] Exception during post (attempt {attempt + 1}): {e}")
+            logging.error(
+                f"[LinkedIn] Exception during post (attempt {attempt + 1}): {e}"
+            )
             if attempt < retries - 1:
                 time.sleep(delay)
             else:

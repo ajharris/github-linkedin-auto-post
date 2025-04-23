@@ -90,7 +90,9 @@ def linkedin_auth():
         current_app.logger.info(f"[DEBUG] CLIENT_ID: {repr(CLIENT_ID)}")
         current_app.logger.info(f"[DEBUG] REDIRECT_URI: {repr(REDIRECT_URI)}")
         current_app.logger.info(f"[DEBUG] scope: {repr(scope)}")
-        current_app.logger.info(f"[DEBUG] SECRET_GITHUB_user_id: {repr(SECRET_GITHUB_user_id)}")
+        current_app.logger.info(
+            f"[DEBUG] SECRET_GITHUB_user_id: {repr(SECRET_GITHUB_user_id)}"
+        )
         current_app.logger.info(f"[DEBUG] Full LinkedIn URL: {repr(linkedin_auth_url)}")
 
         return redirect(linkedin_auth_url)

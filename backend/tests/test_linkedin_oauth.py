@@ -53,7 +53,9 @@ def test_linkedin_callback_stores_token_and_urn(
     }
 
     with client.session_transaction() as session:
-        session["SECRET_GITHUB_user_id"] = SECRET_GITHUB_user.SECRET_GITHUB_id  # Use valid GitHub user ID
+        session["SECRET_GITHUB_user_id"] = (
+            SECRET_GITHUB_user.SECRET_GITHUB_id
+        )  # Use valid GitHub user ID
 
     response = client.get(
         f"/auth/linkedin/callback?code=fake_code&state={SECRET_GITHUB_user.SECRET_GITHUB_id}"

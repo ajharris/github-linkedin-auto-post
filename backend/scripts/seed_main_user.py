@@ -14,9 +14,7 @@ def seed_main_user(app=None):
 
     SECRET_GITHUB_id = os.getenv("SEED_GITHUB_ID", "7585359")
     SECRET_GITHUB_username = os.getenv("SEED_GITHUB_USERNAME", "ajharris")
-    SECRET_GITHUB_TOKEN = os.getenv(
-        "SEED_GITHUB_TOKEN", "placeholderGITHUB_TOKEN"
-    )
+    SECRET_GITHUB_TOKEN = os.getenv("SEED_GITHUB_TOKEN", "placeholderGITHUB_TOKEN")
     linkedin_id = os.getenv("SEED_LINKEDIN_ID", "1485595039")
     linkedin_token = os.getenv("SEED_LINKEDIN_TOKEN", "placeholder_linkedin_token")
 

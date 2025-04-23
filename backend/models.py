@@ -39,4 +39,6 @@ class GitHubEvent(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     linkedin_post_id = db.Column(db.String(255), nullable=True)
 
-    user = db.relationship("User", backref=db.backref("SECRET_GITHUB_events", lazy=True))
+    user = db.relationship(
+        "User", backref=db.backref("SECRET_GITHUB_events", lazy=True)
+    )

@@ -43,6 +43,7 @@ DEFAULT_ENV_VALUES = {
 for var, default in DEFAULT_ENV_VALUES.items():
     os.environ.setdefault(var, default)
 
+
 @pytest.fixture(scope="session", autouse=True)
 def verify_env_vars():
     """Ensure all required environment variables are set."""

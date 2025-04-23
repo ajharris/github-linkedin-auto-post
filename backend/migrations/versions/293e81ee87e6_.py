@@ -28,7 +28,12 @@ def upgrade():
                 server_default="default_token",
             )
         )
-        batch_op.drop_column("SECRET_GITHUB_token")
+        # Check if the column exists before attempting to drop it
+        conn = op.get_bind()
+        inspector = sa.inspect(conn)
+        columns = [col['name'] for col in inspector.get_columns('user')]
+        if 'SECRET_GITHUB_token' in columns:
+            batch_op.drop_column('SECRET_GITHUB_token')
         batch_op.drop_column("linkedin_access_token")
         batch_op.drop_column("linkedin_user_urn")
 
@@ -53,9 +58,13 @@ def downgrade():
                 nullable=True,
             )
         )
-        batch_op.add_column(
-            sa.Column("SECRET_GITHUB_token", sa.VARCHAR(), autoincrement=False, nullable=False)
-        )
+        # Check if the column exists before altering it
+        conn = op.get_bind()
+        inspector = sa.inspect(conn)
+        columns = [col['name'] for col in inspector.get_columns('user')]
+        if 'SECRET_GITHUB_token' in columns:
+            batch_op.add_column(sa.Column('SECRET_GITHUB_token', sa.String(), nullable=False, server_default='default_token'))
+            op.alter_column('user', 'SECRET_GITHUB_token', server_default=None)
         batch_op.drop_column("SECRET_GITHUB_TOKEN")
 
     # ### end Alembic commands ###

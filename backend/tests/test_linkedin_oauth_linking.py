@@ -62,7 +62,9 @@ def test_linkedin_callback_success(test_client, requests_mock):
 
     # Set up user in database
     user = User(
-        SECRET_GITHUB_id="123", SECRET_GITHUB_TOKEN="test-token", SECRET_GITHUB_username="octocat"
+        SECRET_GITHUB_id="123",
+        SECRET_GITHUB_TOKEN="test-token",
+        SECRET_GITHUB_username="octocat",
     )
     db.session.add(user)
     db.session.commit()

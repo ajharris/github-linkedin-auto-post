@@ -12,6 +12,7 @@ import logging
 
 load_dotenv()
 
+
 def create_app(config_name=None):
     """Flask application factory function."""
     config_name = config_name or os.getenv("FLASK_CONFIG", "production")

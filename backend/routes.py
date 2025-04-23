@@ -261,6 +261,7 @@ def check_github_link_status(github_id):
         "linkedin_id": user.linkedin_id
     }), 200
 
+
 @routes.route("/auth/github/callback")
 def github_callback():
     from urllib.parse import urlencode
@@ -347,6 +348,7 @@ def github_callback():
         current_app.logger.error(f"[GitHub] OAuth flow failed: {e}")
         return jsonify({"error": "GitHub OAuth error"}), 500
 
+
 @routes.route("/routes")
 def list_routes():
     from flask import url_for
@@ -354,6 +356,7 @@ def list_routes():
     for rule in current_app.url_map.iter_rules():
         output.append(f"{rule.endpoint}: {rule.rule}")
     return jsonify(sorted(output))
+
 
 @routes.route("/api/github/<github_id>/commits")
 @login_required
@@ -372,6 +375,7 @@ def get_commits(github_id):
     ]
     return jsonify({"commits": commits}), 200
 
+
 @routes.route("/auth/github")
 def github_login():
     client_id = os.getenv("GITHUB_CLIENT_ID")
@@ -381,6 +385,7 @@ def github_login():
         f"client_id={client_id}&redirect_uri={redirect_uri}&scope=repo"
     )
     return redirect(github_oauth_url)
+
 
 @routes.route("/api/github/<github_id>/link_linkedin", methods=["POST"])
 @login_required
@@ -400,6 +405,7 @@ def link_linkedin_account(github_id):
     db.session.commit()
 
     return jsonify({"status": "success", "message": "LinkedIn account linked successfully"}), 200
+
 
 @routes.route("/api/get_user_profile", methods=["GET"])
 @login_required

@@ -182,6 +182,9 @@ jobs:
       - name: Verify environment variables
         run: |
           python -c "import os; assert os.getenv('LINKEDIN_ACCESS_TOKEN'), 'Missing LINKEDIN_ACCESS_TOKEN'; assert os.getenv('LINKEDIN_USER_ID'), 'Missing LINKEDIN_USER_ID'"
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
 
       - name: Lint Python Code
         run: |

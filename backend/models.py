@@ -6,12 +6,13 @@ db = SQLAlchemy()
 
 
 class User(db.Model):
+    """User model."""
     id = db.Column(db.Integer, primary_key=True)
-    github_id = db.Column(db.String, unique=True, nullable=False)
+    github_id = db.Column(db.String(255), unique=True, nullable=False)
     github_username = db.Column(db.String, nullable=True)
-    SECRET_GITHUB_TOKEN = db.Column(db.String, nullable=False)
-    linkedin_id = db.Column(db.String, unique=True, nullable=True)
-    linkedin_token = db.Column(db.String, nullable=True)
+    SECRET_GITHUB_TOKEN = db.Column(db.String(255), nullable=False)
+    linkedin_id = db.Column(db.String(255), unique=True, nullable=True)
+    linkedin_token = db.Column(db.String(255), nullable=True)
     name = db.Column(db.String, nullable=True)  # Optional: GitHub user's name
     email = db.Column(db.String, nullable=True)  # Optional: GitHub user's email
     avatar_url = db.Column(db.String, nullable=True)  # Optional: GitHub user's avatar URL
@@ -20,6 +21,7 @@ class User(db.Model):
     def has_valid_linkedin_token(self):
         """Check if the user has a valid LinkedIn token."""
         return self.linkedin_token is not None and self.linkedin_id is not None
+
 
 class GitHubEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)

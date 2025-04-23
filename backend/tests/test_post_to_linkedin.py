@@ -2,11 +2,9 @@ import pytest
 import requests_mock
 from types import SimpleNamespace
 from backend.services.post_to_linkedin import post_to_linkedin
-from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
 from backend.models import User, db
 from backend.services.post_to_linkedin import send_post_to_linkedin
-import time
 from unittest.mock import call
 
 
@@ -194,6 +192,7 @@ def test_send_post_to_linkedin_refreshes_token(app):
             assert user.linkedin_token == "new_mock_token"
             assert response.status_code == 201
             assert response.json()["id"] == "mock_post_id"
+
 
 def test_send_post_to_linkedin_handles_post_errors(app):
     """Test that send_post_to_linkedin handles errors during posting."""

@@ -1,5 +1,5 @@
 import os
-from flask import current_app, json, jsonify
+from flask import current_app, json
 import requests
 from dotenv import load_dotenv
 import logging
@@ -13,9 +13,10 @@ load_dotenv()
 
 LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
 
+
 def post_to_linkedin(user, repo_name, commit_message, webhook_payload):
     if not user:
-        current_app.logger.warning(f"[post_to_linkedin] No user provided.")
+        current_app.logger.warning("[post_to_linkedin] No user provided.")
         user = User.query.first()
         if not user:
             response = requests.Response()
@@ -76,6 +77,7 @@ def post_to_linkedin(user, repo_name, commit_message, webhook_payload):
         current_app.logger.error(f"[LinkedIn] Unexpected error: {response.status_code} {response.text}")
 
     return response
+
 
 def send_post_to_linkedin(user, repo_name, commit_message, webhook_payload, retries=3, delay=2):
     """

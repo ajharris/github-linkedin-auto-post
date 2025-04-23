@@ -4,8 +4,10 @@ import requests
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+
 # Load environment variables from .env file
 load_dotenv()
+
 
 class LinkedInAuthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -25,6 +27,7 @@ class LinkedInAuthHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"Authorization code not found.")
 
+
 def get_authorization_code():
     client_id = os.getenv("LINKEDIN_CLIENT_ID")
     redirect_uri = os.getenv("LINKEDIN_REDIRECT_URI")
@@ -39,6 +42,7 @@ def get_authorization_code():
     httpd = HTTPServer(server_address, LinkedInAuthHandler)
     httpd.handle_request()
     return httpd.auth_code
+
 
 def renew_linkedin_access_token(auth_code):
     url = "https://www.linkedin.com/oauth/v2/accessToken"
@@ -57,6 +61,7 @@ def renew_linkedin_access_token(auth_code):
         new_token = response.json().get("access_token")
     else:
         pass
+
 
 if __name__ == "__main__":
     auth_code = get_authorization_code()

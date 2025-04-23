@@ -2,8 +2,34 @@ import os
 import pytest
 from unittest.mock import patch
 from backend.app import create_app, db
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 REQUIRED_ENV_VARS = ["LINKEDIN_ACCESS_TOKEN", "LINKEDIN_USER_ID"]
+
+@pytest.fixture(scope="session", autouse=True)
+def verify_env_vars():
+    """Ensure all required environment variables are set."""
+    required_vars = [
+        "LINKEDIN_ACCESS_TOKEN",
+        "LINKEDIN_USER_ID",
+        "SQLALCHEMY_DATABASE_URI",
+        "LINKEDIN_CLIENT_ID",
+        "LINKEDIN_CLIENT_SECRET",
+        "DATABASE_URL",
+        "GITHUB_TOKEN",
+        "GITHUB_SECRET",
+        "SEED_GITHUB_ID",
+        "SEED_GITHUB_USERNAME",
+        "SEED_GITHUB_TOKEN",
+        "SEED_LINKEDIN_ID",
+        "SEED_LINKEDIN_TOKEN",
+    ]
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    if missing_vars:
+        pytest.fail(f"Missing required environment variables: {', '.join(missing_vars)}")
 
 @pytest.fixture(scope="session", autouse=True)
 def check_env_vars():

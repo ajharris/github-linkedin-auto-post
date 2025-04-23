@@ -45,14 +45,7 @@ def test_github_webhook(mock_verify, mock_post, client):
         "Content-Type": "application/json"
     }
 
-    print("[Test] Starting test_github_webhook")
-    print(f"[Test] Payload: {payload}")
-    print(f"[Test] Headers: {headers}")
-
     response = client.post("/webhook/github", data=body, headers=headers)
-
-    print(f"[Test] Response status code: {response.status_code}")
-    print(f"[Test] Response data: {response.data}")
 
     assert response.status_code == 200, response.data
     assert response.get_json()["status"] == "success"
@@ -164,7 +157,6 @@ def test_webhook_route_exists(test_client):
 
 @patch("backend.routes.verify_github_signature", return_value=True)
 def test_webhook_redundant_event(mock_verify, test_client):
-    print("[Test] Starting test_webhook_redundant_event")
 
     # Add test user to DB
     with test_client.application.app_context():
@@ -210,16 +202,10 @@ def test_webhook_redundant_event(mock_verify, test_client):
         "Content-Type": "application/json"
     }
 
-    print(f"[Test] Payload: {payload}")
-    print(f"[Test] Headers: {headers}")
-
     with patch("backend.routes.post_to_linkedin") as mock_post_to_linkedin:
         mock_post_to_linkedin.return_value = MagicMock(status_code=200, json=lambda: {"id": "mock_post_id"})  # Simulate valid response
 
         response = test_client.post("/webhook/github", json=payload, headers=headers)
-
-        print(f"[Test] Response status code: {response.status_code}")
-        print(f"[Test] Response data: {response.data}")
 
         assert response.status_code == 200
         mock_post_to_linkedin.assert_not_called()

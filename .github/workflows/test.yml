@@ -25,6 +25,22 @@ jobs:
           --health-cmd="pg_isready -U postgres" --health-interval=10s --health-timeout=5s --health-retries=5
 
     steps:
+      - name: Verify required secrets
+        run: |
+          for var in LINKEDIN_ACCESS_TOKEN LINKEDIN_USER_ID LINKEDIN_CLIENT_ID LINKEDIN_CLIENT_SECRET; do
+            if [ -z "${!var}" ]; then
+              echo "❌ Missing required secret: $var"
+              exit 1
+            else
+              echo "✅ $var is set"
+            fi
+          done
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+
       - name: Checkout code
         uses: actions/checkout@v3
 

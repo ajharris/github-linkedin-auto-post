@@ -3,8 +3,8 @@ from backend.scripts.seed_main_user import seed_main_user
 
 
 def test_seed_main_user(app, monkeypatch):
-    monkeypatch.setenv("SEEDGITHUB_ID", "123456789")
-    monkeypatch.setenv("SEEDGITHUB_TOKEN", "test_gh_token")
+    monkeypatch.setenv("SEED_GITHUB_ID", "123456789")
+    monkeypatch.setenv("SEED_GITHUB_TOKEN", "test_gh_token")
     monkeypatch.setenv("SEED_LINKEDIN_TOKEN", "test_li_token")
 
     # Clear just in case

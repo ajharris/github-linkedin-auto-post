@@ -15,7 +15,7 @@ def SECRET_GITHUB_user(db_session):
     user = User(
         SECRET_GITHUB_id="12345",
         SECRET_GITHUB_username="testuser",
-        SECRET_GITHUB_TOKEN="mock_SECRET_GITHUB_TOKEN",  # Added a valid value for SECRET_GITHUB_TOKEN
+        SECRET_GITHUB_TOKEN="mockGITHUB_TOKEN",  # Added a valid value for SECRET_GITHUB_TOKEN
     )
     db.session.add(user)
     db.session.commit()

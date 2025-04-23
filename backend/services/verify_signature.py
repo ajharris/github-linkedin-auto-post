@@ -5,7 +5,7 @@ import hashlib
 import logging
 
 
-def verify_SECRET_GITHUB_signature(raw_payload: bytes, signature: str) -> bool:
+def verifyGITHUB_signature(raw_payload: bytes, signature: str) -> bool:
     if not signature:
         logging.warning("[Signature Verification] Missing signature in request.")
         return False

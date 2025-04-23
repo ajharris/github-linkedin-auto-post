@@ -54,7 +54,7 @@ def test_create_user(session):
     assert fetched_user.linkedin_id == "654321"
 
 
-def test_create_SECRET_GITHUB_event(session):
+def test_createGITHUB_event(session):
     """Test creating a GitHub event"""
     user = User(SECRET_GITHUB_id="123456", SECRET_GITHUB_TOKEN="gh_token")
     session.add(user)
@@ -77,7 +77,7 @@ def test_create_SECRET_GITHUB_event(session):
     assert fetched_event.commit_message == "Initial commit"
 
 
-def test_SECRET_GITHUB_event_creation_with_missing_fields(session):
+def testGITHUB_event_creation_with_missing_fields(session):
     """Test that GitHubEvent creation fails gracefully if required fields are missing."""
     user = User(SECRET_GITHUB_id="123456", SECRET_GITHUB_TOKEN="gh_token")
     session.add(user)

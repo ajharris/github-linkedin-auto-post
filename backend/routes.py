@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from backend.models import db, GitHubEvent, User
 from backend.services.post_generator import generate_post_from_webhook
 from backend.services.post_to_linkedin import post_to_linkedin
-from backend.services.verify_signature import verify_SECRET_GITHUB_signature
+from backend.services.verify_signature import verifyGITHUB_signature
 import jwt  # Install with `pip install pyjwt`
 from jwt.exceptions import InvalidTokenError
 from backend.services.utils import (
@@ -200,7 +200,7 @@ def SECRET_GITHUB_webhook():
         current_app.logger.error("[Webhook] Missing signature header.")
         return jsonify({"error": "Invalid signature"}), 403
 
-    if not verify_SECRET_GITHUB_signature(request.data, signature):
+    if not verifyGITHUB_signature(request.data, signature):
         current_app.logger.error("[Webhook] Invalid signature.")
         return jsonify({"error": "Unauthorized"}), 403
 
@@ -292,7 +292,7 @@ def SECRET_GITHUB_webhook():
 
 @routes.route("/api/github/<SECRET_GITHUB_id>/status")
 @login_required
-def check_SECRET_GITHUB_link_status(SECRET_GITHUB_id):
+def checkGITHUB_link_status(SECRET_GITHUB_id):
     user = request.user  # Access the authenticated user from the request context
     return (
         jsonify(

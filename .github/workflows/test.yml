@@ -109,18 +109,18 @@ jobs:
           echo "SECRET_GITHUB_SECRET is set to: ${SECRET_GITHUB_SECRET:+[REDACTED]}"
           echo "DATABASE_URL is set to: ${DATABASE_URL:+[REDACTED]}"
           echo "SQLALCHEMY_DATABASE_URI is set to: ${SQLALCHEMY_DATABASE_URI:+[REDACTED]}"
-          echo "SEED_SECRET_GITHUB_ID is set to: ${SEED_SECRET_GITHUB_ID:+[REDACTED]}"
-          echo "SEED_SECRET_GITHUB_USERNAME is set to: ${SEED_SECRET_GITHUB_USERNAME:+[REDACTED]}"
-          echo "SEED_SECRET_GITHUB_TOKEN is set to: ${SEED_SECRET_GITHUB_TOKEN:+[REDACTED]}"
+          echo "SEEDGITHUB_ID is set to: ${SEEDGITHUB_ID:+[REDACTED]}"
+          echo "SEEDGITHUB_USERNAME is set to: ${SEEDGITHUB_USERNAME:+[REDACTED]}"
+          echo "SEEDGITHUB_TOKEN is set to: ${SEEDGITHUB_TOKEN:+[REDACTED]}"
           echo "SEED_LINKEDIN_ID is set to: ${SEED_LINKEDIN_ID:+[REDACTED]}"
           echo "SEED_LINKEDIN_TOKEN is set to: ${SEED_LINKEDIN_TOKEN:+[REDACTED]}"
         env:
           SECRET_GITHUB_SECRET: ${{ secrets.SECRET_GITHUB_SECRET }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SQLALCHEMY_DATABASE_URI: ${{ secrets.SQLALCHEMY_DATABASE_URI }}
-          SEED_SECRET_GITHUB_ID: ${{ secrets.SEED_SECRET_GITHUB_ID }}
-          SEED_SECRET_GITHUB_USERNAME: ${{ secrets.SEED_SECRET_GITHUB_USERNAME }}
-          SEED_SECRET_GITHUB_TOKEN: ${{ secrets.SEED_SECRET_GITHUB_TOKEN }}
+          SEEDGITHUB_ID: ${{ secrets.SEEDGITHUB_ID }}
+          SEEDGITHUB_USERNAME: ${{ secrets.SEEDGITHUB_USERNAME }}
+          SEEDGITHUB_TOKEN: ${{ secrets.SEEDGITHUB_TOKEN }}
           SEED_LINKEDIN_ID: ${{ secrets.SEED_LINKEDIN_ID }}
           SEED_LINKEDIN_TOKEN: ${{ secrets.SEED_LINKEDIN_TOKEN }}
 
@@ -130,9 +130,9 @@ jobs:
           echo "LINKEDIN_USER_ID is set to: ${LINKEDIN_USER_ID:+[REDACTED]}"
           echo "DATABASE_URL is set to: ${DATABASE_URL:+[REDACTED]}"
           echo "SQLALCHEMY_DATABASE_URI is set to: ${SQLALCHEMY_DATABASE_URI:+[REDACTED]}"
-          echo "SEED_SECRET_GITHUB_ID is set to: ${SEED_SECRET_GITHUB_ID:+[REDACTED]}"
-          echo "SEED_SECRET_GITHUB_USERNAME is set to: ${SEED_SECRET_GITHUB_USERNAME:+[REDACTED]}"
-          echo "SEED_SECRET_GITHUB_TOKEN is set to: ${SEED_SECRET_GITHUB_TOKEN:+[REDACTED]}"
+          echo "SEEDGITHUB_ID is set to: ${SEEDGITHUB_ID:+[REDACTED]}"
+          echo "SEEDGITHUB_USERNAME is set to: ${SEEDGITHUB_USERNAME:+[REDACTED]}"
+          echo "SEEDGITHUB_TOKEN is set to: ${SEEDGITHUB_TOKEN:+[REDACTED]}"
           echo "SEED_LINKEDIN_ID is set to: ${SEED_LINKEDIN_ID:+[REDACTED]}"
           echo "SEED_LINKEDIN_TOKEN is set to: ${SEED_LINKEDIN_TOKEN:+[REDACTED]}"
         env:
@@ -141,9 +141,9 @@ jobs:
           SECRET_GITHUB_SECRET: ${{ secrets.SECRET_GITHUB_SECRET }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SQLALCHEMY_DATABASE_URI: ${{ secrets.SQLALCHEMY_DATABASE_URI }}
-          SEED_SECRET_GITHUB_ID: ${{ secrets.SEED_SECRET_GITHUB_ID }}
-          SEED_SECRET_GITHUB_USERNAME: ${{ secrets.SEED_SECRET_GITHUB_USERNAME }}
-          SEED_SECRET_GITHUB_TOKEN: ${{ secrets.SEED_SECRET_GITHUB_TOKEN }}
+          SEEDGITHUB_ID: ${{ secrets.SEEDGITHUB_ID }}
+          SEEDGITHUB_USERNAME: ${{ secrets.SEEDGITHUB_USERNAME }}
+          SEEDGITHUB_TOKEN: ${{ secrets.SEEDGITHUB_TOKEN }}
           SEED_LINKEDIN_ID: ${{ secrets.SEED_LINKEDIN_ID }}
           SEED_LINKEDIN_TOKEN: ${{ secrets.SEED_LINKEDIN_TOKEN }}
 
@@ -159,9 +159,9 @@ jobs:
           LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SECRET_GITHUB_SECRET: ${{ secrets.SECRET_GITHUB_SECRET }}
-          SEED_SECRET_GITHUB_ID: ${{ secrets.SEED_SECRET_GITHUB_ID }}
-          SEED_SECRET_GITHUB_USERNAME: ${{ secrets.SEED_SECRET_GITHUB_USERNAME }}
-          SEED_SECRET_GITHUB_TOKEN: ${{ secrets.SEED_SECRET_GITHUB_TOKEN }}
+          SEEDGITHUB_ID: ${{ secrets.SEEDGITHUB_ID }}
+          SEEDGITHUB_USERNAME: ${{ secrets.SEEDGITHUB_USERNAME }}
+          SEEDGITHUB_TOKEN: ${{ secrets.SEEDGITHUB_TOKEN }}
           SEED_LINKEDIN_ID: ${{ secrets.SEED_LINKEDIN_ID }}
           SEED_LINKEDIN_TOKEN: ${{ secrets.SEED_LINKEDIN_TOKEN }}
 
@@ -174,9 +174,9 @@ jobs:
           LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           SECRET_GITHUB_SECRET: ${{ secrets.SECRET_GITHUB_SECRET }}
-          SEED_SECRET_GITHUB_ID: ${{ secrets.SEED_SECRET_GITHUB_ID }}
-          SEED_SECRET_GITHUB_USERNAME: ${{ secrets.SEED_SECRET_GITHUB_USERNAME }}
-          SEED_SECRET_GITHUB_TOKEN: ${{ secrets.SEED_SECRET_GITHUB_TOKEN }}
+          SEEDGITHUB_ID: ${{ secrets.SEEDGITHUB_ID }}
+          SEEDGITHUB_USERNAME: ${{ secrets.SEEDGITHUB_USERNAME }}
+          SEEDGITHUB_TOKEN: ${{ secrets.SEEDGITHUB_TOKEN }}
           SEED_LINKEDIN_ID: ${{ secrets.SEED_LINKEDIN_ID }}
           SEED_LINKEDIN_TOKEN: ${{ secrets.SEED_LINKEDIN_TOKEN }}
         run: |

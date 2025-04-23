@@ -151,7 +151,7 @@ function App() {
   const handleGitHubLogin = () => {
     console.log("GitHub login initiated");
     localStorage.removeItem("SECRET_GITHUB_user_id"); // Clear cache
-    const githubClientId = process.env.REACT_APP_SECRET_GITHUB_CLIENT_ID;
+    const githubClientId = process.env.REACT_APPGITHUB_CLIENT_ID;
     const redirectUri = encodeURIComponent("https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/github/callback"); // Ensure this matches GitHub app settings
     const scope = "repo"; // Ensure the scope includes access to repositories
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${redirectUri}&scope=${scope}`;

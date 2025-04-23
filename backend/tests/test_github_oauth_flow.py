@@ -17,7 +17,7 @@ def test_client():
         db.drop_all()
 
 
-def test_SECRET_GITHUB_status_returns_user_info(test_client):
+def testGITHUB_status_returns_user_info(test_client):
     """Test the /api/github/<SECRET_GITHUB_id>/status route."""
     # Create a mock user with GitHub details
     with test_client.application.app_context():

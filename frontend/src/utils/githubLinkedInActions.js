@@ -56,7 +56,7 @@ export const postSelectedCommitToLinkedIn = async (selectedCommit, githubUserId,
 
 export const handleGitHubLogin = () => {
   localStorage.removeItem("SECRET_GITHUB_user_id");
-  const githubClientId = process.env.REACT_APP_SECRET_GITHUB_CLIENT_ID;
+  const githubClientId = process.env.REACT_APPGITHUB_CLIENT_ID;
   const redirectUri = encodeURIComponent("https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/github/callback");
   const scope = "repo";
   const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${redirectUri}&scope=${scope}`;

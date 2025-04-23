@@ -17,8 +17,8 @@ def generate_signature(payload):
     "backend.routes.post_to_linkedin",
     return_value=MagicMock(status_code=201, json=lambda: {"id": "test-post-id"}),
 )
-@patch("backend.routes.verify_SECRET_GITHUB_signature", return_value=True)
-def test_SECRET_GITHUB_webhook(mock_verify, mock_post, client):
+@patch("backend.routes.verifyGITHUB_signature", return_value=True)
+def testGITHUB_webhook(mock_verify, mock_post, client):
     """Test webhook processing a valid push event"""
 
     # Add test user to DB
@@ -64,7 +64,7 @@ def test_SECRET_GITHUB_webhook(mock_verify, mock_post, client):
     "backend.routes.post_to_linkedin",
     return_value=MagicMock(status_code=201, json=lambda: {"id": "linkedin_post_456"}),
 )
-@patch("backend.routes.verify_SECRET_GITHUB_signature", return_value=True)
+@patch("backend.routes.verifyGITHUB_signature", return_value=True)
 def test_webhook_links_event_to_correct_user(
     mock_verify, mock_post_to_linkedin, test_client
 ):
@@ -72,7 +72,7 @@ def test_webhook_links_event_to_correct_user(
 
     user = User(
         SECRET_GITHUB_id="otheruser",
-        SECRET_GITHUB_TOKEN="fake_SECRET_GITHUB_TOKEN",
+        SECRET_GITHUB_TOKEN="fakeGITHUB_TOKEN",
         linkedin_token="fake_token",
         linkedin_id="123456789",
     )
@@ -111,7 +111,7 @@ def test_webhook_links_event_to_correct_user(
         assert event.linkedin_post_id == "linkedin_post_456"
 
 
-@patch("backend.routes.verify_SECRET_GITHUB_signature", return_value=True)
+@patch("backend.routes.verifyGITHUB_signature", return_value=True)
 def test_webhook_unsupported_event_type(mock_verify, test_client):
     """Test that unsupported event types are handled gracefully."""
     payload = {
@@ -171,14 +171,14 @@ def test_webhook_route_exists(test_client):
     assert response.status_code == 403
 
 
-@patch("backend.routes.verify_SECRET_GITHUB_signature", return_value=True)
+@patch("backend.routes.verifyGITHUB_signature", return_value=True)
 def test_webhook_redundant_event(mock_verify, test_client):
 
     # Add test user to DB
     with test_client.application.app_context():
         user = User(
             SECRET_GITHUB_id="testuser",
-            SECRET_GITHUB_TOKEN="fake_SECRET_GITHUB_TOKEN",
+            SECRET_GITHUB_TOKEN="fakeGITHUB_TOKEN",
             linkedin_token="fake_token",
             linkedin_id="123456789",
         )
@@ -239,7 +239,7 @@ def test_webhook_redundant_event(mock_verify, test_client):
         mock_post_to_linkedin.assert_not_called()
 
 
-@patch("backend.routes.verify_SECRET_GITHUB_signature", return_value=True)
+@patch("backend.routes.verifyGITHUB_signature", return_value=True)
 def test_webhook_pull_request_event(mock_verify, test_client):
     """Test that pull request events are parsed correctly."""
     payload = {
@@ -267,7 +267,7 @@ def test_webhook_pull_request_event(mock_verify, test_client):
     )
 
 
-@patch("backend.routes.verify_SECRET_GITHUB_signature", return_value=False)
+@patch("backend.routes.verifyGITHUB_signature", return_value=False)
 def test_webhook_invalid_signature(mock_verify, test_client):
     """Test that payloads with invalid signatures are rejected."""
     payload = {

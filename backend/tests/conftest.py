@@ -7,37 +7,26 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-REQUIRED_ENV_VARS = ["LINKEDIN_ACCESS_TOKEN", "LINKEDIN_USER_ID"]
+REQUIRED_ENV_VARS = [
+    "LINKEDIN_ACCESS_TOKEN",
+    "LINKEDIN_USER_ID",
+    "SQLALCHEMY_DATABASE_URI",
+    "LINKEDIN_CLIENT_ID",
+    "LINKEDIN_CLIENT_SECRET",
+    "DATABASE_URL",
+    "GITHUB_TOKEN",
+    "SECRET_GITHUB_SECRET",
+    "SEED_GITHUB_ID",
+    "SEED_GITHUB_USERNAME",
+    "SEED_GITHUB_TOKEN",
+    "SEED_LINKEDIN_ID",
+    "SEED_LINKEDIN_TOKEN",
+]
 
 
 @pytest.fixture(scope="session", autouse=True)
 def verify_env_vars():
     """Ensure all required environment variables are set."""
-    required_vars = [
-        "LINKEDIN_ACCESS_TOKEN",
-        "LINKEDIN_USER_ID",
-        "SQLALCHEMY_DATABASE_URI",
-        "LINKEDIN_CLIENT_ID",
-        "LINKEDIN_CLIENT_SECRET",
-        "DATABASE_URL",
-        "GITHUB_TOKEN",
-        "SECRET_GITHUB_SECRET",
-        "SEED_GITHUB_ID",
-        "SEED_GITHUB_USERNAME",
-        "SEED_GITHUB_TOKEN",
-        "SEED_LINKEDIN_ID",
-        "SEED_LINKEDIN_TOKEN",
-    ]
-    missing_vars = [var for var in required_vars if not os.getenv(var)]
-    if missing_vars:
-        pytest.fail(
-            f"Missing required environment variables: {', '.join(missing_vars)}"
-        )
-
-
-@pytest.fixture(scope="session", autouse=True)
-def check_env_vars():
-    """Ensure required environment variables are set."""
     missing_vars = [var for var in REQUIRED_ENV_VARS if not os.getenv(var)]
     if missing_vars:
         pytest.fail(

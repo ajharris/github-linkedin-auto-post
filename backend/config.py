@@ -12,8 +12,8 @@ if uri.startswith("postgres://"):
 os.environ["DATABASE_URL"] = uri
 
 REQUIRED_ENV_VARS = [
-    "GITHUB_CLIENT_ID",
-    "GITHUB_CLIENT_SECRET",
+    "SECRET_GITHUB_CLIENT_ID",
+    "SECRET_GITHUB_CLIENT_SECRET",
     "LINKEDIN_CLIENT_ID",
     "LINKEDIN_CLIENT_SECRET",
     "LINKEDIN_ACCESS_TOKEN",
@@ -45,7 +45,7 @@ class BaseConfig:
     LINKEDIN_USER_ID = os.getenv(
         "LINKEDIN_USER_ID", os.getenv("SEED_LINKEDIN_ID", "default_user_id")
     ).strip()
-    GITHUB_WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET", "").strip()
+    SECRET_GITHUB_WEBHOOK_SECRET = os.getenv("SECRET_GITHUB_WEBHOOK_SECRET", "").strip()
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///app.db").strip()
     DEBUG = False
     TESTING = False

@@ -28,7 +28,7 @@ def upgrade():
                 server_default="default_token",
             )
         )
-        batch_op.drop_column("github_token")
+        batch_op.drop_column("SECRET_GITHUB_token")
         batch_op.drop_column("linkedin_access_token")
         batch_op.drop_column("linkedin_user_urn")
 
@@ -54,7 +54,7 @@ def downgrade():
             )
         )
         batch_op.add_column(
-            sa.Column("github_token", sa.VARCHAR(), autoincrement=False, nullable=False)
+            sa.Column("SECRET_GITHUB_token", sa.VARCHAR(), autoincrement=False, nullable=False)
         )
         batch_op.drop_column("SECRET_GITHUB_TOKEN")
 

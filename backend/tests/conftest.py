@@ -12,17 +12,36 @@ REQUIRED_ENV_VARS = [
     "LINKEDIN_CLIENT_ID",
     "LINKEDIN_CLIENT_SECRET",
     "DATABASE_URL",
-    "GITHUB_TOKEN",
+    "SECRET_GITHUB_TOKEN",
     "SECRET_GITHUB_SECRET",
-    "SEED_GITHUB_ID",
-    "SEED_GITHUB_USERNAME",
-    "SEED_GITHUB_TOKEN",
+    "SEED_SECRET_GITHUB_ID",
+    "SEED_SECRET_GITHUB_USERNAME",
+    "SEED_SECRET_GITHUB_TOKEN",
     "SEED_LINKEDIN_ID",
     "SEED_LINKEDIN_TOKEN",
     "LINKEDIN_ACCESS_TOKEN",
     "LINKEDIN_USER_ID",
 ]
 
+# Add default values for optional variables
+DEFAULT_ENV_VALUES = {
+    "SQLALCHEMY_DATABASE_URI": "sqlite:///test.db",
+    "LINKEDIN_CLIENT_ID": "test_client_id",
+    "LINKEDIN_CLIENT_SECRET": "test_client_secret",
+    "DATABASE_URL": "sqlite:///test.db",
+    "SECRET_GITHUB_TOKEN": "test_SECRET_GITHUB_token",
+    "SECRET_GITHUB_SECRET": "test_secret",
+    "SEED_SECRET_GITHUB_ID": "test_SECRET_GITHUB_id",
+    "SEED_SECRET_GITHUB_USERNAME": "test_SECRET_GITHUB_username",
+    "SEED_SECRET_GITHUB_TOKEN": "test_SECRET_GITHUB_token",
+    "SEED_LINKEDIN_ID": "test_linkedin_id",
+    "SEED_LINKEDIN_TOKEN": "test_linkedin_token",
+    "LINKEDIN_ACCESS_TOKEN": "test_access_token",
+    "LINKEDIN_USER_ID": "test_user_id",
+}
+
+for var, default in DEFAULT_ENV_VALUES.items():
+    os.environ.setdefault(var, default)
 
 @pytest.fixture(scope="session", autouse=True)
 def verify_env_vars():
@@ -59,7 +78,7 @@ def test_client(app):
 @pytest.fixture
 def patch_signature_verification():
     """Automatically bypass GitHub signature checks."""
-    with patch("backend.routes.verify_github_signature", return_value=True):
+    with patch("backend.routes.verify_SECRET_GITHUB_signature", return_value=True):
         yield
 
 

@@ -5,12 +5,12 @@ import hashlib
 import logging
 
 
-def verify_github_signature(raw_payload: bytes, signature: str) -> bool:
+def verify_SECRET_GITHUB_signature(raw_payload: bytes, signature: str) -> bool:
     if not signature:
         logging.warning("[Signature Verification] Missing signature in request.")
         return False
 
-    secret = os.environ.get("GITHUB_WEBHOOK_SECRET", "").encode("utf-8")
+    secret = os.environ.get("SECRET_GITHUB_WEBHOOK_SECRET", "").encode("utf-8")
     expected_signature = (
         "sha256=" + hmac.new(secret, raw_payload, hashlib.sha256).hexdigest()
     )

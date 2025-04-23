@@ -9,8 +9,8 @@ class User(db.Model):
     """User model."""
 
     id = db.Column(db.Integer, primary_key=True)
-    github_id = db.Column(db.String(255), unique=True, nullable=False)
-    github_username = db.Column(db.String, nullable=True)
+    SECRET_GITHUB_id = db.Column(db.String(255), unique=True, nullable=False)
+    SECRET_GITHUB_username = db.Column(db.String, nullable=True)
     SECRET_GITHUB_TOKEN = db.Column(db.String(255), nullable=False)
     linkedin_id = db.Column(db.String(255), unique=True, nullable=True)
     linkedin_token = db.Column(db.String(255), nullable=True)
@@ -39,4 +39,4 @@ class GitHubEvent(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     linkedin_post_id = db.Column(db.String(255), nullable=True)
 
-    user = db.relationship("User", backref=db.backref("github_events", lazy=True))
+    user = db.relationship("User", backref=db.backref("SECRET_GITHUB_events", lazy=True))

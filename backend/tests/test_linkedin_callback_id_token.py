@@ -15,10 +15,10 @@ def test_linkedin_callback_handles_id_token(mock_post, app, test_client):
     }
 
     with app.app_context():
-        # Seed a user with github_id='123456789' so the callback can match it
+        # Seed a user with SECRET_GITHUB_id='123456789' so the callback can match it
         user = User(
-            github_id="123456789",
-            github_username="testuser",
+            SECRET_GITHUB_id="123456789",
+            SECRET_GITHUB_username="testuser",
             SECRET_GITHUB_TOKEN="fake-token",
             linkedin_token=None,
             linkedin_id=None,
@@ -45,6 +45,6 @@ def test_linkedin_callback_handles_id_token(mock_post, app, test_client):
     )
 
     with app.app_context():
-        updated_user = User.query.filter_by(github_id="123456789").first()
+        updated_user = User.query.filter_by(SECRET_GITHUB_id="123456789").first()
         assert updated_user.linkedin_token == "mock_access_token"
         assert updated_user.linkedin_id == "mock_linkedin_user_id"

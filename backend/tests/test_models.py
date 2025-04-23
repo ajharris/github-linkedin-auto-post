@@ -41,7 +41,7 @@ def session(app):
 def test_create_user(session):
     """Test creating a user"""
     user = User(
-        github_id="123456",
+        SECRET_GITHUB_id="123456",
         linkedin_id="654321",
         SECRET_GITHUB_TOKEN="gh_token",
         linkedin_token="li_token",
@@ -49,14 +49,14 @@ def test_create_user(session):
     session.add(user)
     session.commit()
 
-    fetched_user = User.query.filter_by(github_id="123456").first()
+    fetched_user = User.query.filter_by(SECRET_GITHUB_id="123456").first()
     assert fetched_user is not None
     assert fetched_user.linkedin_id == "654321"
 
 
-def test_create_github_event(session):
+def test_create_SECRET_GITHUB_event(session):
     """Test creating a GitHub event"""
-    user = User(github_id="123456", SECRET_GITHUB_TOKEN="gh_token")
+    user = User(SECRET_GITHUB_id="123456", SECRET_GITHUB_TOKEN="gh_token")
     session.add(user)
     session.commit()
 
@@ -77,9 +77,9 @@ def test_create_github_event(session):
     assert fetched_event.commit_message == "Initial commit"
 
 
-def test_github_event_creation_with_missing_fields(session):
+def test_SECRET_GITHUB_event_creation_with_missing_fields(session):
     """Test that GitHubEvent creation fails gracefully if required fields are missing."""
-    user = User(github_id="123456", SECRET_GITHUB_TOKEN="gh_token")
+    user = User(SECRET_GITHUB_id="123456", SECRET_GITHUB_TOKEN="gh_token")
     session.add(user)
     session.commit()
 

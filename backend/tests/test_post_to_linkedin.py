@@ -19,7 +19,7 @@ def test_post_to_linkedin_formats_author_correctly(
     monkeypatch, linkedin_id, expected_urn
 ):
     user = SimpleNamespace(
-        github_id="gh123", linkedin_token="fake_token", linkedin_id=linkedin_id
+        SECRET_GITHUB_id="gh123", linkedin_token="fake_token", linkedin_id=linkedin_id
     )
     webhook_payload = {
         "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
@@ -44,7 +44,7 @@ def test_post_to_linkedin_missing_env(monkeypatch):
 
     # Fake user with missing fields
     user = SimpleNamespace(
-        github_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
+        SECRET_GITHUB_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
     )
     webhook_payload = {
         "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
@@ -58,7 +58,7 @@ def test_post_to_linkedin_missing_env(monkeypatch):
 def test_post_to_linkedin_success():
     # Create a fake user with valid credentials
     user = SimpleNamespace(
-        github_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
+        SECRET_GITHUB_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
     )
     webhook_payload = {
         "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
@@ -95,7 +95,7 @@ def test_post_to_linkedin(mock_generate_post, mock_requests_post):
     mock_user = MagicMock()
     mock_user.linkedin_token = "test-token"
     mock_user.linkedin_id = "12345"
-    mock_user.github_id = "test-github-id"
+    mock_user.SECRET_GITHUB_id = "test-github-id"
 
     webhook_payload = {
         "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
@@ -144,7 +144,7 @@ def test_post_to_linkedin_duplicate_event(mock_requests_post):
     mock_user = MagicMock()
     mock_user.linkedin_token = "test-token"
     mock_user.linkedin_id = "12345"
-    mock_user.github_id = "test-github-id"
+    mock_user.SECRET_GITHUB_id = "test-github-id"
 
     webhook_payload = {
         "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
@@ -172,8 +172,8 @@ def test_send_post_to_linkedin_refreshes_token(app):
     """Test that send_post_to_linkedin refreshes the token if missing."""
     with app.app_context():
         user = User(
-            github_id="12345",
-            github_username="testuser",
+            SECRET_GITHUB_id="12345",
+            SECRET_GITHUB_username="testuser",
             SECRET_GITHUB_TOKEN="mock_SECRET_GITHUB_TOKEN",
             linkedin_token=None,  # Simulate missing token
             linkedin_id="mock_linkedin_id",
@@ -206,8 +206,8 @@ def test_send_post_to_linkedin_handles_post_errors(app):
     """Test that send_post_to_linkedin handles errors during posting."""
     with app.app_context():
         user = User(
-            github_id="12345",
-            github_username="testuser",
+            SECRET_GITHUB_id="12345",
+            SECRET_GITHUB_username="testuser",
             SECRET_GITHUB_TOKEN="mock_SECRET_GITHUB_TOKEN",
             linkedin_token="mock_token",
             linkedin_id="mock_linkedin_id",
@@ -228,8 +228,8 @@ def test_retry_logic_if_post_fails(app):
     """Test retry logic when LinkedIn post fails temporarily."""
     with app.app_context():
         user = User(
-            github_id="12345",
-            github_username="testuser",
+            SECRET_GITHUB_id="12345",
+            SECRET_GITHUB_username="testuser",
             SECRET_GITHUB_TOKEN="mock_SECRET_GITHUB_TOKEN",
             linkedin_token="mock_token",
             linkedin_id="mock_linkedin_id",

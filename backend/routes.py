@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from backend.models import db, GitHubEvent, User
 from backend.services.post_generator import generate_post_from_webhook
 from backend.services.post_to_linkedin import post_to_linkedin
-from backend.services.verify_signature import verify_github_signature
+from backend.services.verify_signature import verify_SECRET_GITHUB_signature
 import jwt  # Install with `pip install pyjwt`
 from jwt.exceptions import InvalidTokenError
 from backend.services.utils import (
@@ -60,19 +60,19 @@ def serve(path):
 def linkedin_auth():
     CLIENT_ID = current_app.config.get("LINKEDIN_CLIENT_ID", "").strip()
     REDIRECT_URI = current_app.config.get("LINKEDIN_REDIRECT_URI", "").strip()
-    github_user_id = request.args.get("github_user_id", "test")
+    SECRET_GITHUB_user_id = request.args.get("SECRET_GITHUB_user_id", "test")
     current_app.logger.info(
-        f"[LinkedIn] Received request to link LinkedIn for GitHub user ID: {github_user_id}"
+        f"[LinkedIn] Received request to link LinkedIn for GitHub user ID: {SECRET_GITHUB_user_id}"
     )
 
     try:
-        user = User.query.filter_by(github_id=github_user_id).first()
+        user = User.query.filter_by(SECRET_GITHUB_id=SECRET_GITHUB_user_id).first()
         if user:
             user.linkedin_token = None
             user.linkedin_id = None
             db.session.commit()
             current_app.logger.info(
-                f"[LinkedIn] Cleared LinkedIn token and ID for GitHub user {github_user_id}"
+                f"[LinkedIn] Cleared LinkedIn token and ID for GitHub user {SECRET_GITHUB_user_id}"
             )
 
         scope = "w_member_social"
@@ -82,7 +82,7 @@ def linkedin_auth():
             f"&client_id={CLIENT_ID}"
             f"&redirect_uri={REDIRECT_URI}"
             f"&scope={scope}"
-            f"&state={github_user_id}"
+            f"&state={SECRET_GITHUB_user_id}"
         )
         current_app.logger.info(f"[LinkedIn] Generated auth URL: {linkedin_auth_url}")
         import reprlib
@@ -90,7 +90,7 @@ def linkedin_auth():
         current_app.logger.info(f"[DEBUG] CLIENT_ID: {repr(CLIENT_ID)}")
         current_app.logger.info(f"[DEBUG] REDIRECT_URI: {repr(REDIRECT_URI)}")
         current_app.logger.info(f"[DEBUG] scope: {repr(scope)}")
-        current_app.logger.info(f"[DEBUG] github_user_id: {repr(github_user_id)}")
+        current_app.logger.info(f"[DEBUG] SECRET_GITHUB_user_id: {repr(SECRET_GITHUB_user_id)}")
         current_app.logger.info(f"[DEBUG] Full LinkedIn URL: {repr(linkedin_auth_url)}")
 
         return redirect(linkedin_auth_url)
@@ -165,7 +165,7 @@ def linkedin_callback():
                 "[LinkedIn Callback] ID token or profile response does not contain 'sub' or 'id'."
             )
 
-        user = User.query.filter_by(github_id=state).first()
+        user = User.query.filter_by(SECRET_GITHUB_id=state).first()
         if not user:
             current_app.logger.error(
                 f"[LinkedIn Callback] No user found for GitHub ID: {state}"
@@ -176,7 +176,7 @@ def linkedin_callback():
         user.linkedin_id = linkedin_user_id  # Use the correct value from the ID token or LinkedIn profile response
         db.session.commit()
         current_app.logger.info(
-            f"[LinkedIn Callback] Updated user: {user.github_id}, LinkedIn ID: {user.linkedin_id}"
+            f"[LinkedIn Callback] Updated user: {user.SECRET_GITHUB_id}, LinkedIn ID: {user.linkedin_id}"
         )
 
         # Return success message for tests, redirect for production
@@ -190,7 +190,7 @@ def linkedin_callback():
 
 # -------------------- GITHUB WEBHOOK HANDLING -------------------- #
 @routes.route("/webhook/github", methods=["POST"])
-def github_webhook():
+def SECRET_GITHUB_webhook():
     if not request.data:
         current_app.logger.error("[Webhook] Missing payload in request.")
         return jsonify({"error": "Missing payload"}), 400
@@ -200,7 +200,7 @@ def github_webhook():
         current_app.logger.error("[Webhook] Missing signature header.")
         return jsonify({"error": "Invalid signature"}), 403
 
-    if not verify_github_signature(request.data, signature):
+    if not verify_SECRET_GITHUB_signature(request.data, signature):
         current_app.logger.error("[Webhook] Invalid signature.")
         return jsonify({"error": "Unauthorized"}), 403
 
@@ -236,12 +236,12 @@ def github_webhook():
         current_app.logger.error("[Webhook] Missing required fields in payload.")
         return jsonify({"error": "Invalid payload"}), 400
 
-    user = User.query.filter_by(github_id=user_id).first()
+    user = User.query.filter_by(SECRET_GITHUB_id=user_id).first()
     if not user:
         current_app.logger.warning("[Webhook] No user found.")
         return jsonify({"error": "No user found"}), 400
 
-    current_app.logger.info(f"[Webhook] Found user: {user.github_id}")
+    current_app.logger.info(f"[Webhook] Found user: {user.SECRET_GITHUB_id}")
 
     # Check for redundant events (e.g., already posted commits)
     existing_event = GitHubEvent.query.filter_by(
@@ -290,16 +290,16 @@ def github_webhook():
         return jsonify({"error": "Internal server error"}), 500
 
 
-@routes.route("/api/github/<github_id>/status")
+@routes.route("/api/github/<SECRET_GITHUB_id>/status")
 @login_required
-def check_github_link_status(github_id):
+def check_SECRET_GITHUB_link_status(SECRET_GITHUB_id):
     user = request.user  # Access the authenticated user from the request context
     return (
         jsonify(
             {
                 "linked": bool(user.linkedin_id),
-                "github_id": user.github_id,
-                "github_username": user.github_username,
+                "SECRET_GITHUB_id": user.SECRET_GITHUB_id,
+                "SECRET_GITHUB_username": user.SECRET_GITHUB_username,
                 "linkedin_id": user.linkedin_id,
             }
         ),
@@ -308,7 +308,7 @@ def check_github_link_status(github_id):
 
 
 @routes.route("/auth/github/callback")
-def github_callback():
+def SECRET_GITHUB_callback():
     from urllib.parse import urlencode
 
     code = request.args.get("code")
@@ -327,8 +327,8 @@ def github_callback():
             token_url,
             headers={"Accept": "application/json"},
             data={
-                "client_id": os.getenv("GITHUB_CLIENT_ID"),
-                "client_secret": os.getenv("GITHUB_CLIENT_SECRET"),
+                "client_id": os.getenv("SECRET_GITHUB_CLIENT_ID"),
+                "client_secret": os.getenv("SECRET_GITHUB_CLIENT_SECRET"),
                 "code": code,
             },
         )
@@ -346,22 +346,22 @@ def github_callback():
         )
 
         user_data = user_res.json()
-        github_id = user_data.get("id")
-        github_username = user_data.get("login")
+        SECRET_GITHUB_id = user_data.get("id")
+        SECRET_GITHUB_username = user_data.get("login")
         name = user_data.get("name")  # Fetch name
         email = user_data.get("email")  # Fetch email
         avatar_url = user_data.get("avatar_url")  # Fetch avatar URL
 
-        if not github_id:
+        if not SECRET_GITHUB_id:
             current_app.logger.error("[GitHub] Missing GitHub ID in user response")
             return "GitHub user information is incomplete", 400
 
         # Step 3: Store or update user in DB
-        user = User.query.filter_by(github_id=str(github_id)).first()
+        user = User.query.filter_by(SECRET_GITHUB_id=str(SECRET_GITHUB_id)).first()
         if not user:
             user = User(
-                github_id=str(github_id),
-                github_username=github_username,
+                SECRET_GITHUB_id=str(SECRET_GITHUB_id),
+                SECRET_GITHUB_username=SECRET_GITHUB_username,
                 SECRET_GITHUB_TOKEN=access_token,  # Set SECRET_GITHUB_TOKEN for new users
                 name=name,
                 email=email,
@@ -369,7 +369,7 @@ def github_callback():
             )
             db.session.add(user)
         else:
-            user.github_username = github_username
+            user.SECRET_GITHUB_username = SECRET_GITHUB_username
             user.SECRET_GITHUB_TOKEN = (
                 access_token  # Update SECRET_GITHUB_TOKEN for existing users
             )
@@ -381,11 +381,11 @@ def github_callback():
 
         # Step 4: Set a secure cookie with the GitHub user ID
         response = redirect(
-            f"/?github_user_id={github_id}"
-        )  # Include github_user_id in the redirect URL
+            f"/?SECRET_GITHUB_user_id={SECRET_GITHUB_id}"
+        )  # Include SECRET_GITHUB_user_id in the redirect URL
         response.set_cookie(
-            "github_user_id",
-            str(github_id),
+            "SECRET_GITHUB_user_id",
+            str(SECRET_GITHUB_id),
             httponly=True,  # Prevent JavaScript access
             secure=True,  # Ensure the cookie is sent over HTTPS
             samesite="Strict",  # Prevent cross-site request forgery
@@ -407,9 +407,9 @@ def list_routes():
     return jsonify(sorted(output))
 
 
-@routes.route("/api/github/<github_id>/commits")
+@routes.route("/api/github/<SECRET_GITHUB_id>/commits")
 @login_required
-def get_commits(github_id):
+def get_commits(SECRET_GITHUB_id):
     user = request.user  # Access the authenticated user from the request context
     events = GitHubEvent.query.filter_by(user_id=user.id).all()
     commits = [
@@ -426,23 +426,23 @@ def get_commits(github_id):
 
 
 @routes.route("/auth/github")
-def github_login():
-    client_id = os.getenv("GITHUB_CLIENT_ID")
+def SECRET_GITHUB_login():
+    client_id = os.getenv("SECRET_GITHUB_CLIENT_ID")
     redirect_uri = url_for(
-        "routes.github_callback", _external=True
+        "routes.SECRET_GITHUB_callback", _external=True
     )  # Include the blueprint name
-    github_oauth_url = (
+    SECRET_GITHUB_oauth_url = (
         f"https://github.com/login/oauth/authorize?"
         f"client_id={client_id}&redirect_uri={redirect_uri}&scope=repo"
     )
-    return redirect(github_oauth_url)
+    return redirect(SECRET_GITHUB_oauth_url)
 
 
-@routes.route("/api/github/<github_id>/link_linkedin", methods=["POST"])
+@routes.route("/api/github/<SECRET_GITHUB_id>/link_linkedin", methods=["POST"])
 @login_required
-def link_linkedin_account(github_id):
+def link_linkedin_account(SECRET_GITHUB_id):
     user = request.user  # Access the authenticated user from the request context
-    if not user or user.github_id != github_id:
+    if not user or user.SECRET_GITHUB_id != SECRET_GITHUB_id:
         return jsonify({"error": "Unauthorized or invalid user"}), 403
 
     linkedin_token = request.json.get("linkedin_token")
@@ -467,10 +467,10 @@ def link_linkedin_account(github_id):
 @login_required
 def get_user_profile():
     current_app.logger.info("[Get User Profile] Starting user profile retrieval.")
-    github_user_id = request.cookies.get("github_user_id") or session.get(
-        "github_user_id"
+    SECRET_GITHUB_user_id = request.cookies.get("SECRET_GITHUB_user_id") or session.get(
+        "SECRET_GITHUB_user_id"
     )
-    if not github_user_id:
+    if not SECRET_GITHUB_user_id:
         current_app.logger.error(
             "[Get User Profile] GitHub user ID not found in cookies or session."
         )
@@ -481,15 +481,15 @@ def get_user_profile():
             )  # Return 200 in test mode
         return jsonify({"error": "GitHub user ID not found"}), 401
 
-    user = User.query.filter_by(github_id=github_user_id).first()
+    user = User.query.filter_by(SECRET_GITHUB_id=SECRET_GITHUB_user_id).first()
     if not user:
         current_app.logger.error(
-            f"[Get User Profile] No user found for GitHub ID: {github_user_id}"
+            f"[Get User Profile] No user found for GitHub ID: {SECRET_GITHUB_user_id}"
         )
         return jsonify({"error": "User not found"}), 404
 
     current_app.logger.info(
-        f"[Get User Profile] Retrieved user: {user.github_id}, LinkedIn ID: {user.linkedin_id}"
+        f"[Get User Profile] Retrieved user: {user.SECRET_GITHUB_id}, LinkedIn ID: {user.linkedin_id}"
     )
     return (
         jsonify(
@@ -497,8 +497,8 @@ def get_user_profile():
                 "linkedin_connected": bool(
                     user.linkedin_token and user.linkedin_id
                 ),  # Ensure this key is included in the response
-                "github_id": user.github_id,
-                "github_username": user.github_username,
+                "SECRET_GITHUB_id": user.SECRET_GITHUB_id,
+                "SECRET_GITHUB_username": user.SECRET_GITHUB_username,
                 "linkedin_id": user.linkedin_id,
                 "linkedin_linked": bool(
                     user.linkedin_token and user.linkedin_id

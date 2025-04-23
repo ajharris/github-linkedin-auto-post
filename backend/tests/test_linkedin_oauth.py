@@ -11,10 +11,10 @@ def db_session():
 
 
 @pytest.fixture
-def github_user(db_session):
+def SECRET_GITHUB_user(db_session):
     user = User(
-        github_id="12345",
-        github_username="testuser",
+        SECRET_GITHUB_id="12345",
+        SECRET_GITHUB_username="testuser",
         SECRET_GITHUB_TOKEN="mock_SECRET_GITHUB_TOKEN",  # Added a valid value for SECRET_GITHUB_TOKEN
     )
     db.session.add(user)
@@ -37,7 +37,7 @@ def test_linkedin_auth_redirect(client):
 @patch("backend.services.linkedin_oauth.requests.post")
 @patch("backend.services.linkedin_oauth.requests.get")
 def test_linkedin_callback_stores_token_and_urn(
-    mock_get, mock_post, client, db_session, github_user
+    mock_get, mock_post, client, db_session, SECRET_GITHUB_user
 ):
     # Token exchange mock
     mock_post.return_value.status_code = 200
@@ -53,39 +53,39 @@ def test_linkedin_callback_stores_token_and_urn(
     }
 
     with client.session_transaction() as session:
-        session["github_user_id"] = github_user.github_id  # Use valid GitHub user ID
+        session["SECRET_GITHUB_user_id"] = SECRET_GITHUB_user.SECRET_GITHUB_id  # Use valid GitHub user ID
 
     response = client.get(
-        f"/auth/linkedin/callback?code=fake_code&state={github_user.github_id}"
+        f"/auth/linkedin/callback?code=fake_code&state={SECRET_GITHUB_user.SECRET_GITHUB_id}"
     )
     assert response.status_code == 200  # Updated to expect 200 status code in test mode
     assert "✅ LinkedIn Access Token and ID stored successfully" in response.get_data(
         as_text=True
     )
 
-    updated_user = db.session.get(User, github_user.id)
+    updated_user = db.session.get(User, SECRET_GITHUB_user.id)
     assert updated_user.linkedin_token == "mock_access_token"
     assert updated_user.linkedin_id == "abcd1234"
 
 
-def test_user_model_has_linkedin_fields(github_user):
-    assert hasattr(github_user, "linkedin_token")  # Updated to match the model
-    assert hasattr(github_user, "linkedin_id")  # Updated to match the model
+def test_user_model_has_linkedin_fields(SECRET_GITHUB_user):
+    assert hasattr(SECRET_GITHUB_user, "linkedin_token")  # Updated to match the model
+    assert hasattr(SECRET_GITHUB_user, "linkedin_id")  # Updated to match the model
 
 
-def test_linkedin_status_endpoint(client, github_user, db_session):
-    github_user.linkedin_token = "token123"
-    github_user.linkedin_id = "urn:li:person:abcd"
+def test_linkedin_status_endpoint(client, SECRET_GITHUB_user, db_session):
+    SECRET_GITHUB_user.linkedin_token = "token123"
+    SECRET_GITHUB_user.linkedin_id = "urn:li:person:abcd"
     db_session.commit()
 
     with client.session_transaction() as session:
-        session["github_user_id"] = (
-            github_user.github_id
+        session["SECRET_GITHUB_user_id"] = (
+            SECRET_GITHUB_user.SECRET_GITHUB_id
         )  # Set correct GitHub user ID in session
 
-    # Set the github_user_id in cookies for the test
+    # Set the SECRET_GITHUB_user_id in cookies for the test
     client.set_cookie(
-        "github_user_id", github_user.github_id
+        "SECRET_GITHUB_user_id", SECRET_GITHUB_user.SECRET_GITHUB_id
     )  # Corrected `set_cookie` usage
 
     res = client.get("/api/get_user_profile")

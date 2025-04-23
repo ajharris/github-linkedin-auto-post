@@ -22,12 +22,12 @@ def upgrade():
     op.create_table(
         "user",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("github_id", sa.String(), nullable=False),
+        sa.Column("SECRET_GITHUB_id", sa.String(), nullable=False),
         sa.Column("linkedin_id", sa.String(), nullable=True),
         sa.Column("SECRET_GITHUB_TOKEN", sa.String(), nullable=False),
         sa.Column("linkedin_token", sa.String(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("github_id"),
+        sa.UniqueConstraint("SECRET_GITHUB_id"),
         sa.UniqueConstraint("linkedin_id"),
     )
     op.create_table(

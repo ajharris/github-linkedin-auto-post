@@ -19,7 +19,7 @@ def test_linkedin_env_vars_set():
 
 def test_post_to_linkedin_success():
     user = SimpleNamespace(
-        github_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
+        SECRET_GITHUB_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
     )
     webhook_payload = {
         "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
@@ -34,7 +34,7 @@ def test_post_to_linkedin_success():
 
 def test_post_to_linkedin_auth_failure():
     user = SimpleNamespace(
-        github_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
+        SECRET_GITHUB_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
     )
     webhook_payload = {
         "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
@@ -50,7 +50,7 @@ def test_post_to_linkedin_auth_failure():
 
 def test_post_to_linkedin_server_error():
     user = SimpleNamespace(
-        github_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
+        SECRET_GITHUB_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
     )
     webhook_payload = {
         "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
@@ -66,7 +66,7 @@ def test_post_to_linkedin_server_error():
 
 def test_post_payload_format():
     user = SimpleNamespace(
-        github_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
+        SECRET_GITHUB_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
     )
     repo = "test-repo"
     message = "Initial commit"

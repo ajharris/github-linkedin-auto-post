@@ -67,7 +67,7 @@ def test_linkedin_callback_success(mock_post, mock_get, client):
 
     # Add fake GitHub user so the callback logic finds them
     with client.application.app_context():
-        user = User(github_id="test", SECRET_GITHUB_TOKEN="fake-token")
+        user = User(SECRET_GITHUB_id="test", SECRET_GITHUB_TOKEN="fake-token")
         db.session.add(user)
         db.session.commit()
 
@@ -85,7 +85,7 @@ def test_linkedin_callback_no_code(client):
     assert "Authorization failed" in response.get_data(as_text=True)
 
 
-def test_github_webhook_no_signature(client):
+def test_SECRET_GITHUB_webhook_no_signature(client):
     """Test GitHub webhook request with missing signature."""
     response = client.post(
         "/webhook/github",
@@ -100,14 +100,14 @@ def test_github_webhook_no_signature(client):
     "backend.routes.post_to_linkedin",
     return_value=MagicMock(status_code=201, json=lambda: {"id": "test-post-id"}),
 )
-@patch("backend.routes.verify_github_signature", return_value=True)
-def test_github_webhook(mock_verify, mock_post, client):
+@patch("backend.routes.verify_SECRET_GITHUB_signature", return_value=True)
+def test_SECRET_GITHUB_webhook(mock_verify, mock_post, client):
     """Test webhook processing a valid push event"""
 
     # Add test user to DB
     with client.application.app_context():
         user = User(
-            github_id="ajharris",
+            SECRET_GITHUB_id="ajharris",
             SECRET_GITHUB_TOKEN="gh_token",
             linkedin_token="li_token",
         )
@@ -160,34 +160,34 @@ def client():
         db.drop_all()
 
 
-def test_github_status_returns_user_info(client):
-    """Test the /api/github/<github_id>/status route."""
+def test_SECRET_GITHUB_status_returns_user_info(client):
+    """Test the /api/github/<SECRET_GITHUB_id>/status route."""
     # Create a mock user with GitHub details
     with client.application.app_context():
         user = User(
-            github_id="123456",
-            github_username="octocat",
+            SECRET_GITHUB_id="123456",
+            SECRET_GITHUB_username="octocat",
             SECRET_GITHUB_TOKEN="fake-token",
         )
         db.session.add(user)
         db.session.commit()
 
-    # Include the github_user_id cookie in the request
-    client.set_cookie("github_user_id", "123456")
+    # Include the SECRET_GITHUB_user_id cookie in the request
+    client.set_cookie("SECRET_GITHUB_user_id", "123456")
     response = client.get("/api/github/123456/status")
 
     assert response.status_code == 200
     assert response.get_json() == {
         "linked": False,
-        "github_id": "123456",
-        "github_username": "octocat",
+        "SECRET_GITHUB_id": "123456",
+        "SECRET_GITHUB_username": "octocat",
         "linkedin_id": None,
     }
 
 
 @patch("requests.post")
 @patch("requests.get")
-def test_github_login_redirect(mock_get, mock_post, client):
+def test_SECRET_GITHUB_login_redirect(mock_get, mock_post, client):
     """Test that the GitHub login route redirects to GitHub's OAuth URL."""
     response = client.get("/auth/github")
     assert response.status_code == 302
@@ -199,7 +199,7 @@ def test_github_login_redirect(mock_get, mock_post, client):
 
 @patch("requests.post")
 @patch("requests.get")
-def test_github_callback_valid_code(mock_get, mock_post, client, app):
+def test_SECRET_GITHUB_callback_valid_code(mock_get, mock_post, client, app):
     """Test that the GitHub callback route handles a valid code."""
     # Mock token exchange response
     mock_post.return_value.status_code = 200
@@ -217,18 +217,18 @@ def test_github_callback_valid_code(mock_get, mock_post, client, app):
 
     response = client.get("/auth/github/callback?code=valid_code")
     assert response.status_code == 302
-    assert "github_user_id=12345" in response.location
+    assert "SECRET_GITHUB_user_id=12345" in response.location
 
     # Verify user is stored in the database
     with app.app_context():
-        user = User.query.filter_by(github_id="12345").first()
+        user = User.query.filter_by(SECRET_GITHUB_id="12345").first()
         assert user is not None
-        assert user.github_username == "testuser"
+        assert user.SECRET_GITHUB_username == "testuser"
         assert user.SECRET_GITHUB_TOKEN == "mocked_token"
 
 
 @patch("requests.post")
-def test_github_callback_invalid_code(mock_post, client):
+def test_SECRET_GITHUB_callback_invalid_code(mock_post, client):
     """Test that the GitHub callback route handles an invalid code."""
     # Mock token exchange failure
     mock_post.return_value.status_code = 400
@@ -241,7 +241,7 @@ def test_github_callback_invalid_code(mock_post, client):
 
 @patch("requests.post")
 @patch("requests.get")
-def test_github_callback_duplicate_user(mock_get, mock_post, client, app):
+def test_SECRET_GITHUB_callback_duplicate_user(mock_get, mock_post, client, app):
     """Test that the GitHub callback route handles duplicate users."""
     # Mock token exchange response
     mock_post.return_value.status_code = 200
@@ -260,8 +260,8 @@ def test_github_callback_duplicate_user(mock_get, mock_post, client, app):
     # Add a user with the same GitHub ID to the database
     with app.app_context():
         user = User(
-            github_id="12345",
-            github_username="existinguser",
+            SECRET_GITHUB_id="12345",
+            SECRET_GITHUB_username="existinguser",
             SECRET_GITHUB_TOKEN="existing_token",
         )
         db.session.add(user)
@@ -269,13 +269,13 @@ def test_github_callback_duplicate_user(mock_get, mock_post, client, app):
 
     response = client.get("/auth/github/callback?code=valid_code")
     assert response.status_code == 302
-    assert "github_user_id=12345" in response.location
+    assert "SECRET_GITHUB_user_id=12345" in response.location
 
     # Verify that the existing user was updated
     with app.app_context():
-        user = User.query.filter_by(github_id="12345").first()
+        user = User.query.filter_by(SECRET_GITHUB_id="12345").first()
         assert user is not None
-        assert user.github_username == "testuser"
+        assert user.SECRET_GITHUB_username == "testuser"
         assert user.SECRET_GITHUB_TOKEN == "mocked_token"
         assert user.name == "Test User"
         assert user.email == "testuser@example.com"
@@ -300,7 +300,7 @@ def test_link_linkedin_account(mock_link, client):
     mock_link.return_value = "mock_access_token"
 
     # Simulate calling the function
-    access_token = mock_link("test_github_user_id", "valid_code")
+    access_token = mock_link("test_SECRET_GITHUB_user_id", "valid_code")
 
     assert access_token == "mock_access_token"
-    mock_link.assert_called_once_with("test_github_user_id", "valid_code")
+    mock_link.assert_called_once_with("test_SECRET_GITHUB_user_id", "valid_code")

@@ -25,21 +25,21 @@ def test_client():
 
 def test_linkedin_auth_redirect(test_client):
     user = User(
-        github_id="123",
+        SECRET_GITHUB_id="123",
         SECRET_GITHUB_TOKEN="test-token",
-        github_username="octocat",
+        SECRET_GITHUB_username="octocat",
         linkedin_token="old-token",
         linkedin_id="old-id",
     )
     db.session.add(user)
     db.session.commit()
 
-    response = test_client.get("/auth/linkedin?github_user_id=123")
+    response = test_client.get("/auth/linkedin?SECRET_GITHUB_user_id=123")
     assert response.status_code == 302  # redirect
     assert "linkedin.com/oauth/v2/authorization" in response.location
 
     # Make sure LinkedIn info is cleared
-    updated = User.query.filter_by(github_id="123").first()
+    updated = User.query.filter_by(SECRET_GITHUB_id="123").first()
     assert updated.linkedin_token is None
     assert updated.linkedin_id is None
 
@@ -62,7 +62,7 @@ def test_linkedin_callback_success(test_client, requests_mock):
 
     # Set up user in database
     user = User(
-        github_id="123", SECRET_GITHUB_TOKEN="test-token", github_username="octocat"
+        SECRET_GITHUB_id="123", SECRET_GITHUB_TOKEN="test-token", SECRET_GITHUB_username="octocat"
     )
     db.session.add(user)
     db.session.commit()
@@ -71,7 +71,7 @@ def test_linkedin_callback_success(test_client, requests_mock):
     assert response.status_code == 200
     assert "LinkedIn Access Token and ID stored" in response.get_data(as_text=True)
 
-    updated = User.query.filter_by(github_id="123").first()
+    updated = User.query.filter_by(SECRET_GITHUB_id="123").first()
     assert updated.linkedin_token == "test-access-token"
     assert updated.linkedin_id == "linkedin-user-12345"
 

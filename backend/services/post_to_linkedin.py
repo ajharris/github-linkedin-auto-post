@@ -24,7 +24,7 @@ def post_to_linkedin(user, repo_name, commit_message, webhook_payload):
             response._content = b"User not found"
             return response
         current_app.logger.warning(
-            f"[Webhook] Fallback user: {getattr(user, 'github_id', 'None')}"
+            f"[Webhook] Fallback user: {getattr(user, 'SECRET_GITHUB_id', 'None')}"
         )
 
     access_token = user.linkedin_token

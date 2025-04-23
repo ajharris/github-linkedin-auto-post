@@ -20,7 +20,7 @@ def verify_env_vars():
         "LINKEDIN_CLIENT_SECRET",
         "DATABASE_URL",
         "GITHUB_TOKEN",
-        "GITHUB_SECRET",
+        "SECRET_GITHUB_SECRET",
         "SEED_GITHUB_ID",
         "SEED_GITHUB_USERNAME",
         "SEED_GITHUB_TOKEN",

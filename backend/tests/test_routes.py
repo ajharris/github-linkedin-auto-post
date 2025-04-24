@@ -304,3 +304,46 @@ def test_link_linkedin_account(mock_link, client):
 
     assert access_token == "mock_access_token"
     mock_link.assert_called_once_with("testGITHUB_user_id", "valid_code")
+
+
+def test_preview_linkedin_post_single_commit(client):
+    payload = {
+        "commits": [
+            {
+                "message": "Initial commit",
+                "url": "https://github.com/example/repo/commit/abc123",
+                "author": {"name": "John Doe"}
+            }
+        ],
+        "repository": {"name": "example-repo", "url": "https://github.com/example/repo"}
+    }
+    response = client.post("/api/preview_linkedin_post", json=payload)
+    assert response.status_code == 200
+    assert "Initial commit" in response.json["preview"]
+
+def test_preview_linkedin_post_multiple_commits(client):
+    payload = {
+        "commits": [
+            {
+                "message": "Fix bug",
+                "url": "https://github.com/example/repo/commit/def456",
+                "author": {"name": "Jane Smith"}
+            },
+            {
+                "message": "Add feature",
+                "url": "https://github.com/example/repo/commit/ghi789",
+                "author": {"name": "John Doe"}
+            }
+        ],
+        "repository": {"name": "example-repo", "url": "https://github.com/example/repo"}
+    }
+    response = client.post("/api/preview_linkedin_post", json=payload)
+    assert response.status_code == 200
+    assert "Fix bug" in response.json["preview"]
+    assert "Add feature" in response.json["preview"]
+
+def test_preview_linkedin_post_invalid_payload(client):
+    payload = {}
+    response = client.post("/api/preview_linkedin_post", json=payload)
+    assert response.status_code == 400
+    assert "error" in response.json

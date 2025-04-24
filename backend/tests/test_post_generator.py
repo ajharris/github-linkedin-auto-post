@@ -1,114 +1,120 @@
 # tests/test_post_generator.py
 
 import pytest
-from backend.services.post_generator import generate_post_from_webhook
+from backend.services.post_generator import generate_preview_post, generate_digest_post
 
 
-def test_generate_post_from_webhook():
-    payload = {
-        "repository": {
-            "name": "awesome-project",
-            "full_name": "user/awesome-project",
-            "html_url": "https://github.com/yourusername/awesome-project",
-        },
-        "head_commit": {
-            "message": "Add feature to auto-generate LinkedIn posts",
-            "timestamp": "2025-03-21T12:00:00Z",
-            "author": {"name": "Your Name"},
-        },
+def test_generate_preview_post_single_commit():
+    data = {
+        "commits": [
+            {
+                "message": "Initial commit",
+                "url": "https://github.com/example/repo/commit/abc123",
+                "author": {"name": "John Doe"}
+            }
+        ],
+        "repository": {"name": "example-repo", "url": "https://github.com/example/repo"}
     }
-
-    post = generate_post_from_webhook(payload)
-    assert "awesome-project" in post
-    assert "Add feature to auto-generate LinkedIn posts" in post
-    assert "Your Name" in post
-    assert "#buildinpublic" in post
-    assert "https://github.com/yourusername/awesome-project" in post
+    result = generate_preview_post(data)
+    assert "Initial commit" in result
+    assert "John Doe" in result
+    assert "https://github.com/example/repo/commit/abc123" in result
+    assert "example-repo" in result
 
 
-def test_generate_post_with_no_head_commit():
-    payload = {
-        "repository": {
-            "name": "cool-repo",
-            "full_name": "user/cool-repo",
-            "html_url": "https://github.com/user/cool-repo",
-        }
+def test_generate_preview_post_multiple_commits():
+    data = {
+        "commits": [
+            {
+                "message": "Fix bug",
+                "url": "https://github.com/example/repo/commit/def456",
+                "author": {"name": "Jane Smith"}
+            },
+            {
+                "message": "Add feature",
+                "url": "https://github.com/example/repo/commit/ghi789",
+                "author": {"name": "John Doe"}
+            }
+        ],
+        "repository": {"name": "example-repo", "url": "https://github.com/example/repo"}
     }
-
-    post = generate_post_from_webhook(payload)
-    assert "cool-repo" in post
-    assert "made an update" in post
-    assert "Someone" in post  # default author fallback
-
-
-def test_generate_post_with_minimal_payload():
-    payload = {}
-
-    post = generate_post_from_webhook(payload)
-    assert isinstance(post, str)
-    assert "a GitHub repo" in post
-    assert "made an update" in post
-
-    # Extract the URL from the post string
-    url_start = post.find("https://")
-    url_end = post.find(" ", url_start)
-    url = post[url_start:url_end] if url_end != -1 else post[url_start:]
-
-    from urllib.parse import urlparse
-
-    parsed_url = urlparse(url)
-    assert parsed_url.scheme in ["http", "https"]
-    assert parsed_url.netloc == "github.com"
+    result = generate_preview_post(data)
+    assert "Fix bug" in result
+    assert "Add feature" in result
+    assert "Jane Smith" in result
+    assert "John Doe" in result
+    assert "https://github.com/example/repo/commit/def456" in result
+    assert "https://github.com/example/repo/commit/ghi789" in result
+    assert "example-repo" in result
 
 
-def test_generate_post_with_partial_commit():
-    payload = {
-        "repository": {
-            "name": "example-repo",
-            "full_name": "example/example-repo",
-            "html_url": "https://github.com/example/example-repo",
-        },
-        "head_commit": {
-            "message": "Added support for LinkedIn posting",
-            "author": {"name": "Alice"},
-        },
+def test_generate_preview_post_digest():
+    data = {
+        "commits": [
+            {
+                "message": "Fix bug",
+                "url": "https://github.com/example/repo1/commit/def456",
+                "author": {"name": "Jane Smith"}
+            },
+            {
+                "message": "Add feature",
+                "url": "https://github.com/example/repo2/commit/ghi789",
+                "author": {"name": "John Doe"}
+            }
+        ],
+        "repository": {"name": "example-repo", "url": "https://github.com/example/repo"}
     }
-
-    post = generate_post_from_webhook(payload)
-    assert "example-repo" in post
-    assert "Added support for LinkedIn posting" in post
-    assert "Alice" in post
-    assert "https://github.com/example/example-repo" in post
-    assert "#buildinpublic" in post
-
-
-def test_generate_post_missing_author():
-    payload = {
-        "repository": {
-            "name": "data-utils",
-            "full_name": "org/data-utils",
-            "html_url": "https://github.com/org/data-utils",
-        },
-        "head_commit": {"message": "Improve CSV export"},
-    }
-
-    post = generate_post_from_webhook(payload)
-    assert "Someone" in post
-    assert "Improve CSV export" in post
-    assert "data-utils" in post
+    result = generate_preview_post(data)
+    assert "Digest" in result
+    assert "Fix bug" in result
+    assert "Add feature" in result
+    assert "Jane Smith" in result
+    assert "John Doe" in result
+    assert "https://github.com/example/repo1/commit/def456" in result
+    assert "https://github.com/example/repo2/commit/ghi789" in result
 
 
-def test_generate_post_when_head_commit_is_missing():
-    payload = {
-        "repository": {
-            "name": "my-repo",
-            "full_name": "my-org/my-repo",
-            "html_url": "https://github.com/my-org/my-repo",
-        }
-        # head_commit is omitted entirely
-    }
+def test_generate_digest_post_group_by_repo():
+    commits = [
+        {"message": "Fix bug", "repository": {"name": "repo1"}, "timestamp": "2025-04-24T12:00:00Z"},
+        {"message": "Add feature", "repository": {"name": "repo1"}, "timestamp": "2025-04-24T13:00:00Z"},
+        {"message": "Refactor code", "repository": {"name": "repo2"}, "timestamp": "2025-04-24T14:00:00Z"},
+    ]
 
-    post = generate_post_from_webhook(payload)
-    assert "my-repo" in post
-    assert "made an update" in post
-    assert "Someone" in post
+    result = generate_digest_post(commits)
+
+    assert "repo1" in result
+    assert "repo2" in result
+    assert len(result["repo1"]["commits"]) == 2
+    assert len(result["repo2"]["commits"]) == 1
+    assert "#bugfix" in result["repo1"]["tags"]
+    assert "#refactor" in result["repo2"]["tags"]
+
+
+def test_generate_digest_post_group_by_date():
+    commits = [
+        {"message": "Fix bug", "repository": {"name": "repo1"}, "timestamp": "2025-04-24T12:00:00Z"},
+        {"message": "Add feature", "repository": {"name": "repo1"}, "timestamp": "2025-04-24T13:00:00Z"},
+        {"message": "Refactor code", "repository": {"name": "repo1"}, "timestamp": "2025-04-23T14:00:00Z"},
+    ]
+
+    result = generate_digest_post(commits, group_by_date=True)
+
+    assert ("repo1", "2025-04-24") in result
+    assert ("repo1", "2025-04-23") in result
+    assert len(result[("repo1", "2025-04-24")]["commits"]) == 2
+    assert len(result[("repo1", "2025-04-23")]["commits"]) == 1
+
+
+def test_generate_digest_post_tags():
+    commits = [
+        {"message": "Fix bug", "repository": {"name": "repo1"}},
+        {"message": "Refactor code", "repository": {"name": "repo1"}},
+        {"message": "Add tests", "repository": {"name": "repo1"}},
+    ]
+
+    result = generate_digest_post(commits)
+
+    assert "#bugfix" in result["repo1"]["tags"]
+    assert "#refactor" in result["repo1"]["tags"]
+    assert "#testing" in result["repo1"]["tags"]

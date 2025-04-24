@@ -81,10 +81,10 @@ def test_post_payload_format():
         payload = m.last_request.json()
 
         expected_text = (
-            "🚀 Test User just pushed to test-repo!\n\n"
-            '💬 Commit message: "Initial commit"\n\n'
-            "🔗 Check it out: https://github.com/test-repo\n\n"
-            "#buildinpublic #opensource"
+            "Test User just pushed to test-repo!\n\n"
+            'Commit message: "Initial commit"\n\n'
+            "Check it out: https://github.com/test-repo\n\n"
+            ""
         )
         actual_text = payload["specificContent"]["com.linkedin.ugc.ShareContent"][
             "shareCommentary"

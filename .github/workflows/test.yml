@@ -182,10 +182,26 @@ jobs:
         run: |
           pytest --maxfail=1 --disable-warnings
           # TODO: Add frontend tests when working on the frontend
-      # - name: Run frontend tests
-      #   run: |
-      #     cd frontend
-      #     npm test -- --watchAll=false
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm test -- --watchAll=false
+
+      - name: Simulate OAuth and Webhook Behavior
+        run: |
+          pytest backend/tests/test_linkedin_oauth.py backend/tests/test_webhook.py --disable-warnings
+
+      - name: Verify LinkedIn Post Payload Formatting
+        run: |
+          pytest backend/tests/test_post_generator.py backend/tests/test_post_to_linkedin.py --disable-warnings
+
+      - name: Ensure Critical Tests Pass
+        run: |
+          pytest backend/tests/test_env_config.py backend/tests/test_routes.py --disable-warnings
+
+      - name: Verify Pass/Fail Status
+        run: |
+          echo "All tests completed. Check GitHub Actions for pass/fail status."
 
       - name: Check for lint errors
         run: |

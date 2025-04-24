@@ -43,13 +43,19 @@ def linkedin_auth():
     current_app.logger.info(f"[LinkedIn] Received request to link LinkedIn for GitHub user ID: {github_user_id}")
 
     try:
+        # Validate the GitHub user ID
         user = User.query.filter_by(github_id=github_user_id).first()
-        if user:
-            user.linkedin_token = None
-            user.linkedin_id = None
-            db.session.commit()
-            current_app.logger.info(f"[LinkedIn] Cleared LinkedIn token and ID for GitHub user {github_user_id}")
+        if not user:
+            current_app.logger.warning(f"[LinkedIn] Invalid GitHub user ID: {github_user_id}")
+            return jsonify({"error": "Invalid GitHub user ID"}), 400
 
+        # Clear LinkedIn token and ID for the user
+        user.linkedin_token = None
+        user.linkedin_id = None
+        db.session.commit()
+        current_app.logger.info(f"[LinkedIn] Cleared LinkedIn token and ID for GitHub user {github_user_id}")
+
+        # Construct the LinkedIn authorization URL
         scope = "w_member_social"
         linkedin_auth_url = (
             f"https://www.linkedin.com/oauth/v2/authorization"

@@ -12,6 +12,7 @@ import logging
 
 load_dotenv()
 
+
 def create_app(config_name=None):
     """Flask application factory function."""
     config_name = config_name or os.getenv("FLASK_CONFIG", "production")
@@ -31,11 +32,15 @@ def create_app(config_name=None):
     # Validate required environment variables
     required_env_vars = ["LINKEDIN_ACCESS_TOKEN", "LINKEDIN_USER_ID"]
     missing_vars = [
-        var for var in required_env_vars
-        if not os.getenv(var) and not (var == "LINKEDIN_USER_ID" and os.getenv("SEED_LINKEDIN_ID"))
+        var
+        for var in required_env_vars
+        if not os.getenv(var)
+        and not (var == "LINKEDIN_USER_ID" and os.getenv("SEED_LINKEDIN_ID"))
     ]
     if missing_vars:
-        app.logger.error(f"[App] Missing required environment variables: {missing_vars}")
+        app.logger.error(
+            f"[App] Missing required environment variables: {missing_vars}"
+        )
         raise RuntimeError(f"Missing required environment variables: {missing_vars}")
 
     app.register_blueprint(routes)
@@ -49,15 +54,20 @@ def create_app(config_name=None):
     def serve_frontend(path):
         file_path = os.path.normpath(os.path.join(app.static_folder, path))
 
-        if file_path.startswith(app.static_folder) and os.path.exists(file_path) and os.path.isfile(file_path):
+        if (
+            file_path.startswith(app.static_folder)
+            and os.path.exists(file_path)
+            and os.path.isfile(file_path)
+        ):
             return send_from_directory(app.static_folder, path)
         else:
             return send_from_directory(app.static_folder, "index.html")
-        
+
     # 🔽 CLI command
     @app.cli.command("seed-user")
     def seed_user():
         from backend.scripts.seed_main_user import seed_main_user
+
         seed_main_user(app)
 
     return app

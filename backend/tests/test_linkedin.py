@@ -11,6 +11,7 @@ load_dotenv()
 
 LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
 
+
 def test_linkedin_env_vars_set():
     assert os.getenv("LINKEDIN_ACCESS_TOKEN"), "Missing LINKEDIN_ACCESS_TOKEN"
     assert os.getenv("LINKEDIN_USER_ID"), "Missing LINKEDIN_USER_ID"
@@ -18,13 +19,11 @@ def test_linkedin_env_vars_set():
 
 def test_post_to_linkedin_success():
     user = SimpleNamespace(
-        github_id="gh123",
-        linkedin_token="fake_token",
-        linkedin_id="123456789"
+        SECRET_GITHUB_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
     )
     webhook_payload = {
         "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
-        "head_commit": {"message": "Initial commit", "author": {"name": "Test User"}}
+        "head_commit": {"message": "Initial commit", "author": {"name": "Test User"}},
     }
 
     with requests_mock.Mocker() as m:
@@ -35,13 +34,11 @@ def test_post_to_linkedin_success():
 
 def test_post_to_linkedin_auth_failure():
     user = SimpleNamespace(
-        github_id="gh123",
-        linkedin_token="fake_token",
-        linkedin_id="123456789"
+        SECRET_GITHUB_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
     )
     webhook_payload = {
         "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
-        "head_commit": {"message": "Initial commit", "author": {"name": "Test User"}}
+        "head_commit": {"message": "Initial commit", "author": {"name": "Test User"}},
     }
     mock_response = {"message": "Invalid access token", "status": 401}
 
@@ -53,13 +50,11 @@ def test_post_to_linkedin_auth_failure():
 
 def test_post_to_linkedin_server_error():
     user = SimpleNamespace(
-        github_id="gh123",
-        linkedin_token="fake_token",
-        linkedin_id="123456789"
+        SECRET_GITHUB_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
     )
     webhook_payload = {
         "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
-        "head_commit": {"message": "Initial commit", "author": {"name": "Test User"}}
+        "head_commit": {"message": "Initial commit", "author": {"name": "Test User"}},
     }
     mock_response = {"message": "Internal Server Error"}
 
@@ -71,15 +66,13 @@ def test_post_to_linkedin_server_error():
 
 def test_post_payload_format():
     user = SimpleNamespace(
-        github_id="gh123",
-        linkedin_token="fake_token",
-        linkedin_id="123456789"
+        SECRET_GITHUB_id="gh123", linkedin_token="fake_token", linkedin_id="123456789"
     )
     repo = "test-repo"
     message = "Initial commit"
     webhook_payload = {
         "repository": {"name": "test-repo", "html_url": "https://github.com/test-repo"},
-        "head_commit": {"message": "Initial commit", "author": {"name": "Test User"}}
+        "head_commit": {"message": "Initial commit", "author": {"name": "Test User"}},
     }
 
     with requests_mock.Mocker() as m:
@@ -89,12 +82,17 @@ def test_post_payload_format():
 
         expected_text = (
             "🚀 Test User just pushed to test-repo!\n\n"
-            "💬 Commit message: \"Initial commit\"\n\n"
+            '💬 Commit message: "Initial commit"\n\n'
             "🔗 Check it out: https://github.com/test-repo\n\n"
             "#buildinpublic #opensource"
         )
-        actual_text = payload["specificContent"]["com.linkedin.ugc.ShareContent"]["shareCommentary"]["text"]
+        actual_text = payload["specificContent"]["com.linkedin.ugc.ShareContent"][
+            "shareCommentary"
+        ]["text"]
 
         assert actual_text == expected_text
-        assert payload["visibility"]["com.linkedin.ugc.MemberNetworkVisibility"] == "PUBLIC"
+        assert (
+            payload["visibility"]["com.linkedin.ugc.MemberNetworkVisibility"]
+            == "PUBLIC"
+        )
         assert payload["author"] == "urn:li:member:123456789"

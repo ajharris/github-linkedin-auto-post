@@ -1,4 +1,5 @@
 from flask import Blueprint, json, request, redirect, send_from_directory, jsonify, current_app, url_for, session  # Import session for use in the route
+from urllib.parse import urlparse
 import os
 import requests
 import logging
@@ -78,7 +79,11 @@ def linkedin_auth():
         current_app.logger.info(f"[DEBUG] Full LinkedIn URL: {repr(linkedin_auth_url)}")
 
         # Validate the constructed URL to ensure it adheres to the expected LinkedIn structure
-        if not linkedin_auth_url.startswith("https://www.linkedin.com/oauth/v2/authorization"):
+        from urllib.parse import urlparse
+        parsed_url = urlparse(linkedin_auth_url)
+        if not (parsed_url.scheme == "https" and 
+                parsed_url.netloc == "www.linkedin.com" and 
+                parsed_url.path == "/oauth/v2/authorization"):
             current_app.logger.error(f"[LinkedIn] Invalid redirect URL: {linkedin_auth_url}")
             return jsonify({"error": "Invalid redirect URL"}), 400
         return redirect(linkedin_auth_url)

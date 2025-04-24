@@ -2,11 +2,11 @@ import React from "react";
 
 function UserInfo({ userInfo }) {
   if (!userInfo) {
-    return <p>👤 Not logged in to GitHub</p>;
+    return <div data-testid="user-info"><p>👤 Not logged in to GitHub</p></div>;
   }
 
   return (
-    <div>
+    <div data-testid="user-info">
       <p>
         👤 GitHub: <strong>{userInfo.SECRET_GITHUB_username}</strong> (ID: {userInfo.SECRET_GITHUB_id})
       </p>

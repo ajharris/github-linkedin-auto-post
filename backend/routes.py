@@ -32,7 +32,7 @@ load_dotenv()
 # Runtime-safe helpers
 REDIRECT_URI = os.getenv(
     "LINKEDIN_REDIRECT_URI",
-    "https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin/callback",
+    "${os.getenv('BACKEND_URL')}/auth/linkedin/callback",
 ).strip()
 
 routes = Blueprint("routes", __name__)

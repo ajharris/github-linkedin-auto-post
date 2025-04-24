@@ -48,9 +48,15 @@ def test_generate_post_with_minimal_payload():
     assert isinstance(post, str)
     assert "a GitHub repo" in post
     assert "made an update" in post
+
+    # Extract the URL from the post string
+    url_start = post.find("https://")
+    url_end = post.find(" ", url_start)
+    url = post[url_start:url_end] if url_end != -1 else post[url_start:]
+
     from urllib.parse import urlparse
 
-    parsed_url = urlparse(post)
+    parsed_url = urlparse(url)
     assert parsed_url.scheme in ["http", "https"]
     assert parsed_url.netloc == "github.com"
 

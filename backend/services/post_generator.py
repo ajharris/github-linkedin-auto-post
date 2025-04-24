@@ -1,5 +1,6 @@
 import os
 import logging
+from urllib.parse import urlparse, urlunparse
 
 
 def generate_post_from_webhook(payload):
@@ -12,7 +13,17 @@ def generate_post_from_webhook(payload):
         message = commit.get("message", "made an update")
         commit_author = commit.get("author", {}).get("name", "Someone")
 
+        # Validate and fix URL scheme if necessary
+        parsed_url = urlparse(url)
+        if not parsed_url.scheme:
+            url = urlunparse(parsed_url._replace(scheme="https"))
+
         author = f"urn:li:member:{linkedin_user_id}"
+
+        # Ensure the URL is properly formatted before including it in the post
+        parsed_url = urlparse(url)
+        if not parsed_url.scheme or not parsed_url.netloc:
+            raise ValueError("Invalid URL format")
 
         return (
             f"🚀 {commit_author} just pushed to {repo}!\n\n"

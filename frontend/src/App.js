@@ -6,6 +6,7 @@ import PostPreview from "./components/PostPreview";
 import LoginButtons from "./components/LoginButtons";
 import Cookies from "js-cookie"; // Install with `npm install js-cookie`
 import CryptoJS from "crypto-js"; // Install with `npm install crypto-js`
+const SECRET_KEY = "your-secure-key"; // Replace with a securely managed key
 
 function App() {
   console.log("App component is mounting"); // Add this at the top of the App component
@@ -63,12 +64,22 @@ function App() {
     const id = params.get("SECRET_GITHUB_user_id");
 
     if (id) {
-      sessionStorage.setItem("SECRET_GITHUB_user_id", id);
+      const encryptedId = CryptoJS.AES.encrypt(id, "SECRET_KEY").toString();
+      sessionStorage.setItem("SECRET_GITHUB_user_id", encryptedId);
       setGithubUserId(id);
       window.history.replaceState({}, document.title, "/");
     }
 
-    const storedId = id || sessionStorage.getItem("SECRET_GITHUB_user_id");
+    const encryptedStoredId = id || sessionStorage.getItem("SECRET_GITHUB_user_id");
+    let storedId = null;
+    if (encryptedStoredId) {
+      try {
+        const bytes = CryptoJS.AES.decrypt(encryptedStoredId, "SECRET_KEY");
+        storedId = bytes.toString(CryptoJS.enc.Utf8);
+      } catch (err) {
+        console.error("Error decrypting stored ID:", err); // Debug log
+      }
+    }
     if (storedId) {
       fetch(`/api/github/${storedId}/status`)
         .then((res) => res.json())

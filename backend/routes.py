@@ -39,7 +39,10 @@ def serve(path):
 # -------------------- LINKEDIN AUTHENTICATION -------------------- #
 @routes.route("/auth/linkedin")
 def linkedin_auth():
-    github_user_id = request.args.get("github_user_id", "test")
+    github_user_id = request.args.get("github_user_id", "test").strip()
+    if not github_user_id.isalnum():
+        current_app.logger.warning(f"[LinkedIn] Invalid GitHub user ID format: {github_user_id}")
+        return jsonify({"error": "Invalid GitHub user ID format"}), 400
     current_app.logger.info(f"[LinkedIn] Received request to link LinkedIn for GitHub user ID: {github_user_id}")
 
     try:
@@ -74,6 +77,10 @@ def linkedin_auth():
         current_app.logger.info(f"[DEBUG] github_user_id: {repr(github_user_id)}")
         current_app.logger.info(f"[DEBUG] Full LinkedIn URL: {repr(linkedin_auth_url)}")
 
+        # Validate the constructed URL to ensure it adheres to the expected LinkedIn structure
+        if not linkedin_auth_url.startswith("https://www.linkedin.com/oauth/v2/authorization"):
+            current_app.logger.error(f"[LinkedIn] Invalid redirect URL: {linkedin_auth_url}")
+            return jsonify({"error": "Invalid redirect URL"}), 400
         return redirect(linkedin_auth_url)
     except Exception as e:
         current_app.logger.error(f"[LinkedIn] Error generating auth URL: {e}")

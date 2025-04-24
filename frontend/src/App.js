@@ -118,7 +118,7 @@ function App() {
     }
     setIsPosting(true);
     try {
-      await axios.post("http://localhost:5000/webhook", {
+      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/webhook`, {
         repository: { full_name: repo, owner: { id: githubUserId } },
         head_commit: { message },
         pusher: { name: githubUserId }, // fallback if needed
@@ -164,7 +164,7 @@ function App() {
     console.log("GitHub login initiated");
     sessionStorage.removeItem("SECRET_GITHUB_user_id"); // Clear cache
     const githubClientId = process.env.REACT_APPGITHUB_CLIENT_ID;
-    const redirectUri = encodeURIComponent("https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/github/callback"); // Ensure this matches GitHub app settings
+    const redirectUri = encodeURIComponent(`${process.env.REACT_APP_BACKEND_URL}/auth/github/callback`);
     const scope = "repo"; // Ensure the scope includes access to repositories
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${redirectUri}&scope=${scope}`;
     
@@ -179,7 +179,7 @@ function App() {
       return;
     }
   
-    const linkedinUrl = `https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin?SECRET_GITHUB_user_id=${githubUserId}`;
+    const linkedinUrl = `${process.env.REACT_APP_BACKEND_URL}/auth/linkedin?SECRET_GITHUB_user_id=${githubUserId}`;
     console.log("[LinkedIn] Redirecting to:", linkedinUrl); // Debug log
     window.location.href = linkedinUrl;
   };

@@ -1,9 +1,9 @@
 import React from "react";
 
-function Header() {
+function Header({ title }) {
   return (
     <header>
-      <h2>GitHub to LinkedIn Post</h2>
+      <h2>{title}</h2>
     </header>
   );
 }

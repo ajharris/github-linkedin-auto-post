@@ -12,7 +12,7 @@ export const postToLinkedIn = async (selectedCommit, repo, githubUserId, message
   }
   setIsPosting(true);
   try {
-    await axios.post("http://localhost:5000/webhook", {
+    await axios.post(`${process.env.REACT_APP_BACKEND_URL}/webhook`, {
       repository: { full_name: repo, owner: { id: githubUserId } },
       head_commit: { message },
       pusher: { name: githubUserId },
@@ -57,7 +57,7 @@ export const postSelectedCommitToLinkedIn = async (selectedCommit, githubUserId,
 export const handleGitHubLogin = () => {
   sessionStorage.removeItem("SECRET_GITHUB_user_id");
   const githubClientId = process.env.REACT_APPGITHUB_CLIENT_ID;
-  const redirectUri = encodeURIComponent("https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/github/callback");
+  const redirectUri = encodeURIComponent(`${process.env.REACT_APP_BACKEND_URL}/auth/github/callback`);
   const scope = "repo";
   const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${redirectUri}&scope=${scope}`;
   window.location.href = githubAuthUrl;
@@ -69,7 +69,7 @@ export const handleLinkedInLogin = (githubUserId) => {
     return;
   }
 
-  const linkedinUrl = `https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/linkedin?SECRET_GITHUB_user_id=${githubUserId}`;
+  const linkedinUrl = `${process.env.REACT_APP_BACKEND_URL}/auth/linkedin?SECRET_GITHUB_user_id=${githubUserId}`;
   console.log("[LinkedIn] Redirecting to:", linkedinUrl);
   window.location.href = linkedinUrl;
 };

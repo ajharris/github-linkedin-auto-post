@@ -47,23 +47,25 @@ class BaseConfig:
     SQLALCHEMY_DATABASE_URI = get_database_url()
     DEBUG = False
     TESTING = False
+    BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:5000").strip()
 
 
 class DevelopmentConfig(BaseConfig):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv("DEV_DATABASE_URL", "sqlite:///dev.db").strip()
+    BACKEND_URL = os.getenv("DEV_BACKEND_URL", "http://dev.local").strip()
 
 
 class TestingConfig(BaseConfig):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "TEST_DATABASE_URL", "sqlite:///test.db"
-    ).strip()
+    SQLALCHEMY_DATABASE_URI = os.getenv("TEST_DATABASE_URL", "sqlite:///test.db").strip()
+    BACKEND_URL = os.getenv("TEST_BACKEND_URL", "http://test.local").strip()
 
 
 class ProductionConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = get_database_url()
     DEBUG = False
+    BACKEND_URL = os.getenv("PROD_BACKEND_URL", "https://prod.local").strip()
 
 
 # Dictionary to map environment names to config classes

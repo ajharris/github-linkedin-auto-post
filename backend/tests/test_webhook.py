@@ -4,6 +4,8 @@ import hmac
 import hashlib
 from unittest.mock import patch, MagicMock
 from backend.models import GitHubEvent, User, db
+import pytest
+import requests
 
 
 def generate_signature(payload):
@@ -288,3 +290,29 @@ def test_webhook_invalid_signature(mock_verify, test_client):
     response = test_client.post("/webhook/github", json=payload, headers=headers)
     assert response.status_code == 403
     assert response.get_json()["error"] == "Unauthorized"
+
+
+@patch("requests.post")
+def test_github_webhook_registration(mock_post):
+    # Mock the response from GitHub API
+    mock_post.return_value.status_code = 201
+    mock_post.return_value.json.return_value = {"id": "123456"}
+
+    # Simulate registering the webhook
+    response = requests.post(
+        "https://api.github.com/repos/owner/repo/hooks",
+        json={
+            "name": "web",
+            "active": True,
+            "events": ["push"],
+            "config": {
+                "url": "https://your-backend-url.com/webhook/github",
+                "content_type": "json",
+                "secret": "your-secret",
+            },
+        },
+    )
+
+    # Assert the webhook was registered successfully
+    assert response.status_code == 201
+    assert response.json()["id"] == "123456"

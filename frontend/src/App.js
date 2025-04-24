@@ -5,6 +5,7 @@ import UserInfo from "./components/UserInfo";
 import PostPreview from "./components/PostPreview";
 import LoginButtons from "./components/LoginButtons";
 import Cookies from "js-cookie"; // Install with `npm install js-cookie`
+import CryptoJS from "crypto-js"; // Install with `npm install crypto-js`
 
 function App() {
   console.log("App component is mounting"); // Add this at the top of the App component

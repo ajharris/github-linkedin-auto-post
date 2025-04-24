@@ -30,7 +30,7 @@ def seed_main_user(app=None):
             user.linkedin_id = linkedin_id
             user.linkedin_token = linkedin_token
         else:
-            print(f"➕ Creating new user with SECRET_GITHUB_id={SECRET_GITHUB_id}")
+            print("➕ Creating new user.")
             user = User(
                 SECRET_GITHUB_id=SECRET_GITHUB_id,
                 SECRET_GITHUB_username=SECRET_GITHUB_username,
@@ -41,7 +41,7 @@ def seed_main_user(app=None):
             db.session.add(user)
 
         db.session.commit()
-        print(f"✅ Seeded user with SECRET_GITHUB_id={SECRET_GITHUB_id}")
+        print("✅ User seeding completed.")
 
 
 if __name__ == "__main__":

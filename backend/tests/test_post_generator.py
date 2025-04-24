@@ -51,7 +51,8 @@ def test_generate_post_with_minimal_payload():
     from urllib.parse import urlparse
 
     parsed_url = urlparse(post)
-    assert "https://github.com" in post
+    assert parsed_url.scheme in ["http", "https"]
+    assert parsed_url.netloc == "github.com"
 
 
 def test_generate_post_with_partial_commit():

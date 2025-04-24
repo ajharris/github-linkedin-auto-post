@@ -75,6 +75,7 @@ def linkedin_auth():
                 f"[LinkedIn] Cleared LinkedIn token and ID for GitHub user {SECRET_GITHUB_user_id}"
             )
 
+        # Construct the LinkedIn authorization URL
         scope = "w_member_social"
         linkedin_auth_url = (
             f"https://www.linkedin.com/oauth/v2/authorization"
@@ -95,6 +96,10 @@ def linkedin_auth():
         )
         current_app.logger.info(f"[DEBUG] Full LinkedIn URL: {repr(linkedin_auth_url)}")
 
+        # Validate the constructed URL to ensure it adheres to the expected LinkedIn structure
+        if not linkedin_auth_url.startswith("https://www.linkedin.com/oauth/v2/authorization"):
+            current_app.logger.error(f"[LinkedIn] Invalid redirect URL: {linkedin_auth_url}")
+            return jsonify({"error": "Invalid redirect URL"}), 400
         return redirect(linkedin_auth_url)
     except Exception as e:
         current_app.logger.error(f"[LinkedIn] Error generating auth URL: {e}")
@@ -111,7 +116,8 @@ def linkedin_callback():
     error = request.args.get("error")
     if error:
         current_app.logger.error(f"[LinkedIn Callback] OAuth error: {error}")
-        return f"LinkedIn OAuth error: {error}", 400
+        from flask import escape
+        return f"LinkedIn OAuth error: {escape(error)}", 400
 
     code = request.args.get("code")
     state = request.args.get("state")

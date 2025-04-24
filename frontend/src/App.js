@@ -62,12 +62,12 @@ function App() {
     const id = params.get("SECRET_GITHUB_user_id");
 
     if (id) {
-      localStorage.setItem("SECRET_GITHUB_user_id", id);
+      sessionStorage.setItem("SECRET_GITHUB_user_id", id);
       setGithubUserId(id);
       window.history.replaceState({}, document.title, "/");
     }
 
-    const storedId = id || localStorage.getItem("SECRET_GITHUB_user_id");
+    const storedId = id || sessionStorage.getItem("SECRET_GITHUB_user_id");
     if (storedId) {
       fetch(`/api/github/${storedId}/status`)
         .then((res) => res.json())
@@ -150,7 +150,7 @@ function App() {
 
   const handleGitHubLogin = () => {
     console.log("GitHub login initiated");
-    localStorage.removeItem("SECRET_GITHUB_user_id"); // Clear cache
+    sessionStorage.removeItem("SECRET_GITHUB_user_id"); // Clear cache
     const githubClientId = process.env.REACT_APPGITHUB_CLIENT_ID;
     const redirectUri = encodeURIComponent("https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/auth/github/callback"); // Ensure this matches GitHub app settings
     const scope = "repo"; // Ensure the scope includes access to repositories

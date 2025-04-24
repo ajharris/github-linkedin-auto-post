@@ -82,7 +82,8 @@ def linkedin_callback():
     error = request.args.get("error")
     if error:
         current_app.logger.error(f"[LinkedIn Callback] OAuth error: {error}")
-        return f"LinkedIn OAuth error: {error}", 400
+        from flask import escape
+        return f"LinkedIn OAuth error: {escape(error)}", 400
 
     code = request.args.get("code")
     state = request.args.get("state")

@@ -15,7 +15,7 @@ import requests
 import logging
 from dotenv import load_dotenv
 from backend.models import db, GitHubEvent, User
-from backend.services.post_generator import generate_post_from_webhook
+from backend.services.post_generator import generate_preview_post
 from backend.services.post_to_linkedin import post_to_linkedin
 from backend.services.verify_signature import verifyGITHUB_signature
 import jwt  # Install with `pip install pyjwt`
@@ -531,3 +531,16 @@ def get_user_profile():
         ),
         200,
     )
+
+
+@routes.route('/api/preview_linkedin_post', methods=['POST'])
+def preview_linkedin_post():
+    try:
+        payload = request.get_json()
+        if not payload:
+            return jsonify({"error": "Invalid payload"}), 400
+
+        preview = generate_preview_post(payload)
+        return jsonify({"preview": preview}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

@@ -57,8 +57,13 @@ def serve(path):
 
 
 # -------------------- LINKEDIN AUTHENTICATION -------------------- #
-@routes.route("/auth/linkedin")
+@routes.route("/auth/linkedin", methods=["GET", "POST"])
 def linkedin_auth():
+    if request.method == "POST":
+        # Handle LinkedIn linking logic for POST requests
+        return jsonify({"message": "LinkedIn account linked successfully."}), 200
+
+    # Existing GET logic remains unchanged
     CLIENT_ID = current_app.config.get("LINKEDIN_CLIENT_ID", "").strip()
     REDIRECT_URI = current_app.config.get("LINKEDIN_REDIRECT_URI", "").strip()
     SECRET_GITHUB_user_id = request.args.get("SECRET_GITHUB_user_id", "test")

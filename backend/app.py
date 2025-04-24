@@ -5,12 +5,8 @@ from flask import Flask, send_from_directory
 from flask_migrate import Migrate
 from backend.models import db
 from backend.routes import routes
-from backend.config import config
-from dotenv import load_dotenv
-
+from backend.config import config, LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET
 import logging
-
-load_dotenv()
 
 
 def create_app(config_name=None):

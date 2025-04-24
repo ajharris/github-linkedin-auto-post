@@ -8,8 +8,7 @@ import time
 from backend.models import User, db
 from backend.services.post_generator import generate_post_from_webhook
 from backend.services.linkedin_oauth import exchange_code_for_access_token
-
-load_dotenv()
+from backend.config import LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET
 
 LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
 

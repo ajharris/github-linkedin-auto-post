@@ -1,10 +1,16 @@
+# Centralize dotenv loading
 import os
 from dotenv import load_dotenv
-from backend.services.utils import get_database_url
+from backend.services.utils import get_database_url, get_linkedin_client_id, get_linkedin_client_secret
 
-
-# Load environment variables from a .env file if present
+# Load environment variables once
 load_dotenv()
+
+# Use utility functions to set variables
+LINKEDIN_CLIENT_ID = get_linkedin_client_id()
+LINKEDIN_CLIENT_SECRET = get_linkedin_client_secret()
+DATABASE_URL = get_database_url()
+# Add other environment variables as needed
 
 # Ensure DATABASE_URL uses the correct prefix
 uri = get_database_url()

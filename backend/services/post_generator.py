@@ -84,3 +84,50 @@ def generate_preview_post(data):
 
     preview.append(f"Repository: {repo_url}\n\n")
     return "\n".join(preview)
+
+
+def generate_digest_post(commits, group_by_date=False):
+    """
+    Generate a digest post by grouping commits by repository and optionally by date.
+
+    Args:
+        commits (list): A list of commit dictionaries.
+        group_by_date (bool): Whether to group commits by date.
+
+    Returns:
+        dict: A dictionary containing grouped and summarized commit data.
+    """
+    from collections import defaultdict
+    from datetime import datetime
+
+    grouped_commits = defaultdict(list)
+
+    for commit in commits:
+        repo_name = commit.get("repository", {}).get("name", "Unknown Repository")
+        commit_date = commit.get("timestamp", "").split("T")[0] if group_by_date else None
+        key = (repo_name, commit_date) if group_by_date else repo_name
+        grouped_commits[key].append(commit)
+
+    summary = {}
+    for key, commits in grouped_commits.items():
+        repo_name = key[0] if group_by_date else key
+        date = key[1] if group_by_date else None
+        messages = [commit.get("message", "") for commit in commits]
+        tags = []
+        for message in messages:
+            if "fix" in message.lower():
+                tags.append("#bugfix")
+            if "refactor" in message.lower():
+                tags.append("#refactor")
+            if "test" in message.lower():
+                tags.append("#testing")
+
+        summary[key] = {
+            "repo_name": repo_name,
+            "date": date,
+            "commits": commits,
+            "summary": "; ".join(messages),
+            "tags": list(set(tags)),
+        }
+
+    return summary

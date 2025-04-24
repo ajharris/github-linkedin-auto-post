@@ -2,10 +2,7 @@ import os
 import pytest
 from unittest.mock import patch
 from backend.app import create_app, db
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
+from backend.config import LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET
 
 REQUIRED_ENV_VARS = [
     "SQLALCHEMY_DATABASE_URI",

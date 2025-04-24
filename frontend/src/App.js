@@ -6,6 +6,8 @@ import PostPreview from "./components/PostPreview";
 import LoginButtons from "./components/LoginButtons";
 import Cookies from "js-cookie"; // Install with `npm install js-cookie`
 import CryptoJS from "crypto-js"; // Install with `npm install crypto-js`
+import AuthSection from "./components/AuthSection";
+import CommitActions from "./components/CommitActions";
 const SECRET_KEY = "your-secure-key"; // Replace with a securely managed key
 
 function App() {
@@ -221,19 +223,16 @@ function App() {
   }, [githubUserId, userInfo, commits]);
 
   const renderAuthSection = () => {
-    console.log("Rendering Auth Section");
     return (
-      <div>
-        <UserInfo userInfo={userInfo} />
-        <LoginButtons
-          handleGitHubLogin={handleGitHubLogin}
-          handleGitHubLogout={handleGitHubLogout}
-          isGitHubLoggedIn={!!githubUserId}
-          handleLinkedInLogin={handleLinkedInLogin}
-          handleLinkedInDisconnect={handleLinkedInDisconnect}
-          isLinkedInLinked={userInfo?.linked}
-        />
-      </div>
+      <AuthSection
+        userInfo={userInfo}
+        handleGitHubLogin={handleGitHubLogin}
+        handleGitHubLogout={handleGitHubLogout}
+        isGitHubLoggedIn={!!githubUserId}
+        handleLinkedInLogin={handleLinkedInLogin}
+        handleLinkedInDisconnect={handleLinkedInDisconnect}
+        isLinkedInLinked={userInfo?.linked}
+      />
     );
   };
 
@@ -242,11 +241,13 @@ function App() {
       <h2>GitHub to LinkedIn Post</h2>
       <PostPreview selectedCommit={selectedCommit} repo={repo} />
       <CommitList commits={commits} handleCommitSelect={handleCommitSelect} />
-      {selectedCommit && (
-        <button onClick={() => alert("Previewing LinkedIn post!")}>
-          Preview LinkedIn Post
-        </button>
-      )}
+      <CommitActions
+        selectedCommit={selectedCommit}
+        setSelectedCommit={setSelectedCommit}
+        setMessage={setMessage}
+        postToLinkedIn={postToLinkedIn}
+        postSelectedCommitToLinkedIn={postSelectedCommitToLinkedIn}
+      />
       <div>{renderAuthSection()}</div>
     </div>
   );

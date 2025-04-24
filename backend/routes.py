@@ -13,7 +13,6 @@ from urllib.parse import urlparse
 import os
 import requests
 import logging
-from dotenv import load_dotenv
 from backend.models import db, GitHubEvent, User
 from backend.services.post_generator import generate_preview_post
 from backend.services.post_to_linkedin import post_to_linkedin
@@ -25,9 +24,7 @@ from backend.services.utils import (
     get_linkedin_client_secret,
     get_linkedin_client_id,
 )  # Updated import path
-
-# Load environment variables
-load_dotenv()
+from backend.config import LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET
 
 # Runtime-safe helpers
 REDIRECT_URI = os.getenv(

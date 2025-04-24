@@ -1,15 +1,13 @@
 import os
 from dotenv import load_dotenv
+from backend.services.utils import get_database_url
 
 
 # Load environment variables from a .env file if present
 load_dotenv()
 
 # Ensure DATABASE_URL uses the correct prefix
-uri = os.getenv("DATABASE_URL", "").strip()
-if uri.startswith("postgres://"):
-    uri = uri.replace("postgres://", "postgresql://", 1)
-os.environ["DATABASE_URL"] = uri
+uri = get_database_url()
 
 REQUIRED_ENV_VARS = [
     "SECRET_GITHUB_CLIENT_ID",
@@ -46,7 +44,7 @@ class BaseConfig:
         "LINKEDIN_USER_ID", os.getenv("SEED_LINKEDIN_ID", "default_user_id")
     ).strip()
     SECRET_GITHUB_WEBHOOK_SECRET = os.getenv("SECRET_GITHUB_WEBHOOK_SECRET", "").strip()
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///app.db").strip()
+    SQLALCHEMY_DATABASE_URI = get_database_url()
     DEBUG = False
     TESTING = False
 
@@ -64,7 +62,8 @@ class TestingConfig(BaseConfig):
 
 
 class ProductionConfig(BaseConfig):
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///prod.db").strip()
+    SQLALCHEMY_DATABASE_URI = get_database_url()
+    DEBUG = False
 
 
 # Dictionary to map environment names to config classes

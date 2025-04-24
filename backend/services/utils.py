@@ -36,3 +36,9 @@ def get_linkedin_client_id():
 
 def get_linkedin_client_secret():
     return os.getenv("LINKEDIN_CLIENT_SECRET", "default_client_secret")
+
+def get_database_url():
+    uri = os.getenv("DATABASE_URL", "sqlite:///app.db").strip()
+    if uri.startswith("postgres://"):
+        uri = uri.replace("postgres://", "postgresql://", 1)
+    return uri

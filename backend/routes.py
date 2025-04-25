@@ -56,6 +56,11 @@ def serve(path):
 # -------------------- LINKEDIN AUTHENTICATION -------------------- #
 @routes.route("/auth/linkedin", methods=["GET", "POST"])
 def linkedin_auth():
+    SECRET_GITHUB_user_id = session.get("SECRET_GITHUB_user_id")  # Retrieve from session
+    if not SECRET_GITHUB_user_id:
+        current_app.logger.error("[LinkedIn] SECRET_GITHUB_user_id is not defined in session.")
+        return jsonify({"error": "Unauthorized"}), 401
+
     if request.method == "POST":
         # Handle LinkedIn linking logic for POST requests
         return jsonify({"message": "LinkedIn account linked successfully."}), 200

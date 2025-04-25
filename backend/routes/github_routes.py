@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, redirect, current_app, url_for
 from backend.models import db, User, GitHubEvent
 from backend.services.verify_signature import verifyGITHUB_signature
+from backend.services.post_to_linkedin import post_to_linkedin
 import os
 import requests
 

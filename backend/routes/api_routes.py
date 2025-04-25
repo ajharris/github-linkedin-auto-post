@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, current_app, session
 from backend.models import db, GitHubEvent, User
 from backend.services.utils import login_required
 

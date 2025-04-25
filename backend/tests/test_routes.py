@@ -11,7 +11,7 @@ from backend.app import create_app
 # Set test environment variables
 os.environ["LINKEDIN_ACCESS_TOKEN"] = "test_token"
 os.environ["LINKEDIN_USER_ID"] = "test_user_id"
-os.environ["GITHUB_SECRET"] = "t4keth1s"
+os.environ["SECRET_GITHUB_SECRET"] = "t4keth1s"
 
 
 @pytest.fixture
@@ -58,7 +58,7 @@ def test_linkedin_callback_success(mock_post, mock_get, client):
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = {
         "access_token": "test_token",
-        "id_token": "mock_id_token"
+        "id_token": "mock_id_token",
     }
 
     # Mock profile fetch
@@ -67,7 +67,7 @@ def test_linkedin_callback_success(mock_post, mock_get, client):
 
     # Add fake GitHub user so the callback logic finds them
     with client.application.app_context():
-        user = User(github_id="test", github_token="fake-token")
+        user = User(SECRET_GITHUB_id="test", SECRET_GITHUB_TOKEN="fake-token")
         db.session.add(user)
         db.session.commit()
 
@@ -85,47 +85,65 @@ def test_linkedin_callback_no_code(client):
     assert "Authorization failed" in response.get_data(as_text=True)
 
 
-def test_github_webhook_no_signature(client):
+def testGITHUB_webhook_no_signature(client):
     """Test GitHub webhook request with missing signature."""
-    response = client.post("/webhook/github", json={"test": "data"}, headers={"Content-Type": "application/json"})
+    response = client.post(
+        "/webhook/github",
+        json={"test": "data"},
+        headers={"Content-Type": "application/json"},
+    )
     assert response.status_code == 403
     assert response.get_json() == {"error": "Invalid signature"}
 
 
-@patch("backend.routes.post_to_linkedin", return_value=MagicMock(status_code=201, json=lambda: {"id": "test-post-id"}))
-@patch("backend.routes.verify_github_signature", return_value=True)
-def test_github_webhook(mock_verify, mock_post, client):
+@patch(
+    "backend.routes.post_to_linkedin",
+    return_value=MagicMock(status_code=201, json=lambda: {"id": "test-post-id"}),
+)
+@patch("backend.routes.verifyGITHUB_signature", return_value=True)
+def testGITHUB_webhook(mock_verify, mock_post, client):
     """Test webhook processing a valid push event"""
 
     # Add test user to DB
     with client.application.app_context():
-        user = User(github_id="ajharris", github_token="gh_token", linkedin_token="li_token")
+        user = User(
+            SECRET_GITHUB_id="ajharris",
+            SECRET_GITHUB_TOKEN="gh_token",
+            linkedin_token="li_token",
+        )
         db.session.add(user)
         db.session.commit()
 
     # Simulate GitHub push payload
     payload = {
         "pusher": {"name": "ajharris"},
-        "repository": {"name": "github-linkedin-auto-post", "owner": {"id": "ajharris"}},
+        "repository": {
+            "name": "github-linkedin-auto-post",
+            "owner": {"id": "ajharris"},
+        },
         "head_commit": {
             "message": "Test commit",
-            "url": "https://github.com/ajharris/test/commit/abc123"
-        }
+            "url": "https://github.com/ajharris/test/commit/abc123",
+        },
     }
 
-    secret = os.getenv("GITHUB_SECRET").encode()
+    secret = os.getenv("SECRET_GITHUB_SECRET").encode()
     body = json.dumps(payload).encode()
     signature = "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
 
     headers = {
         "X-Hub-Signature-256": signature,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-GitHub-Event": "push",  # Added missing event type header
     }
 
     response = client.post("/webhook/github", data=body, headers=headers)
 
     assert response.status_code == 200, response.data
-    assert response.get_json() == {"status": "success", "linkedin_post_id": "test-post-id"}
+    assert response.get_json() == {
+        "status": "success",
+        "linkedin_post_id": "test-post-id",
+    }
 
 
 @pytest.fixture(scope="module")
@@ -142,34 +160,34 @@ def client():
         db.drop_all()
 
 
-def test_github_status_returns_user_info(client):
-    """Test the /api/github/<github_id>/status route."""
+def testGITHUB_status_returns_user_info(client):
+    """Test the /api/github/<SECRET_GITHUB_id>/status route."""
     # Create a mock user with GitHub details
     with client.application.app_context():
         user = User(
-            github_id="123456",
-            github_username="octocat",
-            github_token="fake-token"
+            SECRET_GITHUB_id="123456",
+            SECRET_GITHUB_username="octocat",
+            SECRET_GITHUB_TOKEN="fake-token",
         )
         db.session.add(user)
         db.session.commit()
 
-    # Include the github_user_id cookie in the request
-    client.set_cookie("github_user_id", "123456")
+    # Include the SECRET_GITHUB_user_id cookie in the request
+    client.set_cookie("SECRET_GITHUB_user_id", "123456")
     response = client.get("/api/github/123456/status")
-    
+
     assert response.status_code == 200
     assert response.get_json() == {
         "linked": False,
-        "github_id": "123456",
-        "github_username": "octocat",
-        "linkedin_id": None
+        "SECRET_GITHUB_id": "123456",
+        "SECRET_GITHUB_username": "octocat",
+        "linkedin_id": None,
     }
 
 
 @patch("requests.post")
 @patch("requests.get")
-def test_github_login_redirect(mock_get, mock_post, client):
+def testGITHUB_login_redirect(mock_get, mock_post, client):
     """Test that the GitHub login route redirects to GitHub's OAuth URL."""
     response = client.get("/auth/github")
     assert response.status_code == 302
@@ -181,7 +199,7 @@ def test_github_login_redirect(mock_get, mock_post, client):
 
 @patch("requests.post")
 @patch("requests.get")
-def test_github_callback_valid_code(mock_get, mock_post, client, app):
+def testGITHUB_callback_valid_code(mock_get, mock_post, client, app):
     """Test that the GitHub callback route handles a valid code."""
     # Mock token exchange response
     mock_post.return_value.status_code = 200
@@ -199,18 +217,18 @@ def test_github_callback_valid_code(mock_get, mock_post, client, app):
 
     response = client.get("/auth/github/callback?code=valid_code")
     assert response.status_code == 302
-    assert "github_user_id=12345" in response.location
+    assert "SECRET_GITHUB_user_id=12345" in response.location
 
     # Verify user is stored in the database
     with app.app_context():
-        user = User.query.filter_by(github_id="12345").first()
+        user = User.query.filter_by(SECRET_GITHUB_id="12345").first()
         assert user is not None
-        assert user.github_username == "testuser"
-        assert user.github_token == "mocked_token"
+        assert user.SECRET_GITHUB_username == "testuser"
+        assert user.SECRET_GITHUB_TOKEN == "mocked_token"
 
 
 @patch("requests.post")
-def test_github_callback_invalid_code(mock_post, client):
+def testGITHUB_callback_invalid_code(mock_post, client):
     """Test that the GitHub callback route handles an invalid code."""
     # Mock token exchange failure
     mock_post.return_value.status_code = 400
@@ -223,7 +241,7 @@ def test_github_callback_invalid_code(mock_post, client):
 
 @patch("requests.post")
 @patch("requests.get")
-def test_github_callback_duplicate_user(mock_get, mock_post, client, app):
+def testGITHUB_callback_duplicate_user(mock_get, mock_post, client, app):
     """Test that the GitHub callback route handles duplicate users."""
     # Mock token exchange response
     mock_post.return_value.status_code = 200
@@ -241,20 +259,24 @@ def test_github_callback_duplicate_user(mock_get, mock_post, client, app):
 
     # Add a user with the same GitHub ID to the database
     with app.app_context():
-        user = User(github_id="12345", github_username="existinguser", github_token="existing_token")
+        user = User(
+            SECRET_GITHUB_id="12345",
+            SECRET_GITHUB_username="existinguser",
+            SECRET_GITHUB_TOKEN="existing_token",
+        )
         db.session.add(user)
         db.session.commit()
 
     response = client.get("/auth/github/callback?code=valid_code")
     assert response.status_code == 302
-    assert "github_user_id=12345" in response.location
+    assert "SECRET_GITHUB_user_id=12345" in response.location
 
     # Verify that the existing user was updated
     with app.app_context():
-        user = User.query.filter_by(github_id="12345").first()
+        user = User.query.filter_by(SECRET_GITHUB_id="12345").first()
         assert user is not None
-        assert user.github_username == "testuser"
-        assert user.github_token == "mocked_token"
+        assert user.SECRET_GITHUB_username == "testuser"
+        assert user.SECRET_GITHUB_TOKEN == "mocked_token"
         assert user.name == "Test User"
         assert user.email == "testuser@example.com"
         assert user.avatar_url == "https://example.com/avatar.png"
@@ -278,7 +300,50 @@ def test_link_linkedin_account(mock_link, client):
     mock_link.return_value = "mock_access_token"
 
     # Simulate calling the function
-    access_token = mock_link("test_github_user_id", "valid_code")
+    access_token = mock_link("testGITHUB_user_id", "valid_code")
 
     assert access_token == "mock_access_token"
-    mock_link.assert_called_once_with("test_github_user_id", "valid_code")
+    mock_link.assert_called_once_with("testGITHUB_user_id", "valid_code")
+
+
+def test_preview_linkedin_post_single_commit(client):
+    payload = {
+        "commits": [
+            {
+                "message": "Initial commit",
+                "url": "https://github.com/example/repo/commit/abc123",
+                "author": {"name": "John Doe"}
+            }
+        ],
+        "repository": {"name": "example-repo", "url": "https://github.com/example/repo"}
+    }
+    response = client.post("/api/preview_linkedin_post", json=payload)
+    assert response.status_code == 200
+    assert "Initial commit" in response.json["preview"]
+
+def test_preview_linkedin_post_multiple_commits(client):
+    payload = {
+        "commits": [
+            {
+                "message": "Fix bug",
+                "url": "https://github.com/example/repo/commit/def456",
+                "author": {"name": "Jane Smith"}
+            },
+            {
+                "message": "Add feature",
+                "url": "https://github.com/example/repo/commit/ghi789",
+                "author": {"name": "John Doe"}
+            }
+        ],
+        "repository": {"name": "example-repo", "url": "https://github.com/example/repo"}
+    }
+    response = client.post("/api/preview_linkedin_post", json=payload)
+    assert response.status_code == 200
+    assert "Fix bug" in response.json["preview"]
+    assert "Add feature" in response.json["preview"]
+
+def test_preview_linkedin_post_invalid_payload(client):
+    payload = {}
+    response = client.post("/api/preview_linkedin_post", json=payload)
+    assert response.status_code == 400
+    assert "error" in response.json

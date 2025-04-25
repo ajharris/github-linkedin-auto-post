@@ -1,10 +1,10 @@
 import React from "react";
 
-function Button({ name, onClick, disabled }) {
-  console.log(`Rendering Button: ${name}`); // Log the button name
+function Button({ label, onClick, disabled }) {
+  console.log(`Rendering Button: ${label}`); // Log the button label
   return (
     <button onClick={onClick} disabled={disabled}>
-      {name}
+      {label}
     </button>
   );
 }

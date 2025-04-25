@@ -14,17 +14,17 @@ function LoginButtons({
   console.log("isLinkedInLinked:", isLinkedInLinked);
 
   return (
-    <div>
+    <div data-testid="login-buttons">
       {isGitHubLoggedIn ? (
-        <Button name="Logout from GitHub" onClick={handleGitHubLogout} />
+        <Button label="Logout from GitHub" onClick={handleGitHubLogout} />
       ) : (
-        <Button name="Login with GitHub" onClick={handleGitHubLogin} />
+        <Button label="Login with GitHub" onClick={handleGitHubLogin} />
       )}
       {isLinkedInLinked ? (
-        <Button name="Disconnect LinkedIn" onClick={handleLinkedInDisconnect} />
+        <Button label="Disconnect LinkedIn" onClick={handleLinkedInDisconnect} />
       ) : (
         <Button
-          name="Link LinkedIn"
+          label="Link LinkedIn"
           onClick={handleLinkedInLogin}
           disabled={!isGitHubLoggedIn} // Disable LinkedIn button if not logged in to GitHub
         />

@@ -5,12 +5,9 @@ from flask import Flask, send_from_directory
 from flask_migrate import Migrate
 from backend.models import db
 from backend.routes import routes
-from backend.config import config
-from dotenv import load_dotenv
-
+from backend.config import config, LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET
 import logging
 
-load_dotenv()
 
 def create_app(config_name=None):
     """Flask application factory function."""
@@ -31,11 +28,15 @@ def create_app(config_name=None):
     # Validate required environment variables
     required_env_vars = ["LINKEDIN_ACCESS_TOKEN", "LINKEDIN_USER_ID"]
     missing_vars = [
-        var for var in required_env_vars
-        if not os.getenv(var) and not (var == "LINKEDIN_USER_ID" and os.getenv("SEED_LINKEDIN_ID"))
+        var
+        for var in required_env_vars
+        if not os.getenv(var)
+        and not (var == "LINKEDIN_USER_ID" and os.getenv("SEED_LINKEDIN_ID"))
     ]
     if missing_vars:
-        app.logger.error(f"[App] Missing required environment variables: {missing_vars}")
+        app.logger.error(
+            f"[App] Missing required environment variables: {missing_vars}"
+        )
         raise RuntimeError(f"Missing required environment variables: {missing_vars}")
 
     app.register_blueprint(routes)
@@ -47,17 +48,22 @@ def create_app(config_name=None):
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def serve_frontend(path):
-        file_path = os.path.join(app.static_folder, path)
+        file_path = os.path.normpath(os.path.join(app.static_folder, path))
 
-        if os.path.exists(file_path) and os.path.isfile(file_path):
+        if (
+            file_path.startswith(app.static_folder)
+            and os.path.exists(file_path)
+            and os.path.isfile(file_path)
+        ):
             return send_from_directory(app.static_folder, path)
         else:
             return send_from_directory(app.static_folder, "index.html")
-        
+
     # 🔽 CLI command
     @app.cli.command("seed-user")
     def seed_user():
         from backend.scripts.seed_main_user import seed_main_user
+
         seed_main_user(app)
 
     return app

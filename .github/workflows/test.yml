@@ -1,0 +1,232 @@
+name: CI Tests
+
+on:
+  push:
+    branches:
+      - feature/github-actions-ci-integration
+  pull_request:
+    branches:
+      - feature/github-actions-ci-integration
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres" --health-interval=10s --health-timeout=5s --health-retries=5
+
+    steps:
+      - name: Verify required secrets
+        run: |
+          for var in LINKEDIN_ACCESS_TOKEN LINKEDIN_USER_ID LINKEDIN_CLIENT_ID LINKEDIN_CLIENT_SECRET; do
+            if [ -z "${!var}" ]; then
+              echo "❌ Missing required secret: $var"
+              exit 1
+            else
+              echo "✅ $var is set"
+            fi
+          done
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Node.js dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Debug env vars
+        run: |
+          echo "LINKEDIN_CLIENT_ID=$LINKEDIN_CLIENT_ID"
+          echo "LINKEDIN_CLIENT_SECRET=$LINKEDIN_CLIENT_SECRET"
+        env:
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+
+      - name: Verify LinkedIn client secrets
+        run: |
+          test -n "$LINKEDIN_CLIENT_ID" || (echo "LINKEDIN_CLIENT_ID is missing" && exit 1)
+          test -n "$LINKEDIN_CLIENT_SECRET" || (echo "LINKEDIN_CLIENT_SECRET is missing" && exit 1)
+        env:
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+
+      - name: Fail Fast on Missing Secrets
+        run: |
+          test -n "$LINKEDIN_ACCESS_TOKEN" || (echo "LINKEDIN_ACCESS_TOKEN is missing" && exit 1)
+          test -n "$LINKEDIN_USER_ID" || (echo "LINKEDIN_USER_ID is missing" && exit 1)
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+
+      - name: Debug Environment Variables
+        run: |
+          echo "LINKEDIN_ACCESS_TOKEN is set to: ${LINKEDIN_ACCESS_TOKEN:+[REDACTED]}"
+          echo "LINKEDIN_USER_ID is set to: ${LINKEDIN_USER_ID:+[REDACTED]}"
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+
+      - name: Verify Secrets in CI/CD
+        run: |
+          echo "LINKEDIN_ACCESS_TOKEN is set to: ${LINKEDIN_ACCESS_TOKEN:+[REDACTED]}"
+          echo "LINKEDIN_USER_ID is set to: ${LINKEDIN_USER_ID:+[REDACTED]}"
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+
+      - name: Debug GitHub Environment Variables
+        run: |
+          echo "SECRET_GITHUB_SECRET is set to: ${SECRET_GITHUB_SECRET:+[REDACTED]}"
+          echo "DATABASE_URL is set to: ${DATABASE_URL:+[REDACTED]}"
+          echo "SQLALCHEMY_DATABASE_URI is set to: ${SQLALCHEMY_DATABASE_URI:+[REDACTED]}"
+          echo "SEED_GITHUB_ID is set to: ${SEED_GITHUB_ID:+[REDACTED]}"
+          echo "SEED_GITHUB_USERNAME is set to: ${SEED_GITHUB_USERNAME:+[REDACTED]}"
+          echo "SEED_GITHUB_TOKEN is set to: ${SEED_GITHUB_TOKEN:+[REDACTED]}"
+          echo "SEED_LINKEDIN_ID is set to: ${SEED_LINKEDIN_ID:+[REDACTED]}"
+          echo "SEED_LINKEDIN_TOKEN is set to: ${SEED_LINKEDIN_TOKEN:+[REDACTED]}"
+        env:
+          SECRET_GITHUB_SECRET: ${{ secrets.SECRET_GITHUB_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SQLALCHEMY_DATABASE_URI: ${{ secrets.SQLALCHEMY_DATABASE_URI }}
+          SEED_GITHUB_ID: ${{ secrets.SEED_GITHUB_ID }}
+          SEED_GITHUB_USERNAME: ${{ secrets.SEED_GITHUB_USERNAME }}
+          SEED_GITHUB_TOKEN: ${{ secrets.SEED_GITHUB_TOKEN }}
+          SEED_LINKEDIN_ID: ${{ secrets.SEED_LINKEDIN_ID }}
+          SEED_LINKEDIN_TOKEN: ${{ secrets.SEED_LINKEDIN_TOKEN }}
+
+      - name: Debug All Secrets and Environment Variables
+        run: |
+          echo "LINKEDIN_ACCESS_TOKEN is set to: ${LINKEDIN_ACCESS_TOKEN:+[REDACTED]}"
+          echo "LINKEDIN_USER_ID is set to: ${LINKEDIN_USER_ID:+[REDACTED]}"
+          echo "DATABASE_URL is set to: ${DATABASE_URL:+[REDACTED]}"
+          echo "SQLALCHEMY_DATABASE_URI is set to: ${SQLALCHEMY_DATABASE_URI:+[REDACTED]}"
+          echo "SEED_GITHUB_ID is set to: ${SEED_GITHUB_ID:+[REDACTED]}"
+          echo "SEED_GITHUB_USERNAME is set to: ${SEED_GITHUB_USERNAME:+[REDACTED]}"
+          echo "SEED_GITHUB_TOKEN is set to: ${SEED_GITHUB_TOKEN:+[REDACTED]}"
+          echo "SEED_LINKEDIN_ID is set to: ${SEED_LINKEDIN_ID:+[REDACTED]}"
+          echo "SEED_LINKEDIN_TOKEN is set to: ${SEED_LINKEDIN_TOKEN:+[REDACTED]}"
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+          SECRET_GITHUB_SECRET: ${{ secrets.SECRET_GITHUB_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SQLALCHEMY_DATABASE_URI: ${{ secrets.SQLALCHEMY_DATABASE_URI }}
+          SEED_GITHUB_ID: ${{ secrets.SEED_GITHUB_ID }}
+          SEED_GITHUB_USERNAME: ${{ secrets.SEED_GITHUB_USERNAME }}
+          SEED_GITHUB_TOKEN: ${{ secrets.SEED_GITHUB_TOKEN }}
+          SEED_LINKEDIN_ID: ${{ secrets.SEED_LINKEDIN_ID }}
+          SEED_LINKEDIN_TOKEN: ${{ secrets.SEED_LINKEDIN_TOKEN }}
+
+      - name: Debug All Secrets and Environment Variables
+        run: |
+          echo "Environment variables available in CI/CD:"
+          env | sort
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+          SQLALCHEMY_DATABASE_URI: ${{ secrets.SQLALCHEMY_DATABASE_URI }}
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SECRET_GITHUB_SECRET: ${{ secrets.SECRET_GITHUB_SECRET }}
+          SEED_GITHUB_ID: ${{ secrets.SEED_GITHUB_ID }}
+          SEED_GITHUB_USERNAME: ${{ secrets.SEED_GITHUB_USERNAME }}
+          SEED_GITHUB_TOKEN: ${{ secrets.SEED_GITHUB_TOKEN }}
+          SEED_LINKEDIN_ID: ${{ secrets.SEED_LINKEDIN_ID }}
+          SEED_LINKEDIN_TOKEN: ${{ secrets.SEED_LINKEDIN_TOKEN }}
+
+      - name: Run backend tests
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+          SQLALCHEMY_DATABASE_URI: ${{ secrets.SQLALCHEMY_DATABASE_URI }}
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SECRET_GITHUB_SECRET: ${{ secrets.SECRET_GITHUB_SECRET }}
+          SEED_GITHUB_ID: ${{ secrets.SEED_GITHUB_ID }}
+          SEED_GITHUB_USERNAME: ${{ secrets.SEED_GITHUB_USERNAME }}
+          SEED_GITHUB_TOKEN: ${{ secrets.SEED_GITHUB_TOKEN }}
+          SEED_LINKEDIN_ID: ${{ secrets.SEED_LINKEDIN_ID }}
+          SEED_LINKEDIN_TOKEN: ${{ secrets.SEED_LINKEDIN_TOKEN }}
+        run: |
+          pytest --maxfail=1 --disable-warnings
+          # TODO: Add frontend tests when working on the frontend
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm test -- --watchAll=false
+
+      - name: Simulate OAuth and Webhook Behavior
+        run: |
+          pytest backend/tests/test_linkedin_oauth.py backend/tests/test_webhook.py --disable-warnings
+
+      - name: Verify LinkedIn Post Payload Formatting
+        run: |
+          pytest backend/tests/test_post_generator.py backend/tests/test_post_to_linkedin.py --disable-warnings
+
+      - name: Ensure Critical Tests Pass
+        run: |
+          pytest backend/tests/test_env_config.py backend/tests/test_routes.py --disable-warnings
+
+      - name: Verify Pass/Fail Status
+        run: |
+          echo "All tests completed. Check GitHub Actions for pass/fail status."
+
+      - name: Check for lint errors
+        run: |
+          cd frontend
+          npm run lint
+
+      - name: Verify environment variables
+        run: |
+          python -c "import os; assert os.getenv('LINKEDIN_ACCESS_TOKEN'), 'Missing LINKEDIN_ACCESS_TOKEN'; assert os.getenv('LINKEDIN_USER_ID'), 'Missing LINKEDIN_USER_ID'"
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+
+      - name: Check Python Code Formatting
+        run: |
+          pip install black
+          black --check .
+
+      - name: Debug All Environment Variables
+        run: |
+          env | sort
+
+      - name: CI/CD Dry Run
+        run: |
+          echo "Simulating CI/CD pipeline..."
+          pytest --maxfail=1 --disable-warnings
+          echo "Linting and formatting checks passed."
+          echo "Tests passed. CI/CD simulation complete."

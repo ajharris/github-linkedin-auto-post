@@ -1,52 +1,86 @@
-# GitHub to LinkedIn Auto Poster
+# GitHub LinkedIn Auto-Post
 
-This project automates the creation and posting of LinkedIn updates based on GitHub activity. It uses a Flask backend to receive GitHub webhooks, generate post content, and publish to LinkedIn via the LinkedIn API. A React frontend allows for monitoring and potential manual post control.
+## Overview
+This project automates the process of posting updates to LinkedIn based on GitHub activity. It integrates GitHub webhooks with LinkedIn's API to create posts whenever specific events occur in a GitHub repository, such as commits or pull requests.
 
 ## Features
+- Automatically post GitHub activity to LinkedIn.
+- Secure integration using environment variables and OAuth.
+- CI/CD pipeline for automated testing and deployment.
+- Modular and extensible codebase.
 
-- **GitHub Webhook Integration**: Automatically listens for push events.
-- **Auto-Generated LinkedIn Posts**: Intelligent post creation based on commit data.
-- **LinkedIn API Integration**: Posts updates directly to your LinkedIn profile.
-- **Robust Testing**: Includes unit and integration tests for critical backend services.
-- **Frontend UI**: Built with React for future management and user controls.
+## Prerequisites
+- Python 3.9 or higher
+- Node.js 16 or higher
+- PostgreSQL database
+- LinkedIn Developer Account for API credentials
+- GitHub repository with webhook support
 
-## Environment Variables
+## Setup Instructions
 
-This app requires the following environment variables to be set in production. If any are missing, the app will fail fast to prevent misconfiguration.
-
-### Required (for production)
-
-- `GITHUB_CLIENT_ID`
-- `GITHUB_CLIENT_SECRET`
-- `LINKEDIN_CLIENT_ID`
-- `LINKEDIN_CLIENT_SECRET`
-- `LINKEDIN_ACCESS_TOKEN`
-- `LINKEDIN_USER_ID`
-- `SECRET_KEY`
-- `DATABASE_URL`
-
-### Optional (for development/testing)
-
-In development or testing, these variables are optional. You can create a `.env` file to populate them locally:
-
-#### Example `.env` file:
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/github-linkedin-auto-post.git
+cd github-linkedin-auto-post
 ```
-GITHUB_CLIENT_ID=your_github_client_id
-GITHUB_CLIENT_SECRET=your_github_client_secret
+
+### 2. Set Up Environment Variables
+Create a `.env` file in the project root with the following variables:
+```
+SQLALCHEMY_DATABASE_URI=your_database_uri
+LINKEDIN_ACCESS_TOKEN=your_linkedin_access_token
 LINKEDIN_CLIENT_ID=your_linkedin_client_id
 LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
-LINKEDIN_ACCESS_TOKEN=your_linkedin_access_token
+DATABASE_URL=your_database_url
+SECRET_GITHUB_TOKEN=yourGITHUB_token
+SECRET_GITHUB_SECRET=yourGITHUB_secret
+SEED_GITHUB_ID=your_SEED_GITHUB_id
+SEED_GITHUB_USERNAME=your_SEED_GITHUB_username
+SEED_GITHUB_TOKEN=your_SEED_GITHUB_token
+SEED_LINKEDIN_ID=your_seed_linkedin_id
+SEED_LINKEDIN_TOKEN=your_seed_linkedin_token
 LINKEDIN_USER_ID=your_linkedin_user_id
-SECRET_KEY=your_flask_secret_key
-DATABASE_URL=postgresql://localhost/your_local_db
+```
+
+### 3. Install Dependencies
+#### Backend
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+#### Frontend
+```bash
+cd frontend
+npm install
+```
+
+### 4. Run the Application
+#### Backend
+```bash
+flask run
+```
+
+#### Frontend
+```bash
+cd frontend
+npm start
+```
+
+## Testing
+Run the test suite to ensure everything is working:
+```bash
+pytest
 ```
 
 ## Deployment
+This project uses a `Procfile` for deployment to platforms like Heroku. Ensure all environment variables are set in the deployment environment.
 
-The app is hosted at:
+## Contributing
+Contributions are welcome! Please fork the repository and submit a pull request.
 
-[https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/](https://github-linkedin-auto-post-e0d1a2bbce9b.herokuapp.com/)
-
-> **Note**: The frontend is not yet complete.
+## License
+This project is licensed under the MIT License. See the LICENSE file for details.
 
 

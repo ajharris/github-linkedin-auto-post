@@ -4,7 +4,7 @@ function CommitList({ commits, handleCommitSelect }) {
   console.log("Rendering CommitList with commits:", commits);
 
   return (
-    <div>
+    <div data-testid="commit-list">
       <h3>Available Commits</h3>
       <ul>
         {commits.map((commit) => (

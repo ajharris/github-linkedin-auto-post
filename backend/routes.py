@@ -540,4 +540,5 @@ def preview_linkedin_post():
         preview = generate_preview_post(payload)
         return jsonify({"preview": preview}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.error(f"An error occurred: {e}", exc_info=True)
+        return jsonify({"error": "An internal error has occurred. Please try again later."}), 500

@@ -25,6 +25,9 @@ def test_client():
 
 # Ensure a mock User object is created in the database for the test
 def test_linkedin_auth_redirect(test_client):
+    with test_client.session_transaction() as session:
+        session["SECRET_GITHUB_user_id"] = "123"  # Set a valid GitHub user ID
+
     user = User(
         SECRET_GITHUB_id="123",
         SECRET_GITHUB_TOKEN="test-token",
@@ -33,11 +36,9 @@ def test_linkedin_auth_redirect(test_client):
     db.session.add(user)
     db.session.commit()
 
-    with test_client.session_transaction() as sess:
-        sess['SECRET_GITHUB_user_id'] = '123'  # Mock user ID
+    response = test_client.get("/auth/linkedin")
+    assert response.status_code == 302  # redirect
 
-    response = test_client.get("/auth/linkedin?SECRET_GITHUB_user_id=123")
-    assert response.status_code == 302
     assert "linkedin.com/oauth/v2/authorization" in response.location
 
     # Make sure LinkedIn info is cleared

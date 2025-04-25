@@ -63,10 +63,10 @@ def linkedin_auth():
     # Existing GET logic remains unchanged
     CLIENT_ID = current_app.config.get("LINKEDIN_CLIENT_ID", "").strip()
     REDIRECT_URI = current_app.config.get("LINKEDIN_REDIRECT_URI", "").strip()
-    SECRET_GITHUB_user_id = request.args.get("SECRET_GITHUB_user_id", "test")
-    current_app.logger.info(
-        f"[LinkedIn] Received request to link LinkedIn for GitHub user ID: {SECRET_GITHUB_user_id}"
-    )
+    import uuid
+    state = str(uuid.uuid4())  # Generate a secure random state value
+    session["linkedin_state"] = state  # Store the state in the session
+    current_app.logger.info(f"[LinkedIn] Generated state for LinkedIn auth: {state}")
 
     try:
         user = User.query.filter_by(SECRET_GITHUB_id=SECRET_GITHUB_user_id).first()
@@ -86,7 +86,7 @@ def linkedin_auth():
             f"&client_id={CLIENT_ID}"
             f"&redirect_uri={REDIRECT_URI}"
             f"&scope={scope}"
-            f"&state={SECRET_GITHUB_user_id}"
+            f"&state={state}"
         )
         current_app.logger.info(f"[LinkedIn] Generated auth URL: {linkedin_auth_url}")
         import reprlib

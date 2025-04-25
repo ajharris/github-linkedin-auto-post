@@ -60,7 +60,12 @@ def linkedin_auth():
         # Handle LinkedIn linking logic for POST requests
         return jsonify({"message": "LinkedIn account linked successfully."}), 200
 
-    # Existing GET logic remains unchanged
+    # Retrieve SECRET_GITHUB_user_id from cookies or session
+    SECRET_GITHUB_user_id = request.cookies.get("SECRET_GITHUB_user_id") or session.get("SECRET_GITHUB_user_id")
+    if not SECRET_GITHUB_user_id:
+        current_app.logger.error("[LinkedIn] GitHub user ID not found in cookies or session.")
+        return jsonify({"error": "GitHub user ID not found"}), 401
+
     CLIENT_ID = current_app.config.get("LINKEDIN_CLIENT_ID", "").strip()
     REDIRECT_URI = current_app.config.get("LINKEDIN_REDIRECT_URI", "").strip()
     import uuid
@@ -89,15 +94,6 @@ def linkedin_auth():
             f"&state={state}"
         )
         current_app.logger.info(f"[LinkedIn] Generated auth URL: {linkedin_auth_url}")
-        import reprlib
-
-        current_app.logger.info(f"[DEBUG] CLIENT_ID: {repr(CLIENT_ID)}")
-        current_app.logger.info(f"[DEBUG] REDIRECT_URI: {repr(REDIRECT_URI)}")
-        current_app.logger.info(f"[DEBUG] scope: {repr(scope)}")
-        current_app.logger.info(
-            f"[DEBUG] SECRET_GITHUB_user_id: {repr(SECRET_GITHUB_user_id)}"
-        )
-        current_app.logger.info(f"[DEBUG] Full LinkedIn URL: {repr(linkedin_auth_url)}")
 
         # Validate the constructed URL to ensure it adheres to the expected LinkedIn structure
         from urllib.parse import urlparse

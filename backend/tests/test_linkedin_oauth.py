@@ -26,6 +26,9 @@ def SECRET_GITHUB_user(db_session):
 
 
 def test_linkedin_auth_redirect(client):
+    with client.session_transaction() as session:
+        session["SECRET_GITHUB_user_id"] = "12345"  # Set a valid GitHub user ID
+
     response = client.get("/auth/linkedin")
     assert response.status_code == 302
     assert "https://www.linkedin.com/oauth/v2/authorization" in response.location

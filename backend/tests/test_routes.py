@@ -44,7 +44,9 @@ def test_serve_index(client):
 
 
 def test_linkedin_auth_redirect(client):
-    """Test LinkedIn authentication redirect"""
+    with client.session_transaction() as sess:
+        sess['SECRET_GITHUB_user_id'] = 'test_user_id'  # Mock user ID
+
     response = client.get("/auth/linkedin")
     assert response.status_code == 302
     assert "https://www.linkedin.com/oauth/v2/authorization" in response.location

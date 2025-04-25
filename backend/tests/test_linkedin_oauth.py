@@ -1,6 +1,7 @@
 from unittest.mock import patch
 import pytest
 from backend.models import db, User
+from flask import session
 
 
 # Fixtures
@@ -26,8 +27,9 @@ def SECRET_GITHUB_user(db_session):
 
 
 def test_linkedin_auth_redirect(client):
-    with client.session_transaction() as session:
-        session["SECRET_GITHUB_user_id"] = "12345"  # Set a valid GitHub user ID
+    with client.session_transaction() as sess:
+        sess['SECRET_GITHUB_user_id'] = 'test_user_id'  # Mock user ID
+
 
     response = client.get("/auth/linkedin")
     assert response.status_code == 302

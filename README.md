@@ -83,4 +83,67 @@ Contributions are welcome! Please fork the repository and submit a pull request.
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
+## Architecture Overview
+This project is divided into two main components:
+
+### Backend
+- **Language**: Python (Flask framework)
+- **Key Files**:
+  - `app.py`: Entry point for the Flask application.
+  - `routes/`: Contains route handlers for GitHub and LinkedIn integrations.
+  - `services/`: Includes utility functions for LinkedIn OAuth, post generation, and signature verification.
+  - `models.py`: Defines the database models.
+  - `migrations/`: Manages database schema changes using Alembic.
+
+### Frontend
+- **Language**: JavaScript (React framework)
+- **Key Files**:
+  - `src/components/`: Contains reusable UI components like `Header`, `CommitList`, and `PostPreview`.
+  - `src/utils/`: Includes helper functions for GitHub and LinkedIn actions.
+  - `App.js`: Main application file.
+
+## Use Cases
+1. **Team Updates**: Automatically share GitHub activity to LinkedIn to keep stakeholders informed.
+2. **Personal Branding**: Developers can showcase their contributions and projects on LinkedIn.
+3. **Recruitment**: Organizations can highlight team achievements to attract talent.
+
+## API Documentation
+### GitHub Webhook Endpoint
+- **URL**: `/webhook`
+- **Method**: POST
+- **Description**: Receives GitHub events and triggers LinkedIn posts.
+
+### LinkedIn OAuth Callback
+- **URL**: `/linkedin/callback`
+- **Method**: GET
+- **Description**: Handles LinkedIn OAuth flow and token exchange.
+
+## Visual Workflow
+```mermaid
+graph TD
+    A[GitHub Event] -->|Webhook| B[Backend]
+    B -->|Process Event| C[Generate Post]
+    C -->|LinkedIn API| D[Post to LinkedIn]
+```
+
+## Troubleshooting
+### Common Issues
+1. **Invalid LinkedIn Token**:
+   - Ensure the `LINKEDIN_ACCESS_TOKEN` is valid and not expired.
+   - Use the `renew_linkedin_token.py` script to refresh the token.
+
+2. **Webhook Signature Mismatch**:
+   - Verify the `SECRET_GITHUB_SECRET` matches the webhook secret in your GitHub repository.
+
+3. **Database Connection Errors**:
+   - Check the `SQLALCHEMY_DATABASE_URI` in the `.env` file.
+   - Ensure the PostgreSQL database is running and accessible.
+
+## Screenshots
+### Example LinkedIn Post
+![LinkedIn Post Example](docs/linkedin_post_example.png)
+
+### Application UI
+![Application UI](docs/application_ui.png)
+
 

@@ -51,20 +51,18 @@ def verify_env_vars():
         )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def app():
-    """Create and configure a new app instance for each test session."""
-    app = create_app(config_name="testing")
+    from backend.app import create_app
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    app = create_app("testing")
     app.config["TESTING"] = True
-    app.config["WTF_CSRF_ENABLED"] = False
+    app.config['DEBUG'] = True
+    app.config['PROPAGATE_EXCEPTIONS'] = True
+    app.logger.info(f"[Test Config] PROPAGATE_EXCEPTIONS is set to: {app.config['PROPAGATE_EXCEPTIONS']}")
 
     with app.app_context():
-        db.create_all()
         yield app
-        db.session.remove()
-        db.drop_all()
 
 
 @pytest.fixture(scope="function")

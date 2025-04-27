@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 const API_BASE_URL = "/api/github";
@@ -41,6 +40,16 @@ export const disconnectLinkedIn = async (userId) => {
     return response.data;
   } catch (error) {
     console.error("Error disconnecting LinkedIn:", error);
+    throw error;
+  }
+};
+
+export const previewLinkedInDigest = async (events) => {
+  try {
+    const response = await axios.post("/api/preview_linkedin_digest", { events });
+    return response.data.preview;
+  } catch (error) {
+    console.error("Error generating LinkedIn digest preview:", error);
     throw error;
   }
 };

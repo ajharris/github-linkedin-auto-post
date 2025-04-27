@@ -4,6 +4,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 import hmac
 import hashlib
+import backend
 from backend.routes import routes
 from backend.models import db, User
 from backend.app import create_app
@@ -350,3 +351,53 @@ def test_preview_linkedin_post_invalid_payload(client):
     response = client.post("/api/preview_linkedin_post", json=payload)
     assert response.status_code == 400
     assert "error" in response.json
+
+
+@pytest.fixture
+def mock_generate_digest_post():
+    with patch("backend.routes.generate_digest_post") as mock:
+        mock.side_effect = None  # Ensure no exception is raised
+        mock.return_value = "Here's a summary of recent GitHub activity:"  # Valid response for success test
+        yield mock
+
+def test_preview_linkedin_digest_success(client, mock_generate_digest_post):
+    mock_generate_digest_post.return_value = "Here's a summary of recent GitHub activity:"
+    payload = {
+        "events": [
+            {
+                "repository": {"name": "repo1"},
+                "head_commit": {"message": "Fix bug", "author": {"name": "Alice"}}
+            }
+        ]
+    }
+    response = client.post("/api/preview_linkedin_digest", json=payload)
+    assert response.status_code == 200
+    assert "Here's a summary of recent GitHub activity:" in response.json["preview"]
+
+def test_preview_linkedin_digest_invalid_payload(client):
+    payload = {}
+    response = client.post("/api/preview_linkedin_digest", json=payload)
+    assert response.status_code == 400
+    assert "error" in response.json
+
+def test_preview_linkedin_digest_openai_failure(client, mocker):
+    mocker.patch(
+        "backend.routes.generate_digest_post",  # Correct module path
+        side_effect=Exception("OpenAI API error"),
+    )
+
+    payload = {
+        "events": [
+            {
+                "repository": {"name": "repo1"},
+                "head_commit": {"message": "Fix bug", "author": {"name": "Alice"}}
+            }
+        ]
+    }
+
+    response = client.post("/api/preview_linkedin_digest", json=payload)
+
+    assert response.status_code == 500
+    assert response.is_json
+    data = response.get_json()
+    assert "error" in data

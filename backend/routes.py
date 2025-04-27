@@ -14,7 +14,7 @@ import os
 import requests
 import logging
 from backend.models import db, GitHubEvent, User
-from backend.services.post_generator import generate_preview_post
+from backend.services.post_generator import generate_preview_post, generate_digest_post
 from backend.services.post_to_linkedin import post_to_linkedin
 from backend.services.verify_signature import verifyGITHUB_signature
 import jwt  # Install with `pip install pyjwt`
@@ -543,3 +543,26 @@ def preview_linkedin_post():
     except Exception as e:
         current_app.logger.error(f"An error occurred: {e}", exc_info=True)
         return jsonify({"error": "An internal error has occurred. Please try again later."}), 500
+
+
+@routes.route("/api/preview_linkedin_digest", methods=["POST"])
+def preview_linkedin_digest():
+    try:
+        payload = request.get_json()
+        if not payload or "events" not in payload:
+            return jsonify({"error": "Invalid payload"}), 400
+
+        current_app.logger.info("Payload received for preview_linkedin_digest", extra={"payload": payload})
+
+        events = payload["events"]
+        # Add logging to confirm invocation of generate_digest_post
+        current_app.logger.info("Invoking generate_digest_post")
+        preview = generate_digest_post(events, return_as_string=True)
+        current_app.logger.info("generate_digest_post executed successfully")
+        return jsonify({"preview": preview}), 200
+    except Exception as e:
+        current_app.logger.error("Exception caught in preview_linkedin_digest route", exc_info=True)
+        current_app.logger.info("Raising explicit exception for testing")
+        raise Exception("Explicit exception for testing")
+        return jsonify({"error": "An internal error has occurred. Please try again later."}), 500
+

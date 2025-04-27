@@ -21,6 +21,20 @@ function App() {
   const [isPosting, setIsPosting] = useState(false);
   const [commits, setCommits] = useState([]);
   const [selectedCommit, setSelectedCommit] = useState(null);
+  const [useDigestFormat, setUseDigestFormat] = useState(false);
+
+  const toggleDigestFormat = () => {
+    setUseDigestFormat((prev) => !prev);
+  };
+
+  const handlePreviewDigest = async () => {
+    try {
+      const preview = await previewLinkedInDigest(commits);
+      alert(preview);
+    } catch (error) {
+      alert("Failed to generate digest preview.");
+    }
+  };
 
   // Check for GitHub OAuth callback with ?SECRET_GITHUB_user_id=
   useEffect(() => {
@@ -249,6 +263,19 @@ function App() {
         postSelectedCommitToLinkedIn={postSelectedCommitToLinkedIn}
       />
       <div>{renderAuthSection()}</div>
+      <div>
+        <label>
+          <input
+            type="checkbox"
+            checked={useDigestFormat}
+            onChange={toggleDigestFormat}
+          />
+          Use Digest Format
+        </label>
+        {useDigestFormat && (
+          <button onClick={handlePreviewDigest}>Preview Digest</button>
+        )}
+      </div>
     </div>
   );
 }

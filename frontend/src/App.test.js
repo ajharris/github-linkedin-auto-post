@@ -1,4 +1,9 @@
 import axios from 'axios';
+import { render, screen, fireEvent } from "@testing-library/react";
+import App from "./App";
+import MockAdapter from "axios-mock-adapter";
+
+const mock = new MockAdapter(axios);
 
 describe('Dynamic URL Resolution', () => {
   it('sets axios baseURL correctly for local development', () => {
@@ -31,4 +36,28 @@ describe('Frontend Preview API Calls', () => {
     const previewUrl = `${process.env.REACT_APP_BACKEND_URL}/api/preview_linkedin_post`;
     expect(previewUrl).toBe('https://api.example.com/api/preview_linkedin_post');
   });
+});
+
+test("renders digest toggle and respects its state", () => {
+  render(<App />);
+  const toggle = screen.getByLabelText(/Use Digest Format/i);
+  expect(toggle).toBeInTheDocument();
+  fireEvent.click(toggle);
+  expect(toggle.checked).toBe(true);
+});
+
+test("preview digest with multiple events", async () => {
+  mock.onPost("/api/preview_linkedin_digest").reply(200, {
+    preview: "Here's a summary of recent GitHub activity:"
+  });
+
+  render(<App />);
+  const toggle = screen.getByLabelText(/Use Digest Format/i);
+  fireEvent.click(toggle);
+
+  const previewButton = screen.getByText(/Preview Digest/i);
+  fireEvent.click(previewButton);
+
+  const alert = await screen.findByText(/Here's a summary of recent GitHub activity:/i);
+  expect(alert).toBeInTheDocument();
 });

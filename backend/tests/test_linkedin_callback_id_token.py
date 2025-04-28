@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 
 @patch("requests.post")
-def test_linkedin_callback_handles_id_token(mock_post, app, test_client):
+def test_linkedin_callback_handles_id_token(mock_post, app, client):
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = {
         "access_token": "mock_access_token",
@@ -35,7 +35,7 @@ def test_linkedin_callback_handles_id_token(mock_post, app, test_client):
     )  # Fix mock to handle 'algorithms' argument
 
     # Trigger the OAuth callback
-    response = test_client.get("/auth/linkedin/callback?code=mock_code&state=123456789")
+    response = client.get("/auth/linkedin/callback?code=mock_code&state=123456789")
 
     assert (
         response.status_code == 200

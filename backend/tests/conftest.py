@@ -66,7 +66,7 @@ def app():
 
 
 @pytest.fixture(scope="function")
-def test_client(app):
+def client(app):
     """Flask test client that shares the app context."""
     return app.test_client()
 
@@ -92,9 +92,10 @@ def patch_linkedin_env(monkeypatch):
 def clean_db(app):
     from backend.models import db
 
-    db.session.remove()
-    db.drop_all()
-    db.create_all()
+    with app.app_context():
+        db.session.remove()
+        db.drop_all()
+        db.create_all()
 
 
 @pytest.fixture(autouse=True)

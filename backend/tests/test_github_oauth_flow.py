@@ -4,7 +4,7 @@ from backend.models import db, User
 
 
 @pytest.fixture(scope="module")
-def test_client():
+def client():
     app = create_app("testing")
     app.config["TESTING"] = True
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
@@ -17,10 +17,10 @@ def test_client():
         db.drop_all()
 
 
-def testGITHUB_status_returns_user_info(test_client):
+def testGITHUB_status_returns_user_info(client):
     """Test the /api/github/<SECRET_GITHUB_id>/status route."""
     # Create a mock user with GitHub details
-    with test_client.application.app_context():
+    with client.application.app_context():
         user = User(
             SECRET_GITHUB_id="123456",
             SECRET_GITHUB_username="octocat",
@@ -30,8 +30,8 @@ def testGITHUB_status_returns_user_info(test_client):
         db.session.commit()
 
     # Include the SECRET_GITHUB_user_id cookie in the request
-    test_client.set_cookie("SECRET_GITHUB_user_id", "123456")
-    response = test_client.get("/api/github/123456/status")
+    client.set_cookie("SECRET_GITHUB_user_id", "123456")
+    response = client.get("/api/github/123456/status")
 
     assert response.status_code == 200
     assert response.get_json() == {

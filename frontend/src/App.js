@@ -8,6 +8,7 @@ import Cookies from "js-cookie"; // Install with `npm install js-cookie`
 import CryptoJS from "crypto-js"; // Install with `npm install crypto-js`
 import AuthSection from "./components/AuthSection";
 import CommitActions from "./components/CommitActions";
+import { previewLinkedInDigest } from "./apiService"; // Import the digest preview function
 const SECRET_KEY = "your-secure-key"; // Replace with a securely managed key
 
 function App() {

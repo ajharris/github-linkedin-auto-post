@@ -1,0 +1,2 @@
+
+python-3.10.12  # Specify a compatible Python version

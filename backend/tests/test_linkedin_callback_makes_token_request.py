@@ -17,7 +17,7 @@ def get_linkedin_client_secret():
 
 @patch("requests.post")
 def test_linkedin_callback_makes_token_request(
-    mock_post, app, test_client, monkeypatch
+    mock_post, app, client, monkeypatch
 ):
     # Set environment variables explicitly for the test
     monkeypatch.setenv("LINKEDIN_CLIENT_ID", "mock_client_id")
@@ -63,7 +63,7 @@ def test_linkedin_callback_makes_token_request(
     jwt.decode = lambda token, options, algorithms=None: {"sub": "123456789"}
 
     # Trigger the OAuth callback
-    response = test_client.get("/auth/linkedin/callback?code=mock_code&state=test")
+    response = client.get("/auth/linkedin/callback?code=mock_code&state=test")
 
     assert response.status_code == 200, response.data
     assert "✅ LinkedIn Access Token and ID stored successfully" in response.get_data(

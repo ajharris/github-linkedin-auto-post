@@ -68,7 +68,7 @@ def testGITHUB_webhook(mock_verify, mock_post, client):
 )
 @patch("backend.routes.verifyGITHUB_signature", return_value=True)
 def test_webhook_links_event_to_correct_user(
-    mock_verify, mock_post_to_linkedin, test_client
+    mock_verify, mock_post_to_linkedin, client
 ):
     """Test that a webhook event is linked to the correct user in the database."""
 
@@ -78,7 +78,7 @@ def test_webhook_links_event_to_correct_user(
         linkedin_token="fake_token",
         linkedin_id="123456789",
     )
-    with test_client.application.app_context():
+    with client.application.app_context():
         db.session.add(user)
         db.session.commit()
 
@@ -100,12 +100,12 @@ def test_webhook_links_event_to_correct_user(
         "Content-Type": "application/json",
     }
 
-    response = test_client.post("/webhook/github", data=body, headers=headers)
+    response = client.post("/webhook/github", data=body, headers=headers)
 
     assert response.status_code == 200
     assert response.get_json()["status"] == "success"
 
-    with test_client.application.app_context():
+    with client.application.app_context():
         event = GitHubEvent.query.filter_by(
             repo_name="some-repo", commit_message="Refactor API endpoints"
         ).first()
@@ -114,7 +114,7 @@ def test_webhook_links_event_to_correct_user(
 
 
 @patch("backend.routes.verifyGITHUB_signature", return_value=True)
-def test_webhook_unsupported_event_type(mock_verify, test_client):
+def test_webhook_unsupported_event_type(mock_verify, client):
     """Test that unsupported event types are handled gracefully."""
     payload = {
         "repository": {"name": "test-repo", "owner": {"id": "testuser"}},
@@ -131,7 +131,7 @@ def test_webhook_unsupported_event_type(mock_verify, test_client):
         "Content-Type": "application/json",
     }
 
-    response = test_client.post("/webhook/github", json=payload, headers=headers)
+    response = client.post("/webhook/github", json=payload, headers=headers)
     assert response.status_code in [204, 400]
     assert (
         "Unsupported event type" in response.get_data(as_text=True)
@@ -139,9 +139,9 @@ def test_webhook_unsupported_event_type(mock_verify, test_client):
     )
 
 
-def test_webhook_invalid_payload(test_client):
+def test_webhook_invalid_payload(client):
     """Test that malformed JSON is rejected."""
-    response = test_client.post(
+    response = client.post(
         "/webhook/github",
         data="invalid json",
         content_type="application/json",
@@ -150,9 +150,9 @@ def test_webhook_invalid_payload(test_client):
     assert response.status_code == 403
 
 
-def test_webhook_unauthorized_request(test_client):
+def test_webhook_unauthorized_request(client):
     """Test that requests without GitHub signature header are rejected."""
-    response = test_client.post(
+    response = client.post(
         "/webhook/github",
         data=json.dumps({"repository": {"full_name": "testuser/test-repo"}}),
         content_type="application/json",
@@ -161,9 +161,9 @@ def test_webhook_unauthorized_request(test_client):
     assert response.status_code == 403
 
 
-def test_webhook_route_exists(test_client):
+def test_webhook_route_exists(client):
     """This test fails if the GitHub webhook route is missing or returns wrong status."""
-    response = test_client.post(
+    response = client.post(
         "/webhook/github",
         data="{}",
         content_type="application/json",
@@ -174,10 +174,10 @@ def test_webhook_route_exists(test_client):
 
 
 @patch("backend.routes.verifyGITHUB_signature", return_value=True)
-def test_webhook_redundant_event(mock_verify, test_client):
+def test_webhook_redundant_event(mock_verify, client):
 
     # Add test user to DB
-    with test_client.application.app_context():
+    with client.application.app_context():
         user = User(
             SECRET_GITHUB_id="testuser",
             SECRET_GITHUB_TOKEN="fakeGITHUB_TOKEN",
@@ -188,12 +188,12 @@ def test_webhook_redundant_event(mock_verify, test_client):
         db.session.commit()
 
     # Refresh the user instance to ensure it is attached to the session
-    with test_client.application.app_context():
+    with client.application.app_context():
         user = db.session.merge(user)
         db.session.refresh(user)
 
     # Add a redundant event to the database
-    with test_client.application.app_context():
+    with client.application.app_context():
         redundant_event = GitHubEvent(
             user_id=user.id,
             repo_name="test-repo",
@@ -205,7 +205,7 @@ def test_webhook_redundant_event(mock_verify, test_client):
         db.session.commit()
 
     # Ensure the redundant event exists
-    with test_client.application.app_context():
+    with client.application.app_context():
         assert (
             GitHubEvent.query.filter_by(
                 user_id=user.id,
@@ -235,14 +235,14 @@ def test_webhook_redundant_event(mock_verify, test_client):
             status_code=200, json=lambda: {"id": "mock_post_id"}
         )  # Simulate valid response
 
-        response = test_client.post("/webhook/github", json=payload, headers=headers)
+        response = client.post("/webhook/github", json=payload, headers=headers)
 
         assert response.status_code == 200
         mock_post_to_linkedin.assert_not_called()
 
 
 @patch("backend.routes.verifyGITHUB_signature", return_value=True)
-def test_webhook_pull_request_event(mock_verify, test_client):
+def test_webhook_pull_request_event(mock_verify, client):
     """Test that pull request events are parsed correctly."""
     payload = {
         "action": "opened",
@@ -260,7 +260,7 @@ def test_webhook_pull_request_event(mock_verify, test_client):
         "Content-Type": "application/json",
     }
 
-    response = test_client.post("/webhook/github", json=payload, headers=headers)
+    response = client.post("/webhook/github", json=payload, headers=headers)
 
     assert response.status_code in [204, 400]
     assert (
@@ -270,7 +270,7 @@ def test_webhook_pull_request_event(mock_verify, test_client):
 
 
 @patch("backend.routes.verifyGITHUB_signature", return_value=False)
-def test_webhook_invalid_signature(mock_verify, test_client):
+def test_webhook_invalid_signature(mock_verify, client):
     """Test that payloads with invalid signatures are rejected."""
     payload = {
         "repository": {"name": "test-repo", "owner": {"id": "testuser"}},
@@ -287,7 +287,7 @@ def test_webhook_invalid_signature(mock_verify, test_client):
         "Content-Type": "application/json",
     }
 
-    response = test_client.post("/webhook/github", json=payload, headers=headers)
+    response = client.post("/webhook/github", json=payload, headers=headers)
     assert response.status_code == 403
     assert response.get_json()["error"] == "Unauthorized"
 
